@@ -1,0 +1,91 @@
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  let examSlug = typeof body.examSlug === "string" ? body.examSlug.trim() : "";
+  let boardSlug = typeof body.boardSlug === "string" ? body.boardSlug.trim() : "";
+  const authorName = typeof body.authorName === "string" ? body.authorName.trim() : "";
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const content = typeof body.content === "string" ? body.content.trim() : "";
+
+  if (!examSlug || !boardSlug) {
+    const referer = request.headers.get("referer") ?? "";
+    const match = referer.match(/\/c\/([^/]+)\/([^/]+)(?:\/|$)/);
+    if (match) {
+      examSlug = examSlug || decodeURIComponent(match[1]);
+      boardSlug = boardSlug || decodeURIComponent(match[2]);
+    }
+  }
+
+  if (!examSlug || !boardSlug) {
+    return NextResponse.json({ error: "게시판 정보가 없습니다." }, { status: 400 });
+  }
+  if (!authorName || authorName.length < 2) {
+    return NextResponse.json({ error: "닉네임은 2자 이상이어야 합니다." }, { status: 400 });
+  }
+  if (!title) {
+    return NextResponse.json({ error: "제목을 입력해 주세요." }, { status: 400 });
+  }
+  if (!content) {
+    return NextResponse.json({ error: "내용을 입력해 주세요." }, { status: 400 });
+  }
+
+  const admin = getSupabaseAdmin();
+  const examMeta = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === examSlug);
+  const boardMeta = examMeta?.boards.find((board) => board.slug === boardSlug);
+  const examName = examMeta?.examName ?? examSlug;
+  const examDescription = examMeta?.description ?? null;
+  const boardName =
+    boardMeta?.name ?? (boardSlug === "free" ? "자유게시판" : boardSlug);
+  const boardDescription = boardMeta?.description ?? null;
+
+  const { data: examData, error: examError } = await admin
+    .from("exams")
+    .upsert(
+      {
+        name: examName,
+        slug: examSlug,
+        description: examDescription,
+      },
+      { onConflict: "slug" }
+    )
+    .select("id")
+    .single();
+
+  if (examError || !examData?.id) {
+    return NextResponse.json({ error: examError?.message ?? "시험 정보 생성 실패" }, { status: 400 });
+  }
+
+  const { data: boardData, error: boardError } = await admin
+    .from("boards")
+    .upsert(
+      {
+        exam_id: examData.id,
+        name: boardName,
+        slug: boardSlug,
+        description: boardDescription,
+      },
+      { onConflict: "exam_id,slug" }
+    )
+    .select("id")
+    .single();
+
+  if (boardError || !boardData?.id) {
+    return NextResponse.json({ error: boardError?.message ?? "게시판 생성 실패" }, { status: 400 });
+  }
+
+  const { error: insertError } = await admin.from("posts").insert({
+    board_id: boardData.id,
+    author_name: authorName,
+    title,
+    content,
+  });
+
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
