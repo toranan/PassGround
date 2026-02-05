@@ -15,7 +15,7 @@ export default async function BoardWritePage({ params }: BoardWritePageProps) {
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);
   const examName = examInfo?.examName ?? exam;
   const boardName =
-    examInfo?.boards.find((board) => board.slug === board)?.name ?? "게시판";
+    examInfo?.boards.find((item) => item.slug === board)?.name ?? "게시판";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
