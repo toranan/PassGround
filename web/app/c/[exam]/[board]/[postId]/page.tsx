@@ -7,7 +7,8 @@ import { LikeButton } from "@/components/LikeButton";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { BOARD_POST_GROUPS } from "@/lib/data";
-import { ChevronLeft, Eye, Heart, MessageCircle, Share2, Bookmark, User } from "lucide-react";
+import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
+import { ChevronLeft, Eye, MessageCircle, Share2, Bookmark, User } from "lucide-react";
 
 type PostDetailPageProps = {
   params: Promise<{
@@ -15,6 +16,15 @@ type PostDetailPageProps = {
     board: string;
     postId: string;
   }>;
+};
+
+type CommentRow = {
+  id: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+  parent_id: string | null;
+  verification_level?: string | null;
 };
 
 function formatRelativeTime(dateString: string | null): string {
@@ -33,7 +43,6 @@ function formatRelativeTime(dateString: string | null): string {
   return date.toLocaleDateString("ko-KR");
 }
 
-// UUID validation
 function isValidUUID(str: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
@@ -41,6 +50,11 @@ function isValidUUID(str: string): boolean {
 
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { exam, board, postId } = await params;
+
+  if (!ENABLE_CPA && exam === "cpa") {
+    notFound();
+  }
+  const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
   const supabase = getSupabaseServer();
 
@@ -51,25 +65,40 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     .eq("exams.slug", exam)
     .maybeSingle();
 
-  let postData: { id: string; title: string; content: string; author_name: string | null; created_at: string | null; view_count?: number } | null = null;
-  let commentsData: { id: string; author_name: string; content: string; created_at: string; parent_id: string | null }[] = [];
+  let postData:
+    | {
+        id: string;
+        title: string;
+        content: string;
+        author_name: string | null;
+        created_at: string | null;
+        view_count?: number;
+      }
+    | null = null;
+  let commentsData: CommentRow[] = [];
   let boardName = boardData?.name ?? "게시판";
   let likeCount = 0;
+  let adoptedCommentId: string | null = null;
   let isSamplePost = false;
 
   if (boardData?.id && isValidUUID(postId)) {
-    // Increment view count directly
     const admin = getSupabaseAdmin();
     try {
+      const { data: viewData } = await admin
+        .from("posts")
+        .select("view_count")
+        .eq("id", postId)
+        .maybeSingle<{ view_count: number | null }>();
+
       await admin
         .from("posts")
-        .update({ view_count: (await admin.from("posts").select("view_count").eq("id", postId).single()).data?.view_count + 1 || 1 })
+        .update({ view_count: (viewData?.view_count ?? 0) + 1 })
         .eq("id", postId);
     } catch {
-      // ignore view count errors
+      // view_count column may not exist yet in legacy schema
     }
 
-    const { data } = await supabase
+    const { data, error: postSelectError } = await supabase
       .from("posts")
       .select("id,title,content,author_name,created_at,view_count")
       .eq("id", postId)
@@ -77,25 +106,73 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       .maybeSingle();
     postData = data;
 
+    if (!postData && postSelectError?.message?.includes("view_count")) {
+      const { data: legacyData } = await supabase
+        .from("posts")
+        .select("id,title,content,author_name,created_at")
+        .eq("id", postId)
+        .eq("board_id", boardData.id)
+        .maybeSingle();
+
+      postData = legacyData
+        ? {
+            ...legacyData,
+            view_count: 0,
+          }
+        : null;
+    }
+
     if (postData?.id) {
-      // Get comments
       const { data: comments } = await supabase
         .from("comments")
         .select("id,author_name,content,created_at,parent_id")
         .eq("post_id", postData.id)
         .order("created_at", { ascending: true });
-      commentsData = comments ?? [];
 
-      // Get like count
+      const rawComments = comments ?? [];
+      const authorNames = Array.from(
+        new Set(rawComments.map((comment) => comment.author_name).filter(Boolean))
+      );
+
+      const verificationMap = new Map<string, string>();
+      if (authorNames.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("display_name,verification_level")
+          .in("display_name", authorNames);
+
+        (profiles ?? []).forEach((profile: { display_name: string | null; verification_level: string | null }) => {
+          if (profile.display_name) {
+            verificationMap.set(profile.display_name, profile.verification_level ?? "none");
+          }
+        });
+      }
+
+      commentsData = rawComments.map((comment) => ({
+        id: comment.id,
+        author_name: comment.author_name,
+        content: comment.content,
+        created_at: comment.created_at,
+        parent_id: comment.parent_id,
+        verification_level: verificationMap.get(comment.author_name) ?? "none",
+      }));
+
       const { count } = await supabase
         .from("post_likes")
         .select("*", { count: "exact", head: true })
         .eq("post_id", postData.id);
       likeCount = count ?? 0;
+
+      const { data: adoptionData } = await supabase
+        .from("answer_adoptions")
+        .select("comment_id")
+        .eq("post_id", postData.id)
+        .maybeSingle<{ comment_id: string }>();
+
+      adoptedCommentId = adoptionData?.comment_id ?? null;
     }
   }
 
-  // Fallback to static data
   if (!postData) {
     const fallbackGroup = BOARD_POST_GROUPS.find(
       (group) => group.examSlug === exam && group.boardSlug === board
@@ -129,7 +206,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       <Navbar />
 
       <main className="flex-1">
-        {/* Header */}
         <header className="bg-white border-b sticky top-16 z-40">
           <div className="container mx-auto px-4 h-14 flex items-center gap-3">
             <Link
@@ -142,15 +218,10 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </div>
         </header>
 
-        {/* Post Content */}
         <article className="bg-white border-b">
           <div className="container mx-auto px-4 py-6">
-            {/* Title */}
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-4">
-              {postData.title}
-            </h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-4">{postData.title}</h1>
 
-            {/* Author Info */}
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
                 <User className="h-5 w-5 text-emerald-600" />
@@ -168,18 +239,14 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               </div>
             </div>
 
-            {/* Body */}
-            <div className="text-base leading-7 text-gray-800 whitespace-pre-wrap">
-              {postData.content}
-            </div>
+            <div className="text-base leading-7 text-gray-800 whitespace-pre-wrap">{postData.content}</div>
           </div>
         </article>
 
-        {/* Engagement Bar */}
         <div className="bg-white border-b">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-6">
-              <LikeButton postId={postData.id} initialCount={likeCount} isSample={isSamplePost} />
+              <LikeButton postId={postData.id} initialCount={likeCount} isSample={isSamplePost || isReadOnlyExam} />
               <button className="flex items-center gap-2 text-gray-600">
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-sm font-medium">{comments.length}</span>
@@ -195,24 +262,35 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </div>
         </div>
 
-        {/* Comments Section */}
         <section className="bg-white mt-2">
           <div className="container mx-auto px-4 py-4">
-            <h2 className="font-semibold text-gray-900 mb-4">
-              댓글 {comments.length}개
-            </h2>
+            <h2 className="font-semibold text-gray-900 mb-3">댓글 {comments.length}개</h2>
 
-            <CommentList postId={postData.id} comments={comments} isSamplePost={isSamplePost} />
+            {adoptedCommentId && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                채택된 답변이 있습니다. 채택 답변자에게 포인트가 지급되었습니다.
+              </div>
+            )}
 
-            {/* Comment Composer */}
-            {!isSamplePost && (
+            <CommentList
+              postId={postData.id}
+              comments={comments}
+              postAuthorName={postData.author_name ?? ""}
+              adoptedCommentId={adoptedCommentId}
+              isSamplePost={isSamplePost}
+              disableInteractions={isReadOnlyExam}
+            />
+
+            {!isSamplePost && !isReadOnlyExam && (
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <CommentComposer postId={postData.id} />
               </div>
             )}
-            {isSamplePost && (
+            {(isSamplePost || isReadOnlyExam) && (
               <div className="mt-6 pt-4 border-t border-gray-100 text-center text-sm text-gray-500">
-                샘플 게시글에는 댓글을 작성할 수 없습니다.
+                {isReadOnlyExam
+                  ? "현재 CPA 게시판은 구경용(읽기 전용)으로 운영 중입니다."
+                  : "샘플 게시글에는 댓글을 작성할 수 없습니다."}
               </div>
             )}
           </div>

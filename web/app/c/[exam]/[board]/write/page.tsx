@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { BoardComposer } from "@/components/BoardComposer";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 
 type BoardWritePageProps = {
   params: Promise<{
@@ -12,6 +14,14 @@ type BoardWritePageProps = {
 
 export default async function BoardWritePage({ params }: BoardWritePageProps) {
   const { exam, board } = await params;
+
+  if (!ENABLE_CPA && exam === "cpa") {
+    notFound();
+  }
+  if (exam === "cpa" && !ENABLE_CPA_WRITE) {
+    notFound();
+  }
+
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);
   const examName = examInfo?.examName ?? exam;
   const boardName =
@@ -25,8 +35,8 @@ export default async function BoardWritePage({ params }: BoardWritePageProps) {
         <section className="border-b bg-muted/30">
           <div className="container mx-auto px-4 py-6">
             <div className="text-sm text-muted-foreground">
-              <Link href="/community" className="hover:text-foreground">
-                커뮤니티
+              <Link href={`/community/${exam}`} className="hover:text-foreground">
+                {examName} 커뮤니티
               </Link>
               <span className="mx-2">/</span>
               <Link href={`/c/${exam}/${board}`} className="hover:text-foreground">

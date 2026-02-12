@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
+import { CutoffMaskedTitle } from "@/components/CutoffMaskedTitle";
 import { Button } from "@/components/ui/button";
 import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { MessageCircle, Heart, Eye, ChevronLeft, PenSquare } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
@@ -32,8 +35,21 @@ function formatRelativeTime(timeStr: string): string {
   return date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
 }
 
+function deterministicLikeCount(seed: string, base: number): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % 97;
+  }
+  return (hash % 15) + Math.floor(base / 3);
+}
+
 export default async function BoardPage({ params }: BoardPageProps) {
   const { exam, board } = await params;
+
+  if (!ENABLE_CPA && exam === "cpa") {
+    notFound();
+  }
+  const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);
   const examName = examInfo?.examName ?? exam;
@@ -55,11 +71,35 @@ export default async function BoardPage({ params }: BoardPageProps) {
   let dbPosts: { id: string; title: string; author: string; comments: number; likes: number; views: number; timeLabel: string }[] = [];
 
   if (boardId) {
-    const { data: postsData } = await supabase
+    let postsData:
+      | {
+          id: string;
+          title: string;
+          author_name: string | null;
+          created_at: string | null;
+          view_count?: number | null;
+        }[]
+      | null = null;
+
+    const { data: modernPosts, error: modernError } = await supabase
       .from("posts")
       .select("id, title, author_name, created_at, view_count")
       .eq("board_id", boardId)
       .order("created_at", { ascending: false });
+    postsData = modernPosts;
+
+    if ((!postsData || postsData.length === 0) && modernError?.message?.includes("view_count")) {
+      const { data: legacyPosts } = await supabase
+        .from("posts")
+        .select("id, title, author_name, created_at")
+        .eq("board_id", boardId)
+        .order("created_at", { ascending: false });
+
+      postsData = (legacyPosts ?? []).map((post) => ({
+        ...post,
+        view_count: 0,
+      }));
+    }
 
     if (postsData && postsData.length > 0) {
       // Get comment counts for all posts
@@ -107,12 +147,13 @@ export default async function BoardPage({ params }: BoardPageProps) {
     title: post.title,
     author: post.author,
     comments: post.comments,
-    likes: Math.floor(Math.random() * 15),
+    likes: deterministicLikeCount(post.id, post.comments),
     views: post.views,
     timeLabel: post.time,
   }));
 
   const posts = dbPosts.length ? dbPosts : fallbackPosts;
+  const shouldMaskCutoffTitles = exam === "transfer" && board === "cutoff";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -124,7 +165,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
           <div className="container mx-auto px-4 h-14 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
-                href="/community"
+                href={`/community/${exam}`}
                 className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -132,12 +173,16 @@ export default async function BoardPage({ params }: BoardPageProps) {
               <h1 className="font-semibold text-gray-900">{boardName}</h1>
               <span className="text-sm text-gray-500">{examName}</span>
             </div>
-            <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1">
-              <Link href={`/c/${exam}/${board}/write`}>
-                <PenSquare className="h-4 w-4" />
-                글쓰기
-              </Link>
-            </Button>
+            {!isReadOnlyExam ? (
+              <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+                <Link href={`/c/${exam}/${board}/write`}>
+                  <PenSquare className="h-4 w-4" />
+                  글쓰기
+                </Link>
+              </Button>
+            ) : (
+              <span className="text-xs text-gray-500">읽기 전용</span>
+            )}
           </div>
         </header>
 
@@ -153,7 +198,10 @@ export default async function BoardPage({ params }: BoardPageProps) {
                 >
                   <div className="container mx-auto px-4 py-4">
                     <h2 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                      {post.title}
+                      <CutoffMaskedTitle
+                        title={post.title}
+                        shouldMaskForGuest={shouldMaskCutoffTitles}
+                      />
                     </h2>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span>{post.author}</span>

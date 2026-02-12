@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 
@@ -19,14 +18,6 @@ const UPCOMING_EXAMS: DDayExam[] = [
 ];
 
 export function DDayWidget() {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) return null;
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

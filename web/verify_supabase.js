@@ -1,5 +1,5 @@
-
-const { createClient } = require('@supabase/supabase-js');
+/* eslint-disable @typescript-eslint/no-require-imports */
+const { createClient } = require("@supabase/supabase-js");
 
 const supabaseUrl = 'https://mruhnsragtbbrgfyuogu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydWhuc3JhZ3RiYnJnZnl1b2d1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NzMxMjAsImV4cCI6MjA4NTQ0OTEyMH0.p0dCAwUV3dwYfDEJr9RxbeDJWrx6_G9rAsvQJ0zcsaY';
@@ -10,7 +10,7 @@ async function testConnection() {
     console.log('Testing connection to Supabase...');
     try {
         // Attempt to fetch session - simple way to check if client works
-        const { data, error } = await supabase.auth.getSession();
+        const { error } = await supabase.auth.getSession();
 
         if (error) {
             console.error('Connection failed with error:', error.message);

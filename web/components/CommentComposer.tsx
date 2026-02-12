@@ -14,7 +14,7 @@ type CommentComposerProps = {
 
 export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }: CommentComposerProps) {
   const router = useRouter();
-  const [authorName, setAuthorName] = useState("");
+  const [authorName, setAuthorName] = useState("익명");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -41,13 +41,9 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
 
   const handleSubmit = async () => {
     setMessage("");
-    const nameValue = authorName.trim();
+    const nameValue = isLoggedIn ? authorName.trim() : "익명";
     const contentValue = content.trim();
 
-    if (!nameValue || nameValue.length < 2) {
-      setMessage("닉네임은 2자 이상 입력해 주세요.");
-      return;
-    }
     if (!contentValue) {
       setMessage("댓글 내용을 입력해 주세요.");
       return;
@@ -95,17 +91,7 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
         <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
           <User className="h-4 w-4 text-emerald-600" />
         </div>
-        {isLoggedIn ? (
-          <span className="text-sm font-medium text-gray-700">{authorName}</span>
-        ) : (
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="닉네임"
-            className="text-sm font-medium text-gray-700 bg-transparent border-none outline-none placeholder:text-gray-400"
-          />
-        )}
+        <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
       </div>
 
       {/* Textarea */}

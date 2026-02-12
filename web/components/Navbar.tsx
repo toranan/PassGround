@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useMemo, useSyncExternalStore } from "react";
+import { RouteDropdown } from "@/components/RouteDropdown";
 import { Button } from "@/components/ui/button";
+import { ENABLE_CPA } from "@/lib/featureFlags";
 import { GraduationCap, LogOut } from "lucide-react";
 
 interface User {
@@ -15,51 +17,78 @@ interface User {
 
 export function Navbar() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("user");
-    if (stored) {
+  const pathname = usePathname();
+  const user = useSyncExternalStore(
+    () => () => {},
+    () => {
+      const stored = localStorage.getItem("user");
+      if (!stored) return null;
       try {
-        setUser(JSON.parse(stored));
+        return JSON.parse(stored) as User;
       } catch {
-        setUser(null);
+        return null;
       }
+    },
+    () => null
+  );
+
+  const serviceValue = useMemo(() => {
+    if (
+      pathname.startsWith("/cpa") ||
+      pathname.startsWith("/community/cpa") ||
+      pathname.startsWith("/c/cpa")
+    ) {
+      return "cpa";
     }
+    return "transfer";
+  }, [pathname]);
+
+  const serviceOptions = useMemo(() => {
+    const options = [
+      { key: "transfer", label: "편입", href: "/transfer" },
+    ];
+    if (ENABLE_CPA) {
+      options.push({ key: "cpa", label: "CPA 둘러보기", href: "/cpa" });
+    }
+    return options;
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
-    setUser(null);
-    router.push("/login");
+    router.push("/");
   };
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
           <GraduationCap className="h-8 w-8 text-primary" />
           <span className="font-bold text-xl tracking-tight">합격판</span>
         </Link>
 
-        <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link href="#" className="transition-colors hover:text-primary">
-            시험 일정
-          </Link>
-          <Link href="/timer" className="transition-colors hover:text-primary">
-            타이머
-          </Link>
+        <div className="hidden lg:flex items-center space-x-5 text-sm font-medium">
           <Link href="/community" className="transition-colors hover:text-primary">
             커뮤니티
+          </Link>
+          <Link href="/points" className="transition-colors hover:text-primary">
+            포인트
+          </Link>
+          <Link href="/verification" className="transition-colors hover:text-primary">
+            인증
           </Link>
         </div>
 
         <div className="flex items-center space-x-4">
-          {mounted && user ? (
+          <div className="hidden md:flex items-center">
+            <RouteDropdown
+              value={serviceValue}
+              options={serviceOptions}
+              ariaLabel="서비스 선택"
+            />
+          </div>
+          {user ? (
             <>
               <span className="text-sm font-medium text-emerald-700">
                 {user.nickname || user.username}님
@@ -70,14 +99,9 @@ export function Navbar() {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">로그인</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/signup">회원가입</Link>
-              </Button>
-            </>
+            <Button size="sm" asChild>
+              <Link href="/signup">회원가입</Link>
+            </Button>
           )}
         </div>
       </div>

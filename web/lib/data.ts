@@ -1,287 +1,480 @@
 export type ExamCategory = {
-    id: string;
-    name: string;
-    slug: string;
-    icon: string;
-    description: string;
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  description: string;
 };
 
 export const EXAM_CATEGORIES: ExamCategory[] = [
-    { id: '1', name: 'CPA (회계사)', slug: 'cpa', icon: 'Calculator', description: '공인회계사 시험 정보 및 커뮤니티' },
-    { id: '2', name: 'CTA (세무사)', slug: 'cta', icon: 'BookOpen', description: '세무사 시험 대비 및 합격 수기' },
-    { id: '3', name: '9급 공무원', slug: 'civil-9', icon: 'Building2', description: '국가직/지방직 9급 공무원 준비' },
-    { id: '4', name: '7급 공무원', slug: 'civil-7', icon: 'Landmark', description: '7급 공무원 시험 정보 공유' },
-    { id: '5', name: '변호사 (로스쿨)', slug: 'lawyer', icon: 'Scale', description: '변호사 시험 및 로스쿨 생활' },
-    { id: '6', name: '노무사', slug: 'labor', icon: 'Users', description: '공인노무사 시험 합격 정보' },
-    { id: '7', name: '감정평가사', slug: 'appraiser', icon: 'Home', description: '감정평가사 시험/실무 이야기' },
-    { id: '8', name: '경찰공무원', slug: 'police', icon: 'Siren', description: '경찰 공무원 채용 및 체력 정보' },
-    { id: '9', name: '소방공무원', slug: 'fire', icon: 'Flame', description: '소방 공무원 시험 및 안전' },
-    { id: '10', name: '변리사', slug: 'patent', icon: 'Lightbulb', description: '변리사 1차/2차 시험 정보' },
-];
-
-export type TrendingPost = {
-    id: string;
-    title: string;
-    board: string;
-    exam: string;
-    comments: number;
-    views: number;
-    delta: number;
-    time: string;
-};
-
-export const TRENDING_POSTS: TrendingPost[] = [
-    { id: "t1", title: "CPA 1차 공부 루틴 공유합니다 (회독표 포함)", board: "자유", exam: "CPA", comments: 38, views: 1520, delta: 21, time: "11분 전" },
-    { id: "t2", title: "9급 국어 문학 고난도 정리본 업로드", board: "자료실", exam: "9급 공무원", comments: 19, views: 860, delta: 15, time: "25분 전" },
-    { id: "t4", title: "변리사 1차 기출 오답 노트 템플릿", board: "Q&A", exam: "변리사", comments: 27, views: 540, delta: 9, time: "48분 전" },
-    { id: "t5", title: "7급 경제학 모의고사 난이도 체감 공유", board: "자유", exam: "7급 공무원", comments: 9, views: 420, delta: 7, time: "58분 전" },
-];
-
-export const HOT_KEYWORDS = [
-    "전공자 vs 비전공자",
-    "회독 루틴",
-    "기출 3회독",
-    "모의고사 난이도",
-    "답안지 템플릿",
-];
-
-export type BestComment = {
-    id: string;
-    postTitle: string;
-    author: string;
-    content: string;
-    likes: number;
-    time: string;
-};
-
-export const BEST_COMMENTS: BestComment[] = [
-    { id: "c1", postTitle: "CPA 1차 과목별 난이도", author: "그루터기", content: "저는 회계학은 1.5배 시간 잡았어요. 나머지는 기출 반복이 답입니다.", likes: 42, time: "1시간 전" },
-    { id: "c2", postTitle: "9급 영어 단어장 추천", author: "하루한장", content: "기출 단어장 + 오답복습만 해도 점수 안정됩니다.", likes: 31, time: "2시간 전" },
-];
-
-export type TopBoard = {
-    id: string;
-    name: string;
-    exam: string;
-    posts: number;
-    activity: string;
-};
-
-export const TOP_BOARDS: TopBoard[] = [
-    { id: "b1", name: "자유게시판", exam: "CPA", posts: 128, activity: "지금 32명 보는 중" },
-    { id: "b2", name: "Q&A", exam: "9급 공무원", posts: 94, activity: "최근 10분 내 7건" },
-    { id: "b3", name: "자료실", exam: "노무사", posts: 61, activity: "오늘 업로드 14건" },
+  {
+    id: "1",
+    name: "편입",
+    slug: "transfer",
+    icon: "GraduationCap",
+    description: "합격 가능성 예측, 커트라인, 전략형 Q&A",
+  },
+  {
+    id: "2",
+    name: "CPA (회계사)",
+    slug: "cpa",
+    icon: "Calculator",
+    description: "검증된 답변과 전문 수험 정보",
+  },
 ];
 
 export type CommunityBoard = {
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    postsToday: number;
-    activeNow: number;
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
 };
 
 export type CommunityBoardGroup = {
-    id: string;
-    examName: string;
-    examSlug: string;
-    description: string;
-    boards: CommunityBoard[];
+  id: string;
+  examName: string;
+  examSlug: string;
+  description: string;
+  boards: CommunityBoard[];
 };
 
 export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
-    {
-        id: "cg1",
-        examName: "CPA (회계사)",
-        examSlug: "cpa",
-        description: "회계사 1·2차 과목별 정보를 한곳에.",
-        boards: [
-            { id: "cpa-1", name: "자유게시판", slug: "free", description: "수험생 일상과 고민 공유", postsToday: 42, activeNow: 18 },
-            { id: "cpa-2", name: "자료실", slug: "resources", description: "요약본/서브노트/기출 정리", postsToday: 27, activeNow: 9 },
-            { id: "cpa-3", name: "Q&A", slug: "qa", description: "과목별 질문 답변", postsToday: 31, activeNow: 14 },
-        ],
-    },
-    {
-        id: "cg2",
-        examName: "9급 공무원",
-        examSlug: "civil-9",
-        description: "국가직/지방직 최신 정보와 필수 자료 모음.",
-        boards: [
-            { id: "c9-1", name: "자유게시판", slug: "free", description: "수험 생활 정보 공유", postsToday: 35, activeNow: 16 },
-            { id: "c9-2", name: "기출/자료", slug: "resources", description: "기출 분석/암기노트", postsToday: 22, activeNow: 11 },
-            { id: "c9-3", name: "Q&A", slug: "qa", description: "과목별 질문과 답변", postsToday: 28, activeNow: 13 },
-        ],
-    },
-    {
-        id: "cg3",
-        examName: "노무사",
-        examSlug: "labor",
-        description: "노무사 1·2차 대비, 답안 구조 및 실무 팁.",
-        boards: [
-            { id: "labor-1", name: "자유게시판", slug: "free", description: "학습 일정과 고민 공유", postsToday: 14, activeNow: 7 },
-            { id: "labor-2", name: "자료실", slug: "resources", description: "판례/법령 요약", postsToday: 9, activeNow: 3 },
-            { id: "labor-3", name: "Q&A", slug: "qa", description: "답안 작성 피드백", postsToday: 11, activeNow: 6 },
-        ],
-    },
-    {
-        id: "cg4",
-        examName: "변리사",
-        examSlug: "patent",
-        description: "특허법·민법 중심 학습 자료 모음.",
-        boards: [
-            { id: "pat-1", name: "자유게시판", slug: "free", description: "수험 생활/멘탈 관리", postsToday: 12, activeNow: 5 },
-            { id: "pat-2", name: "기출/자료", slug: "resources", description: "조문 정리/핵심 판례", postsToday: 10, activeNow: 4 },
-            { id: "pat-3", name: "Q&A", slug: "qa", description: "문제풀이 질문", postsToday: 8, activeNow: 4 },
-        ],
-    },
-];
-
-export type BoardFeedPost = {
-    id: string;
-    title: string;
-    comments: number;
-    time: string;
-};
-
-export type BoardFeed = {
-    id: string;
-    exam: string;
-    board: string;
-    posts: BoardFeedPost[];
-};
-
-export const BOARD_FEEDS: BoardFeed[] = [
-    {
-        id: "feed-1",
-        exam: "CPA",
-        board: "자유게시판",
-        posts: [
-            { id: "f1-1", title: "올해 1차 회독 루틴 공유합니다", comments: 18, time: "8분 전" },
-            { id: "f1-2", title: "회계학 원가 파트 정리 팁", comments: 11, time: "22분 전" },
-        ],
-    },
-    {
-        id: "feed-2",
-        exam: "9급 공무원",
-        board: "자유게시판",
-        posts: [
-            { id: "f2-1", title: "국어 문학 고난도 풀이 질문", comments: 9, time: "12분 전" },
-            { id: "f2-2", title: "영어 문법 우선순위 어떻게?", comments: 14, time: "26분 전" },
-            { id: "f2-3", title: "한국사 연표 암기법 추천", comments: 7, time: "41분 전" },
-        ],
-    },
-    {
-        id: "feed-3",
-        exam: "노무사",
-        board: "자유게시판",
-        posts: [
-            { id: "f3-1", title: "노동법 판례 요약본 공유", comments: 5, time: "18분 전" },
-            { id: "f3-2", title: "행정쟁송법 핵심정리 PDF", comments: 3, time: "32분 전" },
-            { id: "f3-3", title: "2차 답안 구조 샘플", comments: 8, time: "45분 전" },
-        ],
-    },
-    {
-        id: "feed-4",
-        exam: "변리사",
-        board: "자유게시판",
-        posts: [
-            { id: "f4-1", title: "1차 합격 루틴과 공부 시간표", comments: 12, time: "29분 전" },
-            { id: "f4-2", title: "특허법 점수 끌어올린 방법", comments: 4, time: "54분 전" },
-            { id: "f4-3", title: "2차 모의고사 활용법", comments: 2, time: "1시간 전" },
-        ],
-    },
-    {
-        id: "feed-5",
-        exam: "7급 공무원",
-        board: "자유게시판",
-        posts: [
-            { id: "f5-1", title: "경제학 공부 루틴 조언", comments: 10, time: "17분 전" },
-            { id: "f5-2", title: "헌법 모의고사 난이도 체감", comments: 6, time: "38분 전" },
-        ],
-    },
-    {
-        id: "feed-6",
-        exam: "세무사",
-        board: "자유게시판",
-        posts: [
-            { id: "f6-1", title: "세법개론 중요 조문 정리", comments: 7, time: "24분 전" },
-            { id: "f6-2", title: "회계학 계산 문제 풀이집", comments: 5, time: "39분 전" },
-            { id: "f6-3", title: "1차 기출 오답노트 공유", comments: 3, time: "1시간 전" },
-        ],
-    },
+  {
+    id: "cg-transfer",
+    examName: "편입",
+    examSlug: "transfer",
+    description: "합격 확률과 전략을 중심으로 소통하는 편입 특화 커뮤니티",
+    boards: [
+      {
+        id: "transfer-qa",
+        name: "전략 Q&A",
+        slug: "qa",
+        description: "대학/전형/학습 전략 질문과 답변",
+      },
+      {
+        id: "transfer-study-qa",
+        name: "학습 Q&A",
+        slug: "study-qa",
+        description: "영어/수학/논술 과목별 공부법 질문과 답변",
+      },
+      {
+        id: "transfer-cutoff",
+        name: "커트라인 제보",
+        slug: "cutoff",
+        description: "대학별 합격 점수 제보와 비교",
+      },
+      {
+        id: "transfer-free",
+        name: "자유게시판",
+        slug: "free",
+        description: "수험생 일상/멘탈/루틴 공유",
+      },
+      {
+        id: "transfer-admit",
+        name: "합격수기",
+        slug: "admit-review",
+        description: "합격생 인증 기반 수기와 노하우",
+      },
+    ],
+  },
+  {
+    id: "cg-cpa",
+    examName: "CPA (회계사)",
+    examSlug: "cpa",
+    description: "검증된 합격자/현직 인증 답변과 과목별 고밀도 정보",
+    boards: [
+      {
+        id: "cpa-qa",
+        name: "전문 Q&A",
+        slug: "qa",
+        description: "재무회계/세법/원가관리 전략 질의응답",
+      },
+      {
+        id: "cpa-free",
+        name: "자유게시판",
+        slug: "free",
+        description: "학습 루틴/슬럼프/시험장 정보",
+      },
+      {
+        id: "cpa-materials",
+        name: "자료/강사",
+        slug: "resources",
+        description: "강의 추록, 교재, 자료 공유",
+      },
+      {
+        id: "cpa-pass",
+        name: "합격자 라운지",
+        slug: "pass-lounge",
+        description: "1차 합격/현직 회계사 인증 유저 중심 토론",
+      },
+    ],
+  },
 ];
 
 export type BoardPost = {
-    id: string;
-    title: string;
-    author: string;
-    comments: number;
-    views: number;
-    time: string;
+  id: string;
+  title: string;
+  author: string;
+  comments: number;
+  views: number;
+  time: string;
 };
 
 export type BoardPostGroup = {
-    examSlug: string;
-    boardSlug: string;
-    boardName: string;
-    posts: BoardPost[];
+  examSlug: string;
+  boardSlug: string;
+  boardName: string;
+  posts: BoardPost[];
 };
 
 export const BOARD_POST_GROUPS: BoardPostGroup[] = [
-    {
-        examSlug: "cpa",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "cpa-f-1", title: "1차 회독표 공유합니다", author: "회독러", comments: 12, views: 420, time: "10분 전" },
-            { id: "cpa-f-2", title: "재무회계 공부 루틴 질문", author: "새내기", comments: 6, views: 210, time: "24분 전" },
-        ],
-    },
-    {
-        examSlug: "civil-9",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "c9-f-1", title: "국어 문학 파트 난이도 체감", author: "달빛", comments: 8, views: 180, time: "18분 전" },
-            { id: "c9-f-2", title: "한국사 연표 암기법 공유", author: "초시생", comments: 5, views: 140, time: "33분 전" },
-            { id: "c9-f-3", title: "영어 어휘 공부 어떻게 해요?", author: "하루10분", comments: 7, views: 200, time: "1시간 전" },
-        ],
-    },
-    {
-        examSlug: "labor",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "labor-f-1", title: "노동법 판례 정리 루틴", author: "로디", comments: 4, views: 120, time: "26분 전" },
-            { id: "labor-f-2", title: "2차 답안 작성 팁 공유", author: "모범답안", comments: 6, views: 150, time: "50분 전" },
-        ],
-    },
-    {
-        examSlug: "patent",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "pat-f-1", title: "민법 암기 방법 공유", author: "봄날", comments: 5, views: 110, time: "22분 전" },
-            { id: "pat-f-3", title: "1차 대비 자료 추천", author: "수험생A", comments: 4, views: 100, time: "1시간 전" },
-        ],
-    },
-    {
-        examSlug: "civil-7",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "c7-f-1", title: "경제학 풀이 루틴 공유", author: "경제러", comments: 7, views: 170, time: "14분 전" },
-            { id: "c7-f-2", title: "헌법 개념 정리 방법", author: "헌법러", comments: 4, views: 120, time: "37분 전" },
-        ],
-    },
-    {
-        examSlug: "cta",
-        boardSlug: "free",
-        boardName: "자유게시판",
-        posts: [
-            { id: "cta-f-1", title: "세법개론 공부 팁", author: "세무러", comments: 6, views: 160, time: "12분 전" },
-            { id: "cta-f-2", title: "회계학 계산 문제 접근법", author: "장부", comments: 3, views: 90, time: "28분 전" },
-        ],
-    },
+  {
+    examSlug: "transfer",
+    boardSlug: "qa",
+    boardName: "전략 Q&A",
+    posts: [
+      {
+        id: "transfer-qa-1",
+        title: "건국대 경영 편입 커트라인 88점이면 지원 가능할까요?",
+        author: "편입N수",
+        comments: 15,
+        views: 361,
+        time: "19분 전",
+      },
+      {
+        id: "transfer-qa-2",
+        title: "전적대 3.4 / 공인영어 940 조합, 인서울 상위권 전략 부탁드립니다",
+        author: "리셋중",
+        comments: 12,
+        views: 288,
+        time: "42분 전",
+      },
+    ],
+  },
+  {
+    examSlug: "transfer",
+    boardSlug: "study-qa",
+    boardName: "학습 Q&A",
+    posts: [
+      {
+        id: "transfer-study-qa-1",
+        title: "편입영어 독해 정확도 올리는 복습 루틴 피드백 부탁해요",
+        author: "리딩중",
+        comments: 13,
+        views: 244,
+        time: "27분 전",
+      },
+      {
+        id: "transfer-study-qa-2",
+        title: "수학 미적분 킬러문항 접근 순서 어떻게 잡으세요?",
+        author: "수학재도전",
+        comments: 9,
+        views: 198,
+        time: "1시간 전",
+      },
+    ],
+  },
+  {
+    examSlug: "transfer",
+    boardSlug: "cutoff",
+    boardName: "커트라인 제보",
+    posts: [
+      {
+        id: "transfer-cutoff-1",
+        title: "2025 중앙대 전전(일반) 최종합격 91.3 공유",
+        author: "합격생A",
+        comments: 9,
+        views: 410,
+        time: "31분 전",
+      },
+      {
+        id: "transfer-cutoff-2",
+        title: "한양대 기계 컷 89 후반대였던 것 같습니다",
+        author: "작년응시",
+        comments: 7,
+        views: 256,
+        time: "1시간 전",
+      },
+    ],
+  },
+  {
+    examSlug: "transfer",
+    boardSlug: "free",
+    boardName: "자유게시판",
+    posts: [
+      {
+        id: "transfer-free-1",
+        title: "이번 주 모의고사 멘탈 관리 어떻게 하시나요",
+        author: "새벽러",
+        comments: 11,
+        views: 176,
+        time: "16분 전",
+      },
+      {
+        id: "transfer-free-2",
+        title: "편입 영어 단어 회독표 템플릿 공유합니다",
+        author: "꾸준함",
+        comments: 4,
+        views: 98,
+        time: "54분 전",
+      },
+    ],
+  },
+  {
+    examSlug: "cpa",
+    boardSlug: "qa",
+    boardName: "전문 Q&A",
+    posts: [
+      {
+        id: "cpa-qa-1",
+        title: "1차 세법개론 70점대에서 80점대로 올린 루틴 피드백 부탁",
+        author: "초시회계",
+        comments: 18,
+        views: 349,
+        time: "24분 전",
+      },
+      {
+        id: "cpa-qa-2",
+        title: "원가관리회계 계산속도 안 나올 때 우선순위가 뭘까요",
+        author: "분개러",
+        comments: 10,
+        views: 211,
+        time: "53분 전",
+      },
+    ],
+  },
+  {
+    examSlug: "cpa",
+    boardSlug: "free",
+    boardName: "자유게시판",
+    posts: [
+      {
+        id: "cpa-free-1",
+        title: "동차생 하루 루틴 점검해 주세요",
+        author: "회계랑",
+        comments: 9,
+        views: 139,
+        time: "22분 전",
+      },
+      {
+        id: "cpa-free-2",
+        title: "시험장 도시락 뭐가 제일 무난했나요",
+        author: "출근길",
+        comments: 6,
+        views: 102,
+        time: "1시간 전",
+      },
+    ],
+  },
+  {
+    examSlug: "cpa",
+    boardSlug: "resources",
+    boardName: "자료/강사",
+    posts: [
+      {
+        id: "cpa-res-1",
+        title: "재무회계 2026 개정 추록 요약 업로드",
+        author: "기출광",
+        comments: 14,
+        views: 402,
+        time: "12분 전",
+      },
+      {
+        id: "cpa-res-2",
+        title: "감사 과목 판서노트 정리 방식 공유",
+        author: "노트장인",
+        comments: 8,
+        views: 220,
+        time: "39분 전",
+      },
+    ],
+  },
+];
+
+export type CutoffSeed = {
+  id: string;
+  examSlug: string;
+  university: string;
+  major: string;
+  year: number;
+  scoreBand: string;
+  note: string;
+};
+
+export const CUTOFF_SEED_DATA: CutoffSeed[] = [
+  {
+    id: "cutoff-1",
+    examSlug: "transfer",
+    university: "중앙대학교",
+    major: "전자전기공학부",
+    year: 2025,
+    scoreBand: "90.8 ~ 92.1",
+    note: "일반편입 기준, 면접 반영 포함",
+  },
+  {
+    id: "cutoff-2",
+    examSlug: "transfer",
+    university: "건국대학교",
+    major: "경영학과",
+    year: 2025,
+    scoreBand: "87.5 ~ 89.2",
+    note: "전적대 성적/영어 가중치 반영",
+  },
+  {
+    id: "cutoff-3",
+    examSlug: "transfer",
+    university: "한양대학교",
+    major: "기계공학부",
+    year: 2024,
+    scoreBand: "88.7 ~ 90.0",
+    note: "최초/추합 데이터 통합",
+  },
+  {
+    id: "cutoff-4",
+    examSlug: "transfer",
+    university: "서강대학교",
+    major: "경제학부",
+    year: 2025,
+    scoreBand: "91.2 ~ 92.8",
+    note: "합격수기 언급 + 인증 데이터 교차 검증",
+  },
+];
+
+export type InstructorRankingSeed = {
+  id: string;
+  examSlug: string;
+  subject: string;
+  instructorName: string;
+  rank: number;
+  trend: string;
+  confidence: number;
+};
+
+export const INSTRUCTOR_RANKING_SEED: InstructorRankingSeed[] = [
+  {
+    id: "rank-transfer-1",
+    examSlug: "transfer",
+    subject: "편입영어",
+    instructorName: "김OO",
+    rank: 1,
+    trend: "+3",
+    confidence: 92,
+  },
+  {
+    id: "rank-transfer-2",
+    examSlug: "transfer",
+    subject: "수학",
+    instructorName: "박OO",
+    rank: 2,
+    trend: "-",
+    confidence: 88,
+  },
+  {
+    id: "rank-transfer-3",
+    examSlug: "transfer",
+    subject: "전공",
+    instructorName: "이OO",
+    rank: 3,
+    trend: "+1",
+    confidence: 81,
+  },
+  {
+    id: "rank-cpa-1",
+    examSlug: "cpa",
+    subject: "재무회계",
+    instructorName: "정OO",
+    rank: 1,
+    trend: "+2",
+    confidence: 95,
+  },
+  {
+    id: "rank-cpa-2",
+    examSlug: "cpa",
+    subject: "세법",
+    instructorName: "최OO",
+    rank: 2,
+    trend: "-",
+    confidence: 89,
+  },
+  {
+    id: "rank-cpa-3",
+    examSlug: "cpa",
+    subject: "원가관리",
+    instructorName: "윤OO",
+    rank: 3,
+    trend: "+1",
+    confidence: 84,
+  },
+];
+
+export type DailyBriefingSeed = {
+  id: string;
+  examSlug: string;
+  title: string;
+  summary: string;
+  sourceLabel: string;
+  publishedAt: string;
+};
+
+export const DAILY_BRIEFING_SEED: DailyBriefingSeed[] = [
+  {
+    id: "brief-transfer-1",
+    examSlug: "transfer",
+    title: "중앙대 2026 편입 요강 일부 변경",
+    summary: "면접 반영 비율이 전년 대비 5%p 상향. 1단계 커트라인 예측치는 소폭 상승 가능성.",
+    sourceLabel: "대학 입학처 공지",
+    publishedAt: "2026-02-10",
+  },
+  {
+    id: "brief-transfer-2",
+    examSlug: "transfer",
+    title: "주요 편입 학원 2월 모의고사 일정 공개",
+    summary: "상위권 대학 타깃 모의고사 일정이 집중 배치되어 있어 실전 점검 주간으로 활용 권장.",
+    sourceLabel: "학원 공지 모음",
+    publishedAt: "2026-02-11",
+  },
+  {
+    id: "brief-cpa-1",
+    examSlug: "cpa",
+    title: "금감원 공지: 2026 1차 시험 유의사항 업데이트",
+    summary: "신분증 인정 범위와 입실 제한 시간 안내가 명확화. 시험장 반입 규정 반드시 재확인 필요.",
+    sourceLabel: "금융감독원",
+    publishedAt: "2026-02-11",
+  },
+  {
+    id: "brief-cpa-2",
+    examSlug: "cpa",
+    title: "주요 강의 플랫폼 추록 배포 현황",
+    summary: "재무회계/세법 추록 배포가 시작되어 최신 기준 반영 여부를 주간 단위로 체크 권장.",
+    sourceLabel: "강의 플랫폼 공지",
+    publishedAt: "2026-02-10",
+  },
+];
+
+export type RewardRule = {
+  id: string;
+  label: string;
+  points: number;
+  description: string;
+};
+
+export const REWARD_RULES: RewardRule[] = [
+  {
+    id: "reward-adopted",
+    label: "채택 답변",
+    points: 80,
+    description: "질문자가 채택한 답변자에게 지급",
+  },
+  {
+    id: "reward-verified-bonus",
+    label: "인증 유저 가산",
+    points: 20,
+    description: "합격자/회계사 인증 유저가 채택될 때 추가",
+  },
+  {
+    id: "reward-quality-post",
+    label: "핵심 정보글",
+    points: 30,
+    description: "운영자가 유익 게시글로 선정 시 지급",
+  },
 ];

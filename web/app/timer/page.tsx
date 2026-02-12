@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Pause, RotateCcw, Monitor } from "lucide-react";
+import { Play, Pause, RotateCcw } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 export default function TimerPage() {
@@ -115,8 +115,6 @@ function CountdownTimer() {
                     return prev - 1000;
                 });
             }, 1000);
-        } else if (timeLeft === 0) {
-            setIsRunning(false);
         } else {
             if (intervalRef.current) clearInterval(intervalRef.current);
         }

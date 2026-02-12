@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { ENABLE_EMAIL_AUTH } from "@/lib/featureFlags";
 
 export async function POST(request: Request) {
     try {
+        if (!ENABLE_EMAIL_AUTH) {
+            return NextResponse.json(
+                { error: "소셜 로그인으로 이용해 주세요." },
+                { status: 403 }
+            );
+        }
+
         const body = await request.json().catch(() => ({}));
         const username = typeof body.username === "string" ? body.username.trim() : "";
         const password = typeof body.password === "string" ? body.password : "";

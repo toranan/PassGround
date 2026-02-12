@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { ENABLE_EMAIL_AUTH } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(request: Request) {
+  if (!ENABLE_EMAIL_AUTH) {
+    return NextResponse.json({ error: "소셜 회원가입으로 이용해 주세요." }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const username = typeof body.username === "string" ? body.username.trim() : "";
   const nickname = typeof body.nickname === "string" ? body.nickname.trim() : "";
@@ -40,6 +45,8 @@ export async function POST(request: Request) {
       id: userData.user.id,
       username,
       display_name: nickname,
+      points: 0,
+      verification_level: "none",
     });
 
     if (profileError) {

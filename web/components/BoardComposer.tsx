@@ -24,7 +24,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
   const router = useRouter();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [authorName, setAuthorName] = useState("");
+  const [authorName, setAuthorName] = useState("익명");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -137,14 +137,10 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
 
   const handleSubmit = async () => {
     setMessage("");
-    const nameValue = authorName.trim();
+    const nameValue = isLoggedIn ? authorName.trim() : "익명";
     const titleValue = title.trim();
     let contentValue = content.trim();
 
-    if (!nameValue || nameValue.length < 2) {
-      setMessage("닉네임은 2자 이상 입력해 주세요.");
-      return;
-    }
     if (!titleValue) {
       setMessage("제목을 입력해 주세요.");
       return;
@@ -200,16 +196,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
         <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
           <User className="h-4 w-4 text-emerald-600" />
         </div>
-        {isLoggedIn ? (
-          <span className="text-sm font-medium text-gray-700">{authorName}</span>
-        ) : (
-          <Input
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="닉네임"
-            className="h-8 w-32 text-sm border-gray-200"
-          />
-        )}
+        <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
       </div>
 
       {/* Title */}
