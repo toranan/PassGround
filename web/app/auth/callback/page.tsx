@@ -35,7 +35,7 @@ export default function AuthCallbackPage() {
 
       if (errorDescription) {
         setIsError(true);
-        setMessage(decodeURIComponent(errorDescription));
+        setMessage(errorDescription);
         return;
       }
 
