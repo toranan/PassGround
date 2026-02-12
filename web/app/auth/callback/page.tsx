@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
@@ -62,7 +62,7 @@ async function finalizeWithTokens(
   return data as OAuthResult;
 }
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const [message, setMessage] = useState("소셜 로그인 처리 중입니다...");
   const [isError, setIsError] = useState(false);
@@ -157,6 +157,14 @@ export default function AuthCallbackPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">로딩 중...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
 
