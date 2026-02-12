@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -20,17 +20,12 @@ function normalizeNextPath(value: string | null): string {
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [message, setMessage] = useState("소셜 로그인 처리 중입니다...");
   const [isError, setIsError] = useState(false);
 
-  const nextPath = useMemo(
-    () => normalizeNextPath(searchParams.get("next")),
-    [searchParams]
-  );
-
   useEffect(() => {
     const run = async () => {
+      const nextPath = normalizeNextPath(new URLSearchParams(window.location.search).get("next"));
       const hashParams = parseHashParams();
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
@@ -85,7 +80,7 @@ export default function AuthCallbackPage() {
     };
 
     run();
-  }, [router, nextPath]);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
