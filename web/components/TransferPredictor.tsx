@@ -5,6 +5,7 @@ import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getIsMemberSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type CutoffRow = {
   id: string;
@@ -34,7 +35,7 @@ type TransferPredictorProps = {
 };
 
 const TIER_STYLE: Record<Tier, string> = {
-  합격권: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  합격권: "border-border bg-accent text-primary",
   예비순위권: "border-amber-200 bg-amber-50 text-amber-700",
   탈락권: "border-rose-200 bg-rose-50 text-rose-700",
 };
@@ -149,17 +150,8 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMember = useSyncExternalStore(
-    () => () => {},
-    () => {
-      const raw = localStorage.getItem("user");
-      if (!raw) return false;
-      try {
-        const parsed = JSON.parse(raw) as { id?: string; username?: string; nickname?: string };
-        return Boolean(parsed?.id || parsed?.username || parsed?.nickname);
-      } catch {
-        return false;
-      }
-    },
+    subscribeAuthChange,
+    getIsMemberSnapshot,
     () => false
   );
 
@@ -277,7 +269,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
   };
 
   return (
-    <Card className="border-none shadow-lg overflow-hidden bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_56%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,1))]">
+    <Card className="border-none shadow-lg overflow-hidden bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.12),transparent_56%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,1))]">
       <CardHeader>
         <CardTitle className="text-lg">편입 합격커트라인 알아보기 · 시뮬레이터</CardTitle>
       </CardHeader>
@@ -287,7 +279,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
             학교별 커트라인 추정과 돌려보기는 회원가입 후 이용 가능합니다.
             <div className="mt-2 flex gap-2">
-              <Button asChild size="sm" className="bg-emerald-700 hover:bg-emerald-800">
+              <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
                 <Link href="/signup">회원가입</Link>
               </Button>
             </div>
@@ -382,7 +374,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           <Button
             onClick={handleRun}
             disabled={running || !isMember}
-            className="bg-emerald-700 hover:bg-emerald-800 min-w-36"
+            className="bg-primary hover:bg-primary/90 min-w-36"
           >
             {!isMember ? "회원가입 후 이용" : running ? "돌리는 중..." : "돌려보기 🎰"}
           </Button>

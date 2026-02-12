@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { CutoffTable } from "@/components/CutoffTable";
+import { TransferRankingTabs } from "@/components/TransferRankingTabs";
 import { TransferPredictor } from "@/components/TransferPredictor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BOARD_POST_GROUPS, CUTOFF_SEED_DATA, DAILY_BRIEFING_SEED } from "@/lib/data";
+import { BOARD_POST_GROUPS, CUTOFF_SEED_DATA, DAILY_BRIEFING_SEED, INSTRUCTOR_RANKING_SEED } from "@/lib/data";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,15 @@ type PopularRow = {
   commentCount: number;
   likeCount: number;
   viewCount: number;
+};
+
+type RankingRow = {
+  id: string;
+  subject: string;
+  instructorName: string;
+  rank: number;
+  trend: string;
+  confidence: number;
 };
 
 function formatRelativeTime(dateString: string | null): string {
@@ -316,13 +326,46 @@ async function loadPopularRows(): Promise<PopularRow[]> {
     }));
 }
 
+async function loadRankings(): Promise<RankingRow[]> {
+  const supabase = getSupabaseServer();
+  const { data, error } = await supabase
+    .from("instructor_rankings")
+    .select("id,subject,instructor_name,rank,trend,confidence")
+    .eq("exam_slug", "transfer")
+    .order("rank", { ascending: true })
+    .limit(12);
+
+  if (error || !data?.length) {
+    return INSTRUCTOR_RANKING_SEED
+      .filter((row) => row.examSlug === "transfer")
+      .map((row) => ({
+        id: row.id,
+        subject: row.subject,
+        instructorName: row.instructorName,
+        rank: row.rank,
+        trend: row.trend,
+        confidence: row.confidence,
+      }));
+  }
+
+  return data.map((row: { id: string; subject: string; instructor_name: string; rank: number; trend: string | null; confidence: number | null }) => ({
+    id: row.id,
+    subject: row.subject,
+    instructorName: row.instructor_name,
+    rank: row.rank,
+    trend: row.trend ?? "-",
+    confidence: row.confidence ?? 0,
+  }));
+}
+
 export default async function TransferPage() {
-  const [cutoffRows, briefingRows, qaRows, studyQaRows, popularRows] = await Promise.all([
+  const [cutoffRows, briefingRows, qaRows, studyQaRows, popularRows, rankingRows] = await Promise.all([
     loadCutoffs(),
     loadBriefings(),
     loadQaRows(),
     loadStudyQaRows(),
     loadPopularRows(),
+    loadRankings(),
   ]);
 
   return (
@@ -330,20 +373,20 @@ export default async function TransferPage() {
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_56%)]">
+        <section className="border-b bg-secondary bg-[radial-gradient(circle_at_top,oklch(0.52_0.2_265_/_0.15),transparent_58%)]">
           <div className="container mx-auto px-4 py-10">
-            <h1 className="font-display text-3xl md:text-4xl font-bold">편입 서비스</h1>
-            <p className="text-sm text-muted-foreground mt-3 max-w-2xl">
-              합격 가능성 예측, 전략 Q&A, 학습 Q&A를 중심으로 편입 수험 정보를 빠르게 확인합니다.
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입 커뮤니티</h1>
+            <p className="text-sm text-primary/80 mt-3 max-w-2xl">
+              수험생들의 정보 불균형 해소를 위해 다양한 정보를 제공합니다. 질문을 남겨주시면 편입 합격생 출신 운영자가 한 분 한 분 상세히 답변드립니다.
             </p>
             <div className="flex flex-wrap gap-2 mt-5">
-              <Button asChild className="bg-emerald-700 hover:bg-emerald-800">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/community/transfer">편입 커뮤니티</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
                 <Link href="/c/transfer/qa">전략 Q&A</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
                 <Link href="/c/transfer/study-qa">학습 Q&A</Link>
               </Button>
             </div>
@@ -358,20 +401,20 @@ export default async function TransferPage() {
             </div>
 
             <div className="space-y-4">
-              <Card className="border-none shadow-lg">
+              <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/cutoff" className="hover:text-emerald-700 transition-colors">
+                    <Link href="/c/transfer/cutoff" className="hover:text-primary transition-colors">
                       AI 오늘의 편입 정보
                     </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {briefingRows.map((row) => (
-                    <div key={row.id} className="rounded-lg border border-gray-100 p-3">
+                    <div key={row.id} className="rounded-lg border border-border p-3">
                       <p className="text-sm font-semibold">{row.title}</p>
-                      <p className="text-xs text-gray-600 mt-1">{row.summary}</p>
-                      <p className="text-[11px] text-emerald-700 mt-2">
+                      <p className="text-xs text-muted-foreground mt-1">{row.summary}</p>
+                      <p className="text-[11px] text-primary mt-2">
                         {row.sourceLabel} · {row.publishedAt} · {row.boardName}
                       </p>
                     </div>
@@ -379,10 +422,23 @@ export default async function TransferPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-lg">
+              <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/qa" className="hover:text-emerald-700 transition-colors">
+                    <Link href="/c/transfer/study-qa" className="hover:text-primary transition-colors">
+                      편입 인기 강사 순위
+                    </Link>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TransferRankingTabs rows={rankingRows} />
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    <Link href="/c/transfer/qa" className="hover:text-primary transition-colors">
                       편입 전략 Q&A
                     </Link>
                   </CardTitle>
@@ -392,22 +448,22 @@ export default async function TransferPage() {
                     <Link
                       key={row.id}
                       href={`/c/transfer/qa/${row.id}`}
-                      className="block rounded-lg border border-gray-100 p-3 hover:bg-emerald-50/40 transition-colors"
+                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
                     >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-emerald-700">
+                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
                         {row.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
                     </Link>
                   ))}
-                  {!qaRows.length && <p className="text-sm text-gray-500">아직 등록된 Q&A가 없습니다.</p>}
+                  {!qaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 Q&A가 없습니다.</p>}
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-lg">
+              <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/study-qa" className="hover:text-emerald-700 transition-colors">
+                    <Link href="/c/transfer/study-qa" className="hover:text-primary transition-colors">
                       편입 학습 Q&A
                     </Link>
                   </CardTitle>
@@ -417,22 +473,22 @@ export default async function TransferPage() {
                     <Link
                       key={row.id}
                       href={`/c/transfer/study-qa/${row.id}`}
-                      className="block rounded-lg border border-gray-100 p-3 hover:bg-emerald-50/40 transition-colors"
+                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
                     >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-emerald-700">
+                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
                         {row.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
                     </Link>
                   ))}
-                  {!studyQaRows.length && <p className="text-sm text-gray-500">아직 등록된 학습 Q&A가 없습니다.</p>}
+                  {!studyQaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 학습 Q&A가 없습니다.</p>}
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-lg">
+              <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/free" className="hover:text-emerald-700 transition-colors">
+                    <Link href="/c/transfer/free" className="hover:text-primary transition-colors">
                       오늘의 인기글
                     </Link>
                   </CardTitle>
@@ -442,17 +498,17 @@ export default async function TransferPage() {
                     <Link
                       key={row.id}
                       href={`/c/transfer/${row.boardSlug}/${row.id}`}
-                      className="block rounded-lg border border-gray-100 p-3 hover:bg-emerald-50/40 transition-colors"
+                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
                     >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-emerald-700">
+                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
                         {row.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         {row.boardName} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
                       </p>
                     </Link>
                   ))}
-                  {!popularRows.length && <p className="text-sm text-gray-500">아직 집계된 인기글이 없습니다.</p>}
+                  {!popularRows.length && <p className="text-sm text-muted-foreground">아직 집계된 인기글이 없습니다.</p>}
                 </CardContent>
               </Card>
             </div>

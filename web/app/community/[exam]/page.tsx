@@ -126,7 +126,7 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_60%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.10),transparent_60%)]">
           <div className="container mx-auto px-4 py-10">
             <h1 className="font-display text-3xl font-bold">{group.examName} 커뮤니티</h1>
             <p className="text-sm text-muted-foreground mt-2">{group.description}</p>
@@ -172,7 +172,7 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
                           )}
                         </div>
 
-                        <div className="flex items-center gap-1 text-sm font-medium text-emerald-700">
+                        <div className="flex items-center gap-1 text-sm font-medium text-primary">
                           바로 입장
                           <ChevronRight className="h-4 w-4" />
                         </div>
@@ -187,7 +187,7 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <BadgeCheck className="h-4 w-4 text-emerald-700" />
+                    <BadgeCheck className="h-4 w-4 text-primary" />
                     인증 신청
                   </CardTitle>
                   <CardDescription className="text-sm">
@@ -196,7 +196,7 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
                       : "인증 배지로 답변 신뢰도를 높이세요."}
                   </CardDescription>
                   {!isReadOnlyExam && (
-                    <Button asChild size="sm" className="bg-emerald-700 hover:bg-emerald-800 w-fit">
+                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90 w-fit">
                       <Link href="/verification">인증하기</Link>
                     </Button>
                   )}
@@ -213,7 +213,7 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
                     채택 답변 포인트를 확인하고 보상으로 교환하세요.
                   </CardDescription>
                   <Button asChild size="sm" variant="outline" className="w-fit">
-                    <Link href="/points">내 포인트 보기</Link>
+                    <Link href="/mypage">내 포인트 보기</Link>
                   </Button>
                 </CardHeader>
               </Card>

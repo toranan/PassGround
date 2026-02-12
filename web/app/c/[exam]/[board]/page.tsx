@@ -73,12 +73,12 @@ export default async function BoardPage({ params }: BoardPageProps) {
   if (boardId) {
     let postsData:
       | {
-          id: string;
-          title: string;
-          author_name: string | null;
-          created_at: string | null;
-          view_count?: number | null;
-        }[]
+        id: string;
+        title: string;
+        author_name: string | null;
+        created_at: string | null;
+        view_count?: number | null;
+      }[]
       | null = null;
 
     const { data: modernPosts, error: modernError } = await supabase
@@ -174,7 +174,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
               <span className="text-sm text-gray-500">{examName}</span>
             </div>
             {!isReadOnlyExam ? (
-              <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+              <Button asChild size="sm" className="bg-primary hover:bg-primary/90 gap-1">
                 <Link href={`/c/${exam}/${board}/write`}>
                   <PenSquare className="h-4 w-4" />
                   글쓰기

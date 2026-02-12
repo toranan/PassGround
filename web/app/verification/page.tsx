@@ -145,7 +145,7 @@ export default function VerificationPage() {
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_60%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.08),transparent_60%)]">
           <div className="container mx-auto px-4 py-8 md:py-10">
             <h1 className="font-display text-3xl font-bold">인증 신청</h1>
             <p className="text-sm text-muted-foreground mt-2">
@@ -175,7 +175,7 @@ export default function VerificationPage() {
                     <Button
                       type="button"
                       variant={examSlug === "transfer" ? "default" : "outline"}
-                      className={examSlug === "transfer" ? "bg-emerald-700 hover:bg-emerald-800" : ""}
+                      className={examSlug === "transfer" ? "bg-primary hover:bg-primary/90" : ""}
                       onClick={() => handleExamChange("transfer")}
                     >
                       편입
@@ -184,7 +184,7 @@ export default function VerificationPage() {
                       <Button
                         type="button"
                         variant={examSlug === "cpa" ? "default" : "outline"}
-                        className={examSlug === "cpa" ? "bg-emerald-700 hover:bg-emerald-800" : ""}
+                        className={examSlug === "cpa" ? "bg-primary hover:bg-primary/90" : ""}
                         onClick={() => handleExamChange("cpa")}
                       >
                         CPA
@@ -269,14 +269,14 @@ export default function VerificationPage() {
                 </div>
 
                 {message && (
-                  <p className={`text-sm ${message.includes("실패") || message.includes("오류") ? "text-red-600" : "text-emerald-700"}`}>
+                  <p className={`text-sm ${message.includes("실패") || message.includes("오류") ? "text-red-600" : "text-primary"}`}>
                     {message}
                   </p>
                 )}
 
                 <Button
                   type="button"
-                  className="bg-emerald-700 hover:bg-emerald-800"
+                  className="bg-primary hover:bg-primary/90"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                 >
@@ -297,7 +297,7 @@ export default function VerificationPage() {
                 <p>2. 개인정보는 가림 처리 후 업로드하세요.</p>
                 <p>3. 허위 인증 시 계정 제재 및 포인트 회수됩니다.</p>
                 {!name && (
-                  <Button asChild size="sm" className="mt-3 bg-emerald-700 hover:bg-emerald-800">
+                  <Button asChild size="sm" className="mt-3 bg-primary hover:bg-primary/90">
                     <Link href="/signup">회원가입</Link>
                   </Button>
                 )}

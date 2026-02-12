@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { emitAuthChange } from "@/lib/authClient";
 
 function parseHashParams(): URLSearchParams {
   if (typeof window === "undefined") return new URLSearchParams();
@@ -70,6 +71,7 @@ export default function AuthCallbackPage() {
           localStorage.setItem("refresh_token", data.session.refresh_token);
         }
         localStorage.setItem("user", JSON.stringify(data.user));
+        emitAuthChange();
 
         setMessage("로그인 성공! 이동 중입니다...");
         router.replace(nextPath);
@@ -86,7 +88,7 @@ export default function AuthCallbackPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_60%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.08),transparent_60%)]">
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-md mx-auto">
               <Card className="border-none shadow-lg">
@@ -95,12 +97,12 @@ export default function AuthCallbackPage() {
                   <CardDescription>인증 상태를 확인하고 있습니다.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className={`text-sm ${isError ? "text-red-600" : "text-emerald-700"}`}>
+                  <p className={`text-sm ${isError ? "text-red-600" : "text-primary"}`}>
                     {message}
                   </p>
                   {isError && (
                     <div className="text-xs text-muted-foreground">
-                      <Link href="/signup" className="text-emerald-700 hover:underline">
+                      <Link href="/signup" className="text-primary hover:underline">
                         회원가입 페이지로 돌아가기
                       </Link>
                     </div>

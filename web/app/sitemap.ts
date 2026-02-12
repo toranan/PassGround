@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes = ["/", "/community", "/transfer", "/community/transfer"];
   if (ENABLE_TRANSFER) {
-    staticRoutes.push("/verification", "/points");
+    staticRoutes.push("/verification", "/mypage", "/points");
   }
   if (ENABLE_CPA) {
     staticRoutes.push("/cpa", "/community/cpa");

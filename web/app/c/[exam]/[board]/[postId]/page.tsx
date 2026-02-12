@@ -67,13 +67,13 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
   let postData:
     | {
-        id: string;
-        title: string;
-        content: string;
-        author_name: string | null;
-        created_at: string | null;
-        view_count?: number;
-      }
+      id: string;
+      title: string;
+      content: string;
+      author_name: string | null;
+      created_at: string | null;
+      view_count?: number;
+    }
     | null = null;
   let commentsData: CommentRow[] = [];
   let boardName = boardData?.name ?? "게시판";
@@ -116,9 +116,9 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
       postData = legacyData
         ? {
-            ...legacyData,
-            view_count: 0,
-          }
+          ...legacyData,
+          view_count: 0,
+        }
         : null;
     }
 
@@ -223,8 +223,8 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-4">{postData.title}</h1>
 
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <User className="h-5 w-5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-gray-900">{postData.author_name ?? "익명"}</div>

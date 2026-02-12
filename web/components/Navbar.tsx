@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useSyncExternalStore } from "react";
 import { RouteDropdown } from "@/components/RouteDropdown";
 import { Button } from "@/components/ui/button";
+import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { GraduationCap, LogOut } from "lucide-react";
 
@@ -19,16 +20,8 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const user = useSyncExternalStore(
-    () => () => {},
-    () => {
-      const stored = localStorage.getItem("user");
-      if (!stored) return null;
-      try {
-        return JSON.parse(stored) as User;
-      } catch {
-        return null;
-      }
-    },
+    subscribeAuthChange,
+    () => getUserSnapshot() as User | null,
     () => null
   );
 
@@ -48,7 +41,7 @@ export function Navbar() {
       { key: "transfer", label: "편입", href: "/transfer" },
     ];
     if (ENABLE_CPA) {
-      options.push({ key: "cpa", label: "CPA 둘러보기", href: "/cpa" });
+      options.push({ key: "cpa", label: "CPA", href: "/cpa" });
     }
     return options;
   }, []);
@@ -57,6 +50,7 @@ export function Navbar() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    emitAuthChange();
     router.push("/");
   };
 
@@ -72,8 +66,8 @@ export function Navbar() {
           <Link href="/community" className="transition-colors hover:text-primary">
             커뮤니티
           </Link>
-          <Link href="/points" className="transition-colors hover:text-primary">
-            포인트
+          <Link href="/mypage" className="transition-colors hover:text-primary">
+            마이페이지
           </Link>
           <Link href="/verification" className="transition-colors hover:text-primary">
             인증
@@ -90,7 +84,7 @@ export function Navbar() {
           </div>
           {user ? (
             <>
-              <span className="text-sm font-medium text-emerald-700">
+              <span className="text-sm font-medium text-primary">
                 {user.nickname || user.username}님
               </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>

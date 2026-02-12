@@ -186,7 +186,7 @@ export default async function CpaPage() {
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.10),transparent_58%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.10),transparent_58%)]">
           <div className="container mx-auto px-4 py-10">
             <h1 className="font-display text-3xl md:text-4xl font-bold">CPA 서비스</h1>
             <p className="text-sm text-muted-foreground mt-3 max-w-2xl">
@@ -195,7 +195,7 @@ export default async function CpaPage() {
                 : "현재는 둘러보기(읽기 전용)로 운영 중이며, 쓰기 기능은 추후 오픈됩니다."}
             </p>
             <div className="flex gap-2 mt-5">
-              <Button asChild className="bg-emerald-700 hover:bg-emerald-800">
+              <Button asChild className="bg-primary hover:bg-primary/90">
                 <Link href="/community/cpa">CPA 커뮤니티</Link>
               </Button>
               <Button asChild variant="outline">
@@ -220,7 +220,7 @@ export default async function CpaPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">변동 {row.trend}</p>
-                      <p className="text-xs text-emerald-700">신뢰도 {row.confidence}%</p>
+                      <p className="text-xs text-primary">신뢰도 {row.confidence}%</p>
                     </div>
                   </div>
                 ))}
@@ -234,7 +234,7 @@ export default async function CpaPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {qaRows.map((row) => (
-                    <Link key={row.id} href={`/c/cpa/qa/${row.id}`} className="block rounded-lg border border-gray-100 p-3 hover:bg-sky-50/40 transition-colors">
+                    <Link key={row.id} href={`/c/cpa/qa/${row.id}`} className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors">
                       <p className="text-sm font-medium line-clamp-2">{row.title}</p>
                       <p className="text-xs text-gray-500 mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
                     </Link>
@@ -252,7 +252,7 @@ export default async function CpaPage() {
                     <div key={row.id} className="rounded-lg border border-gray-100 p-3">
                       <p className="text-sm font-semibold">{row.title}</p>
                       <p className="text-xs text-gray-600 mt-1">{row.summary}</p>
-                      <p className="text-[11px] text-emerald-700 mt-2">{row.sourceLabel} · {row.publishedAt}</p>
+                      <p className="text-[11px] text-primary mt-2">{row.sourceLabel} · {row.publishedAt}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -270,12 +270,12 @@ export default async function CpaPage() {
                   </p>
                   <div className="flex gap-2">
                     {ENABLE_CPA_WRITE && (
-                      <Button asChild size="sm" className="bg-emerald-700 hover:bg-emerald-800">
+                      <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
                         <Link href="/verification">인증 신청</Link>
                       </Button>
                     )}
                     <Button asChild size="sm" variant="outline">
-                      <Link href="/points">포인트 확인</Link>
+                      <Link href="/mypage">포인트 확인</Link>
                     </Button>
                   </div>
                 </CardContent>

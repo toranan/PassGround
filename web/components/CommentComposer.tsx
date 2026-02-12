@@ -88,8 +88,8 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
     <div className={`bg-white rounded-lg border border-gray-200 overflow-hidden ${parentId ? "ml-8 mt-2" : ""}`}>
       {/* Author info */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
-        <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
-          <User className="h-4 w-4 text-emerald-600" />
+        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+          <User className="h-4 w-4 text-primary" />
         </div>
         <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
       </div>
@@ -110,7 +110,7 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
           <div className="text-xs">
             {message && (
-              <span className={message.includes("실패") || message.includes("오류") ? "text-red-500" : "text-emerald-600"}>
+              <span className={message.includes("실패") || message.includes("오류") ? "text-red-500" : "text-primary"}>
                 {message}
               </span>
             )}
@@ -128,7 +128,7 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
               size="sm"
               onClick={handleSubmit}
               disabled={isSubmitting || !content.trim()}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary/90"
             >
               {isSubmitting ? "등록 중..." : parentId ? "답글 등록" : "댓글 등록"}
             </Button>

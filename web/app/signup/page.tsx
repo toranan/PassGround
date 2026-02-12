@@ -11,7 +11,7 @@ export default function SignupPage() {
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_60%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.08),transparent_60%)]">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-md mx-auto">
               <Card className="border-none shadow-lg">
@@ -23,7 +23,7 @@ export default function SignupPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {ENABLE_SOCIAL_AUTH ? (
-                    <SocialAuthButtons redirectTo="/" />
+                    <SocialAuthButtons redirectTo="/mypage" />
                   ) : (
                     <p className="text-sm text-red-600">
                       소셜 회원가입이 비활성화되어 있습니다.

@@ -193,8 +193,8 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* Author info */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
-        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-          <User className="h-4 w-4 text-emerald-600" />
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <User className="h-4 w-4 text-primary" />
         </div>
         <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
       </div>
@@ -278,7 +278,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={isUploading}
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-emerald-600 disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-primary disabled:opacity-50"
           >
             {isUploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -301,14 +301,14 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-emerald-600 disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-primary disabled:opacity-50"
           >
             <Paperclip className="h-4 w-4" />
             파일
           </button>
 
           {message && (
-            <span className={`text-xs ${message.includes("실패") || message.includes("오류") ? "text-red-500" : "text-emerald-600"}`}>
+            <span className={`text-xs ${message.includes("실패") || message.includes("오류") ? "text-red-500" : "text-primary"}`}>
               {message}
             </span>
           )}
@@ -317,7 +317,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="h-10 rounded-lg bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-emerald-300"
+          className="h-10 rounded-lg bg-primary px-6 text-sm font-semibold text-white hover:bg-primary/90 disabled:bg-primary/40"
         >
           {isSubmitting ? "작성 중..." : "글쓰기"}
         </button>

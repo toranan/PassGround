@@ -1,23 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { getIsMemberSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type CutoffMaskedTitleProps = {
   title: string;
   shouldMaskForGuest: boolean;
 };
-
-function isLoggedInClient(): boolean {
-  if (typeof window === "undefined") return false;
-  const raw = localStorage.getItem("user");
-  if (!raw) return false;
-  try {
-    const parsed = JSON.parse(raw) as { id?: string; username?: string; nickname?: string };
-    return Boolean(parsed?.id || parsed?.username || parsed?.nickname);
-  } catch {
-    return false;
-  }
-}
 
 function maskNumericTokens(text: string): string {
   return text.replace(/[0-9]+(?:\.[0-9]+)?/g, "??");
@@ -25,8 +14,8 @@ function maskNumericTokens(text: string): string {
 
 export function CutoffMaskedTitle({ title, shouldMaskForGuest }: CutoffMaskedTitleProps) {
   const isMember = useSyncExternalStore(
-    () => () => {},
-    () => isLoggedInClient(),
+    subscribeAuthChange,
+    getIsMemberSnapshot,
     () => false
   );
 

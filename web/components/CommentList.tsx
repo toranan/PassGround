@@ -177,7 +177,7 @@ export function CommentList({
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="font-medium text-sm text-gray-900">{comment.author_name ?? "익명"}</span>
               {verifiedBadge && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
                   <BadgeCheck className="h-3 w-3" />
                   {verifiedBadge}
                 </span>
@@ -207,7 +207,7 @@ export function CommentList({
                 <button
                   onClick={() => handleAdopt(comment.id)}
                   disabled={adoptingCommentId === comment.id}
-                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 disabled:opacity-50"
+                  className="text-xs font-semibold text-primary hover:text-primary/90 disabled:opacity-50"
                 >
                   {adoptingCommentId === comment.id ? "채택 중..." : "채택"}
                 </button>
@@ -243,7 +243,7 @@ export function CommentList({
   return (
     <div className="space-y-2">
       {message && (
-        <p className={`text-sm ${message.includes("실패") || message.includes("오류") ? "text-red-600" : "text-emerald-700"}`}>
+        <p className={`text-sm ${message.includes("실패") || message.includes("오류") ? "text-red-600" : "text-primary"}`}>
           {message}
         </p>
       )}
