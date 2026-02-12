@@ -19,6 +19,49 @@ function normalizeNextPath(value: string | null): string {
   return value;
 }
 
+type OAuthResult = {
+  ok: boolean;
+  user?: { id: string; email: string; username: string; nickname: string };
+  session?: { access_token: string; refresh_token: string; expires_at: number | null };
+  error?: string;
+};
+
+async function exchangeCode(code: string): Promise<OAuthResult> {
+  const res = await fetch("/api/auth/oauth/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok || !data?.ok || !data?.user) {
+    return { ok: false, error: data?.error ?? "인증 코드 교환에 실패했습니다." };
+  }
+
+  return data as OAuthResult;
+}
+
+async function finalizeWithTokens(
+  accessToken: string,
+  refreshToken: string | null,
+  expiresAt: string | null
+): Promise<OAuthResult> {
+  const res = await fetch("/api/auth/oauth/finalize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok || !data?.ok || !data?.user) {
+    return { ok: false, error: data?.error ?? "소셜 로그인 처리에 실패했습니다." };
+  }
+
+  return data as OAuthResult;
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [message, setMessage] = useState("소셜 로그인 처리 중입니다...");
@@ -26,53 +69,53 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const run = async () => {
-      const nextPath = normalizeNextPath(new URLSearchParams(window.location.search).get("next"));
-      const hashParams = parseHashParams();
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      const expiresAt = hashParams.get("expires_at");
-      const errorDescription = hashParams.get("error_description");
-
-      if (errorDescription) {
-        setIsError(true);
-        setMessage(errorDescription);
-        return;
-      }
-
-      if (!accessToken) {
-        setIsError(true);
-        setMessage("소셜 로그인 토큰을 확인할 수 없습니다. 다시 시도해 주세요.");
-        return;
-      }
-
       try {
-        const res = await fetch("/api/auth/oauth/finalize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            accessToken,
-            refreshToken,
-            expiresAt,
-          }),
-        });
+        const searchParams = new URLSearchParams(window.location.search);
+        const nextPath = normalizeNextPath(searchParams.get("next"));
 
-        const data = await res.json().catch(() => null);
+        // --- PKCE flow: Supabase sends ?code=xxx ---
+        const code = searchParams.get("code");
+        if (code) {
+          const result = await exchangeCode(code);
+          if (!result.ok || !result.user || !result.session) {
+            setIsError(true);
+            setMessage(result.error ?? "인증 코드 교환에 실패했습니다.");
+            return;
+          }
 
-        if (!res.ok || !data?.ok || !data?.user) {
-          setIsError(true);
-          setMessage(data?.error ?? "소셜 로그인 처리에 실패했습니다.");
+          persistSession(result);
+          setMessage("로그인 성공! 이동 중입니다...");
+          router.replace(nextPath);
           return;
         }
 
-        if (data.session?.access_token) {
-          localStorage.setItem("access_token", data.session.access_token);
-        }
-        if (data.session?.refresh_token) {
-          localStorage.setItem("refresh_token", data.session.refresh_token);
-        }
-        localStorage.setItem("user", JSON.stringify(data.user));
-        emitAuthChange();
+        // --- Implicit flow fallback: tokens in URL hash ---
+        const hashParams = parseHashParams();
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const expiresAt = hashParams.get("expires_at");
+        const errorDescription = hashParams.get("error_description");
 
+        if (errorDescription) {
+          setIsError(true);
+          setMessage(errorDescription);
+          return;
+        }
+
+        if (!accessToken) {
+          setIsError(true);
+          setMessage("소셜 로그인 토큰을 확인할 수 없습니다. 다시 시도해 주세요.");
+          return;
+        }
+
+        const result = await finalizeWithTokens(accessToken, refreshToken, expiresAt);
+        if (!result.ok || !result.user || !result.session) {
+          setIsError(true);
+          setMessage(result.error ?? "소셜 로그인 처리에 실패했습니다.");
+          return;
+        }
+
+        persistSession(result);
         setMessage("로그인 성공! 이동 중입니다...");
         router.replace(nextPath);
       } catch {
@@ -115,4 +158,17 @@ export default function AuthCallbackPage() {
       </main>
     </div>
   );
+}
+
+function persistSession(result: OAuthResult) {
+  if (result.session?.access_token) {
+    localStorage.setItem("access_token", result.session.access_token);
+  }
+  if (result.session?.refresh_token) {
+    localStorage.setItem("refresh_token", result.session.refresh_token);
+  }
+  if (result.user) {
+    localStorage.setItem("user", JSON.stringify(result.user));
+  }
+  emitAuthChange();
 }
