@@ -9,6 +9,9 @@ type StoredUser = {
   email?: string;
 } | null;
 
+let cachedRawUser: string | null | undefined;
+let cachedParsedUser: StoredUser = null;
+
 function parseStoredUser(raw: string | null): StoredUser {
   if (!raw) return null;
   try {
@@ -22,7 +25,14 @@ function parseStoredUser(raw: string | null): StoredUser {
 
 export function getUserSnapshot(): StoredUser {
   if (typeof window === "undefined") return null;
-  return parseStoredUser(window.localStorage.getItem("user"));
+  const raw = window.localStorage.getItem("user");
+  if (raw === cachedRawUser) {
+    return cachedParsedUser;
+  }
+
+  cachedRawUser = raw;
+  cachedParsedUser = parseStoredUser(raw);
+  return cachedParsedUser;
 }
 
 export function getIsMemberSnapshot(): boolean {
