@@ -1,6 +1,6 @@
 "use client";
 
-import type { SVGProps } from "react";
+import type { ReactElement, SVGProps } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -60,7 +60,7 @@ const PROVIDERS: {
   id: SocialProvider;
   label: string;
   shortLabel: string;
-  icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
+  icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
   brandClass: string;
 }[] = [
   {

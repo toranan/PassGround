@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { ENABLE_SOCIAL_AUTH } from "@/lib/featureFlags";
 
 type SocialProvider = "kakao" | "naver" | "google";
+type SupportedOAuthProvider = Exclude<SocialProvider, "naver">;
 
 function parseProvider(value: string | null): SocialProvider | null {
   if (value === "kakao" || value === "naver" || value === "google") {
@@ -32,6 +33,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/signup?error=invalid_provider", url.origin));
   }
 
+  if (provider === "naver") {
+    return NextResponse.redirect(new URL("/signup?error=provider_not_enabled", url.origin));
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
@@ -50,8 +55,9 @@ export async function GET(request: Request) {
   const callbackUrl = new URL("/auth/callback", url.origin);
   callbackUrl.searchParams.set("next", nextPath);
 
+  const oauthProvider: SupportedOAuthProvider = provider;
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
+    provider: oauthProvider,
     options: {
       redirectTo: callbackUrl.toString(),
     },
