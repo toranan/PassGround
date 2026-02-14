@@ -37,7 +37,6 @@ type RankingItem = {
   votePercent: number;
 };
 
-type CutoffResultType = "불합격" | "추합" | "최초합";
 type InputBasisType = "wrong" | "score";
 
 type CutoffItem = {
@@ -46,8 +45,9 @@ type CutoffItem = {
   university: string;
   major: string;
   year: number;
-  resultType: CutoffResultType;
-  note: string;
+  waitlistCutoff: number;
+  initialCutoff: number;
+  memo: string;
   inputBasis: InputBasisType;
 };
 
@@ -96,9 +96,10 @@ export default function AdminPage() {
     university: "",
     major: "",
     year: String(new Date().getFullYear()),
-    resultType: "최초합" as CutoffResultType,
     inputBasis: "wrong" as InputBasisType,
-    note: "",
+    waitlistCutoff: "",
+    initialCutoff: "",
+    memo: "",
   });
 
   const sortedRankings = useMemo(() => {
@@ -335,9 +336,10 @@ export default function AdminPage() {
           university: cutoffForm.university,
           major: cutoffForm.major,
           year: Number(cutoffForm.year),
-          resultType: cutoffForm.resultType,
           inputBasis: cutoffForm.inputBasis,
-          note: cutoffForm.note,
+          waitlistCutoff: Number(cutoffForm.waitlistCutoff),
+          initialCutoff: Number(cutoffForm.initialCutoff),
+          memo: cutoffForm.memo,
         }),
       });
 
@@ -348,7 +350,7 @@ export default function AdminPage() {
       }
 
       setCutoffs(payload.cutoffs ?? []);
-      setCutoffForm((prev) => ({ ...prev, major: "", note: "" }));
+      setCutoffForm((prev) => ({ ...prev, major: "", waitlistCutoff: "", initialCutoff: "", memo: "" }));
       setMessage("커트라인 데이터가 저장되었습니다.");
     } catch {
       setMessage("커트라인 저장 중 오류가 발생했습니다.");
@@ -549,7 +551,7 @@ export default function AdminPage() {
                     <CardTitle className="text-lg">편입 합격 커트라인 관리</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
                       <Input
                         placeholder="학교명"
                         value={cutoffForm.university}
@@ -574,20 +576,6 @@ export default function AdminPage() {
                       />
                       <select
                         className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                        value={cutoffForm.resultType}
-                        onChange={(e) =>
-                          setCutoffForm((prev) => ({
-                            ...prev,
-                            resultType: e.target.value as CutoffResultType,
-                          }))
-                        }
-                      >
-                        <option value="불합격">불합격</option>
-                        <option value="추합">추합</option>
-                        <option value="최초합">최초합</option>
-                      </select>
-                      <select
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                         value={cutoffForm.inputBasis}
                         onChange={(e) =>
                           setCutoffForm((prev) => ({
@@ -600,13 +588,29 @@ export default function AdminPage() {
                         <option value="score">점수 기준</option>
                       </select>
                       <Input
-                        placeholder="비고 (선택)"
-                        value={cutoffForm.note}
+                        placeholder={`추합권 컷 (${cutoffForm.inputBasis === "wrong" ? "개" : "점"})`}
+                        inputMode="decimal"
+                        value={cutoffForm.waitlistCutoff}
                         onChange={(e) =>
-                          setCutoffForm((prev) => ({ ...prev, note: e.target.value }))
+                          setCutoffForm((prev) => ({ ...prev, waitlistCutoff: e.target.value }))
                         }
                       />
-                      <div className="md:col-span-6">
+                      <Input
+                        placeholder={`최초합권 컷 (${cutoffForm.inputBasis === "wrong" ? "개" : "점"})`}
+                        inputMode="decimal"
+                        value={cutoffForm.initialCutoff}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, initialCutoff: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="비고 (선택)"
+                        value={cutoffForm.memo}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, memo: e.target.value }))
+                        }
+                      />
+                      <div className="md:col-span-7">
                         <Button onClick={handleSaveCutoff} disabled={submitting}>
                           {submitting ? "저장 중..." : "커트라인 저장"}
                         </Button>
@@ -626,12 +630,16 @@ export default function AdminPage() {
                               <p className="text-sm font-semibold">
                                 {item.year} · {item.university} {item.major}
                               </p>
-                              <p className="text-xs text-primary mt-1">{item.resultType}</p>
+                              <p className="text-xs text-primary mt-1">
+                                추합권 {item.waitlistCutoff}
+                                {item.inputBasis === "wrong" ? "개" : "점"} · 최초합권 {item.initialCutoff}
+                                {item.inputBasis === "wrong" ? "개" : "점"}
+                              </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 기준: {item.inputBasis === "wrong" ? "틀린개수" : "점수"}
                               </p>
-                              {item.note ? (
-                                <p className="text-xs text-muted-foreground mt-1">{item.note}</p>
+                              {item.memo ? (
+                                <p className="text-xs text-muted-foreground mt-1">{item.memo}</p>
                               ) : null}
                             </div>
                             <Button

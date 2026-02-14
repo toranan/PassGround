@@ -15,6 +15,8 @@ type CutoffRow = {
   scoreBand: string;
   note: string;
   inputBasis: "wrong" | "score" | "both";
+  waitlistCutoff: number | null;
+  initialCutoff: number | null;
 };
 
 type ResultType = "최초합" | "추합" | "불합격" | "정보없음";
@@ -26,6 +28,8 @@ type PredictorResult = {
   strategy: "상향 지원 가능" | "적정 지원 권장" | "하향/재조정 권장" | "데이터 등록 필요";
   inputType: InputType;
   inputValue: number;
+  waitlistCutoff: number | null;
+  initialCutoff: number | null;
   note: string;
   university: string;
   major: string;
@@ -49,11 +53,6 @@ const RESULT_EMOJI: Record<ResultType, string> = {
   불합격: "🛟",
   정보없음: "ℹ️",
 };
-
-function parseResultType(value: string): ResultType | null {
-  if (value === "최초합" || value === "추합" || value === "불합격" || value === "정보없음") return value;
-  return null;
-}
 
 export function TransferPredictor({ rows }: TransferPredictorProps) {
   const availableRows = rows.filter((row) => row.university && row.year && row.scoreBand);
@@ -153,6 +152,8 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         strategy: "데이터 등록 필요",
         inputType,
         inputValue,
+        waitlistCutoff: null,
+        initialCutoff: null,
         reason: "선택한 학교/년도/전공은 아직 등록된 정보가 없습니다.",
         note: "",
         university: university || "-",
@@ -167,7 +168,6 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
       return;
     }
 
-    const resultType = parseResultType(selectedRow.scoreBand) ?? "정보없음";
     const basisMatched =
       selectedRow.inputBasis === "both" || selectedRow.inputBasis === inputType;
 
@@ -177,6 +177,8 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         strategy: "데이터 등록 필요",
         inputType,
         inputValue,
+        waitlistCutoff: selectedRow.waitlistCutoff,
+        initialCutoff: selectedRow.initialCutoff,
         reason:
           selectedRow.inputBasis === "wrong"
             ? "해당 전공은 틀린개수 기준 데이터만 등록되어 있습니다."
@@ -194,6 +196,43 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
       return;
     }
 
+    if (selectedRow.waitlistCutoff === null || selectedRow.initialCutoff === null) {
+      const missingCutoffResult: PredictorResult = {
+        resultType: "정보없음",
+        strategy: "데이터 등록 필요",
+        inputType,
+        inputValue,
+        waitlistCutoff: null,
+        initialCutoff: null,
+        reason: "해당 전공의 기준 컷(추합권/최초합권)이 아직 등록되지 않았습니다.",
+        note: selectedRow.note || "",
+        university: selectedRow.university,
+        major: selectedRow.major,
+        year: selectedRow.year,
+      };
+      setReelResult(missingCutoffResult.resultType);
+      setReelStrategy(missingCutoffResult.strategy);
+      setReelEffect("판정 완료!");
+      setResult(missingCutoffResult);
+      setRunning(false);
+      return;
+    }
+
+    const waitlistCutoff = selectedRow.waitlistCutoff;
+    const initialCutoff = selectedRow.initialCutoff;
+    const resultType =
+      inputType === "score"
+        ? inputValue >= initialCutoff
+          ? "최초합"
+          : inputValue >= waitlistCutoff
+            ? "추합"
+            : "불합격"
+        : inputValue <= initialCutoff
+          ? "최초합"
+          : inputValue <= waitlistCutoff
+            ? "추합"
+            : "불합격";
+
     const strategy =
       resultType === "최초합"
         ? "상향 지원 가능"
@@ -208,13 +247,15 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
       strategy,
       inputType,
       inputValue,
+      waitlistCutoff,
+      initialCutoff,
       reason:
         resultType === "최초합"
-          ? "최근 데이터 기준 최초합 케이스입니다."
+          ? "입력값이 최초합권 컷을 만족합니다."
           : resultType === "추합"
-            ? "최근 데이터 기준 추합 케이스입니다."
+            ? "입력값이 추합권 컷 범위입니다."
             : resultType === "불합격"
-              ? "최근 데이터 기준 불합격 케이스입니다."
+              ? "입력값이 추합권 컷에 미달합니다."
               : "선택한 항목은 등록된 정보가 없습니다.",
       note: selectedRow.note || "",
       university: selectedRow.university,
@@ -416,7 +457,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
                 </p>
               </div>
               <div className="rounded-md bg-white/70 px-2 py-2">
-                <p className="opacity-70">최근 결과 데이터</p>
+                <p className="opacity-70">판정 결과</p>
                 <p className="font-semibold mt-1">{result.resultType}</p>
               </div>
               <div className="rounded-md bg-white/70 px-2 py-2">
@@ -425,6 +466,13 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
               </div>
             </div>
 
+            {result.waitlistCutoff !== null && result.initialCutoff !== null ? (
+              <p className="text-xs mt-3 opacity-90">
+                기준 컷: 추합권 {result.waitlistCutoff}
+                {result.inputType === "wrong" ? "개" : "점"} · 최초합권 {result.initialCutoff}
+                {result.inputType === "wrong" ? "개" : "점"}
+              </p>
+            ) : null}
             {result.note ? <p className="text-xs mt-3 opacity-90">비고: {result.note}</p> : null}
           </div>
         )}

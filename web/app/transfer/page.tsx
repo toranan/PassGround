@@ -17,6 +17,8 @@ type CutoffRow = {
   scoreBand: string;
   note: string;
   inputBasis: "wrong" | "score" | "both";
+  waitlistCutoff: number | null;
+  initialCutoff: number | null;
 };
 
 type BriefingRow = {
@@ -105,15 +107,44 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     score_band: string;
     note: string | null;
     source: string | null;
-  }) => ({
-    id: row.id,
-    university: row.university,
-    major: row.major,
-    year: row.year,
-    scoreBand: row.score_band,
-    note: row.note ?? "-",
-    inputBasis: row.source === "wrong" || row.source === "score" ? row.source : "both",
-  }));
+  }) => {
+    let waitlistCutoff: number | null = null;
+    let initialCutoff: number | null = null;
+    let memo = row.note ?? "-";
+
+    if (row.note) {
+      try {
+        const meta = JSON.parse(row.note) as {
+          waitlistCutoff?: number;
+          initialCutoff?: number;
+          memo?: string;
+        };
+        if (typeof meta.waitlistCutoff === "number") {
+          waitlistCutoff = meta.waitlistCutoff;
+        }
+        if (typeof meta.initialCutoff === "number") {
+          initialCutoff = meta.initialCutoff;
+        }
+        if (typeof meta.memo === "string") {
+          memo = meta.memo;
+        }
+      } catch {
+        // Legacy plain-text note
+      }
+    }
+
+    return {
+      id: row.id,
+      university: row.university,
+      major: row.major,
+      year: row.year,
+      scoreBand: row.score_band,
+      note: memo,
+      inputBasis: row.source === "wrong" || row.source === "score" ? row.source : "both",
+      waitlistCutoff,
+      initialCutoff,
+    };
+  });
 }
 
 async function loadBriefings(): Promise<BriefingRow[]> {

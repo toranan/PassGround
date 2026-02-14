@@ -3,11 +3,14 @@ import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 
-const CUTOFF_RESULT_TYPES = ["불합격", "추합", "최초합"] as const;
 const INPUT_BASIS_TYPES = ["wrong", "score"] as const;
 
-type CutoffResultType = (typeof CUTOFF_RESULT_TYPES)[number];
 type InputBasisType = (typeof INPUT_BASIS_TYPES)[number];
+type StoredCutoffMeta = {
+  waitlistCutoff: number;
+  initialCutoff: number;
+  memo: string;
+};
 
 function resolveExam(value: string): "transfer" | "cpa" | null {
   if (value === "transfer" || value === "cpa") return value;
@@ -19,18 +22,39 @@ function normalizeText(value: unknown, maxLength: number): string {
   return value.trim().slice(0, maxLength);
 }
 
-function parseResultType(value: unknown): CutoffResultType | null {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim() as CutoffResultType;
-  if (!CUTOFF_RESULT_TYPES.includes(normalized)) return null;
-  return normalized;
-}
-
 function parseInputBasis(value: unknown): InputBasisType | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim() as InputBasisType;
   if (!INPUT_BASIS_TYPES.includes(normalized)) return null;
   return normalized;
+}
+
+function parseStoredMeta(raw: string | null): StoredCutoffMeta | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredCutoffMeta>;
+    const waitlistCutoff = Number(parsed.waitlistCutoff);
+    const initialCutoff = Number(parsed.initialCutoff);
+    if (!Number.isFinite(waitlistCutoff) || !Number.isFinite(initialCutoff)) {
+      return null;
+    }
+    return {
+      waitlistCutoff,
+      initialCutoff,
+      memo: typeof parsed.memo === "string" ? parsed.memo : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatScoreBand(
+  basis: InputBasisType,
+  waitlistCutoff: number,
+  initialCutoff: number
+): string {
+  const unit = basis === "score" ? "점" : "개";
+  return `추합권 ${waitlistCutoff}${unit} / 최초합권 ${initialCutoff}${unit}`;
 }
 
 async function ensureAdmin(request: Request) {
@@ -79,14 +103,32 @@ async function loadCutoffs(exam: "transfer" | "cpa") {
       note: string | null;
       source: string | null;
     }) => ({
+      ...(function () {
+        const basis = parseInputBasis(row.source) ?? "wrong";
+        const parsedMeta = parseStoredMeta(row.note);
+        if (parsedMeta) {
+          return {
+            waitlistCutoff: parsedMeta.waitlistCutoff,
+            initialCutoff: parsedMeta.initialCutoff,
+            memo: parsedMeta.memo,
+            inputBasis: basis,
+          };
+        }
+
+        const numbers = row.score_band.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+        return {
+          waitlistCutoff: Number.isFinite(numbers[0]) ? numbers[0] : 0,
+          initialCutoff: Number.isFinite(numbers[1]) ? numbers[1] : 0,
+          memo: row.note ?? "",
+          inputBasis: basis,
+        };
+      })(),
       id: row.id,
       examSlug: row.exam_slug,
       university: row.university,
       major: row.major,
       year: row.year,
-      resultType: row.score_band,
-      note: row.note ?? "",
-      inputBasis: parseInputBasis(row.source) ?? "wrong",
+      displayBand: row.score_band,
     })),
   };
 }
@@ -130,17 +172,47 @@ export async function POST(request: Request) {
   const university = normalizeText(body.university, 40);
   const major = normalizeText(body.major, 40);
   const yearRaw = Number(body.year);
-  const resultType = parseResultType(body.resultType);
   const inputBasis = parseInputBasis(body.inputBasis) ?? "wrong";
-  const note = normalizeText(body.note, 120);
+  const waitlistCutoffRaw = Number(body.waitlistCutoff);
+  const initialCutoffRaw = Number(body.initialCutoff);
+  const memo = normalizeText(body.memo, 160);
   const year = Number.isFinite(yearRaw) ? Math.round(yearRaw) : NaN;
+  const waitlistCutoff = Number.isFinite(waitlistCutoffRaw) ? waitlistCutoffRaw : NaN;
+  const initialCutoff = Number.isFinite(initialCutoffRaw) ? initialCutoffRaw : NaN;
 
-  if (!university || !major || !Number.isFinite(year) || !resultType) {
+  if (
+    !university ||
+    !major ||
+    !Number.isFinite(year) ||
+    !Number.isFinite(waitlistCutoff) ||
+    !Number.isFinite(initialCutoff)
+  ) {
     return NextResponse.json(
-      { error: "university, major, year, resultType이 필요합니다." },
+      { error: "university, major, year, waitlistCutoff, initialCutoff이 필요합니다." },
       { status: 400 }
     );
   }
+
+  if (inputBasis === "score" && initialCutoff < waitlistCutoff) {
+    return NextResponse.json(
+      { error: "점수 기준에서는 최초합권 컷이 추합권 컷보다 크거나 같아야 합니다." },
+      { status: 400 }
+    );
+  }
+  if (inputBasis === "wrong" && initialCutoff > waitlistCutoff) {
+    return NextResponse.json(
+      { error: "틀린개수 기준에서는 최초합권 컷이 추합권 컷보다 작거나 같아야 합니다." },
+      { status: 400 }
+    );
+  }
+
+  const safeWaitlist = Number(waitlistCutoff.toFixed(2));
+  const safeInitial = Number(initialCutoff.toFixed(2));
+  const storedMeta: StoredCutoffMeta = {
+    waitlistCutoff: safeWaitlist,
+    initialCutoff: safeInitial,
+    memo,
+  };
 
   const admin = getSupabaseAdmin();
   const { error } = await admin
@@ -151,8 +223,8 @@ export async function POST(request: Request) {
         university,
         major,
         year,
-        score_band: resultType,
-        note: note || null,
+        score_band: formatScoreBand(inputBasis, safeWaitlist, safeInitial),
+        note: JSON.stringify(storedMeta),
         source: inputBasis,
       },
       { onConflict: "exam_slug,university,major,year" }
