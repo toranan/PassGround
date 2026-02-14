@@ -337,8 +337,10 @@ export default function AdminPage() {
           major: cutoffForm.major,
           year: Number(cutoffForm.year),
           inputBasis: cutoffForm.inputBasis,
-          waitlistCutoff: Number(cutoffForm.waitlistCutoff),
-          initialCutoff: Number(cutoffForm.initialCutoff),
+          waitlistCutoff:
+            cutoffForm.waitlistCutoff.trim() === "" ? undefined : Number(cutoffForm.waitlistCutoff),
+          initialCutoff:
+            cutoffForm.initialCutoff.trim() === "" ? undefined : Number(cutoffForm.initialCutoff),
           memo: cutoffForm.memo,
         }),
       });
@@ -631,8 +633,8 @@ export default function AdminPage() {
                                 {item.year} · {item.university} {item.major}
                               </p>
                               <p className="text-xs text-primary mt-1">
-                                추합권 {item.waitlistCutoff}
-                                {item.inputBasis === "wrong" ? "개" : "점"} · 최초합권 {item.initialCutoff}
+                                추합권 {item.waitlistCutoff ?? "-"}
+                                {item.inputBasis === "wrong" ? "개" : "점"} · 최초합권 {item.initialCutoff ?? "-"}
                                 {item.inputBasis === "wrong" ? "개" : "점"}
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">

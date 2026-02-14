@@ -7,8 +7,8 @@ const INPUT_BASIS_TYPES = ["wrong", "score"] as const;
 
 type InputBasisType = (typeof INPUT_BASIS_TYPES)[number];
 type StoredCutoffMeta = {
-  waitlistCutoff: number;
-  initialCutoff: number;
+  waitlistCutoff: number | null;
+  initialCutoff: number | null;
   memo: string;
 };
 
@@ -33,11 +33,14 @@ function parseStoredMeta(raw: string | null): StoredCutoffMeta | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<StoredCutoffMeta>;
-    const waitlistCutoff = Number(parsed.waitlistCutoff);
-    const initialCutoff = Number(parsed.initialCutoff);
-    if (!Number.isFinite(waitlistCutoff) || !Number.isFinite(initialCutoff)) {
-      return null;
-    }
+    const waitlistRaw = parsed.waitlistCutoff;
+    const initialRaw = parsed.initialCutoff;
+    const waitlistCutoff =
+      waitlistRaw === null || waitlistRaw === undefined ? null : Number(waitlistRaw);
+    const initialCutoff =
+      initialRaw === null || initialRaw === undefined ? null : Number(initialRaw);
+    if (waitlistCutoff !== null && !Number.isFinite(waitlistCutoff)) return null;
+    if (initialCutoff !== null && !Number.isFinite(initialCutoff)) return null;
     return {
       waitlistCutoff,
       initialCutoff,
@@ -50,11 +53,20 @@ function parseStoredMeta(raw: string | null): StoredCutoffMeta | null {
 
 function formatScoreBand(
   basis: InputBasisType,
-  waitlistCutoff: number,
-  initialCutoff: number
+  waitlistCutoff: number | null,
+  initialCutoff: number | null
 ): string {
   const unit = basis === "score" ? "점" : "개";
-  return `추합권 ${waitlistCutoff}${unit} / 최초합권 ${initialCutoff}${unit}`;
+  if (waitlistCutoff !== null && initialCutoff !== null) {
+    return `추합권 ${waitlistCutoff}${unit} / 최초합권 ${initialCutoff}${unit}`;
+  }
+  if (waitlistCutoff !== null) {
+    return `추합권 ${waitlistCutoff}${unit}`;
+  }
+  if (initialCutoff !== null) {
+    return `최초합권 ${initialCutoff}${unit}`;
+  }
+  return "-";
 }
 
 async function ensureAdmin(request: Request) {
@@ -177,37 +189,50 @@ export async function POST(request: Request) {
   const initialCutoffRaw = Number(body.initialCutoff);
   const memo = normalizeText(body.memo, 160);
   const year = Number.isFinite(yearRaw) ? Math.round(yearRaw) : NaN;
-  const waitlistCutoff = Number.isFinite(waitlistCutoffRaw) ? waitlistCutoffRaw : NaN;
-  const initialCutoff = Number.isFinite(initialCutoffRaw) ? initialCutoffRaw : NaN;
+  const waitlistCutoff = Number.isFinite(waitlistCutoffRaw) ? waitlistCutoffRaw : null;
+  const initialCutoff = Number.isFinite(initialCutoffRaw) ? initialCutoffRaw : null;
 
-  if (
-    !university ||
-    !major ||
-    !Number.isFinite(year) ||
-    !Number.isFinite(waitlistCutoff) ||
-    !Number.isFinite(initialCutoff)
-  ) {
+  if (!university || !major || !Number.isFinite(year)) {
     return NextResponse.json(
-      { error: "university, major, year, waitlistCutoff, initialCutoff이 필요합니다." },
+      { error: "university, major, year는 필수입니다." },
       { status: 400 }
     );
   }
 
-  if (inputBasis === "score" && initialCutoff < waitlistCutoff) {
+  if (waitlistCutoff === null && initialCutoff === null) {
+    return NextResponse.json(
+      { error: "추합권 컷 또는 최초합권 컷 중 하나는 입력해 주세요." },
+      { status: 400 }
+    );
+  }
+
+  if (
+    inputBasis === "score" &&
+    waitlistCutoff !== null &&
+    initialCutoff !== null &&
+    initialCutoff < waitlistCutoff
+  ) {
     return NextResponse.json(
       { error: "점수 기준에서는 최초합권 컷이 추합권 컷보다 크거나 같아야 합니다." },
       { status: 400 }
     );
   }
-  if (inputBasis === "wrong" && initialCutoff > waitlistCutoff) {
+  if (
+    inputBasis === "wrong" &&
+    waitlistCutoff !== null &&
+    initialCutoff !== null &&
+    initialCutoff > waitlistCutoff
+  ) {
     return NextResponse.json(
       { error: "틀린개수 기준에서는 최초합권 컷이 추합권 컷보다 작거나 같아야 합니다." },
       { status: 400 }
     );
   }
 
-  const safeWaitlist = Number(waitlistCutoff.toFixed(2));
-  const safeInitial = Number(initialCutoff.toFixed(2));
+  const safeWaitlist =
+    waitlistCutoff === null ? null : Number(waitlistCutoff.toFixed(2));
+  const safeInitial =
+    initialCutoff === null ? null : Number(initialCutoff.toFixed(2));
   const storedMeta: StoredCutoffMeta = {
     waitlistCutoff: safeWaitlist,
     initialCutoff: safeInitial,
