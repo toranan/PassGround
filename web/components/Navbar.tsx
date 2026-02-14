@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { RouteDropdown } from "@/components/RouteDropdown";
 import { Button } from "@/components/ui/button";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
@@ -16,9 +16,15 @@ interface User {
   nickname?: string;
 }
 
+type AdminMeResponse = {
+  ok: boolean;
+  isAdmin: boolean;
+};
+
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
   const user = useSyncExternalStore(
     subscribeAuthChange,
     () => getUserSnapshot() as User | null,
@@ -54,6 +60,43 @@ export function Navbar() {
     router.push("/");
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    const userId = user?.id ?? "";
+    const token = localStorage.getItem("access_token") ?? "";
+
+    const checkAdmin = async () => {
+      if (!userId || !token) {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/admin/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
+        const payload = (await res.json().catch(() => null)) as AdminMeResponse | null;
+        if (cancelled) return;
+        setIsAdmin(Boolean(res.ok && payload?.ok && payload?.isAdmin));
+      } catch {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+      }
+    };
+
+    void checkAdmin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-3">
@@ -84,6 +127,11 @@ export function Navbar() {
           </div>
           {user ? (
             <>
+              {isAdmin ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin">관리자페이지</Link>
+                </Button>
+              ) : null}
               <span className="text-sm font-medium text-primary">
                 {user.nickname || user.username}님
               </span>
