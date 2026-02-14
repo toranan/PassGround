@@ -38,6 +38,7 @@ type RankingItem = {
 };
 
 type CutoffResultType = "불합격" | "추합" | "최초합";
+type InputBasisType = "wrong" | "score";
 
 type CutoffItem = {
   id: string;
@@ -47,6 +48,7 @@ type CutoffItem = {
   year: number;
   resultType: CutoffResultType;
   note: string;
+  inputBasis: InputBasisType;
 };
 
 type AdminRankingResponse = {
@@ -95,6 +97,7 @@ export default function AdminPage() {
     major: "",
     year: String(new Date().getFullYear()),
     resultType: "최초합" as CutoffResultType,
+    inputBasis: "wrong" as InputBasisType,
     note: "",
   });
 
@@ -333,6 +336,7 @@ export default function AdminPage() {
           major: cutoffForm.major,
           year: Number(cutoffForm.year),
           resultType: cutoffForm.resultType,
+          inputBasis: cutoffForm.inputBasis,
           note: cutoffForm.note,
         }),
       });
@@ -545,7 +549,7 @@ export default function AdminPage() {
                     <CardTitle className="text-lg">편입 합격 커트라인 관리</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
                       <Input
                         placeholder="학교명"
                         value={cutoffForm.university}
@@ -582,6 +586,19 @@ export default function AdminPage() {
                         <option value="추합">추합</option>
                         <option value="최초합">최초합</option>
                       </select>
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        value={cutoffForm.inputBasis}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({
+                            ...prev,
+                            inputBasis: e.target.value as InputBasisType,
+                          }))
+                        }
+                      >
+                        <option value="wrong">틀린개수 기준</option>
+                        <option value="score">점수 기준</option>
+                      </select>
                       <Input
                         placeholder="비고 (선택)"
                         value={cutoffForm.note}
@@ -589,7 +606,7 @@ export default function AdminPage() {
                           setCutoffForm((prev) => ({ ...prev, note: e.target.value }))
                         }
                       />
-                      <div className="md:col-span-5">
+                      <div className="md:col-span-6">
                         <Button onClick={handleSaveCutoff} disabled={submitting}>
                           {submitting ? "저장 중..." : "커트라인 저장"}
                         </Button>
@@ -610,6 +627,9 @@ export default function AdminPage() {
                                 {item.year} · {item.university} {item.major}
                               </p>
                               <p className="text-xs text-primary mt-1">{item.resultType}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                기준: {item.inputBasis === "wrong" ? "틀린개수" : "점수"}
+                              </p>
                               {item.note ? (
                                 <p className="text-xs text-muted-foreground mt-1">{item.note}</p>
                               ) : null}

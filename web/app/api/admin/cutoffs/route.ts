@@ -4,8 +4,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 
 const CUTOFF_RESULT_TYPES = ["불합격", "추합", "최초합"] as const;
+const INPUT_BASIS_TYPES = ["wrong", "score"] as const;
 
 type CutoffResultType = (typeof CUTOFF_RESULT_TYPES)[number];
+type InputBasisType = (typeof INPUT_BASIS_TYPES)[number];
 
 function resolveExam(value: string): "transfer" | "cpa" | null {
   if (value === "transfer" || value === "cpa") return value;
@@ -21,6 +23,13 @@ function parseResultType(value: unknown): CutoffResultType | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim() as CutoffResultType;
   if (!CUTOFF_RESULT_TYPES.includes(normalized)) return null;
+  return normalized;
+}
+
+function parseInputBasis(value: unknown): InputBasisType | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim() as InputBasisType;
+  if (!INPUT_BASIS_TYPES.includes(normalized)) return null;
   return normalized;
 }
 
@@ -49,7 +58,7 @@ async function loadCutoffs(exam: "transfer" | "cpa") {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from("cutoff_scores")
-    .select("id,exam_slug,university,major,year,score_band,note")
+    .select("id,exam_slug,university,major,year,score_band,note,source")
     .eq("exam_slug", exam)
     .order("year", { ascending: false })
     .order("university", { ascending: true })
@@ -68,6 +77,7 @@ async function loadCutoffs(exam: "transfer" | "cpa") {
       year: number;
       score_band: string;
       note: string | null;
+      source: string | null;
     }) => ({
       id: row.id,
       examSlug: row.exam_slug,
@@ -76,6 +86,7 @@ async function loadCutoffs(exam: "transfer" | "cpa") {
       year: row.year,
       resultType: row.score_band,
       note: row.note ?? "",
+      inputBasis: parseInputBasis(row.source) ?? "wrong",
     })),
   };
 }
@@ -120,6 +131,7 @@ export async function POST(request: Request) {
   const major = normalizeText(body.major, 40);
   const yearRaw = Number(body.year);
   const resultType = parseResultType(body.resultType);
+  const inputBasis = parseInputBasis(body.inputBasis) ?? "wrong";
   const note = normalizeText(body.note, 120);
   const year = Number.isFinite(yearRaw) ? Math.round(yearRaw) : NaN;
 
@@ -141,7 +153,7 @@ export async function POST(request: Request) {
         year,
         score_band: resultType,
         note: note || null,
-        source: "admin",
+        source: inputBasis,
       },
       { onConflict: "exam_slug,university,major,year" }
     );

@@ -16,6 +16,7 @@ type CutoffRow = {
   year: number;
   scoreBand: string;
   note: string;
+  inputBasis: "wrong" | "score" | "both";
 };
 
 type BriefingRow = {
@@ -87,7 +88,7 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
   const supabase = getSupabaseServer();
   const { data, error } = await supabase
     .from("cutoff_scores")
-    .select("id,university,major,year,score_band,note")
+    .select("id,university,major,year,score_band,note,source")
     .eq("exam_slug", "transfer")
     .order("year", { ascending: false })
     .limit(200);
@@ -96,13 +97,22 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     return [];
   }
 
-  return data.map((row: { id: string; university: string; major: string; year: number; score_band: string; note: string | null }) => ({
+  return data.map((row: {
+    id: string;
+    university: string;
+    major: string;
+    year: number;
+    score_band: string;
+    note: string | null;
+    source: string | null;
+  }) => ({
     id: row.id,
     university: row.university,
     major: row.major,
     year: row.year,
     scoreBand: row.score_band,
     note: row.note ?? "-",
+    inputBasis: row.source === "wrong" || row.source === "score" ? row.source : "both",
   }));
 }
 
