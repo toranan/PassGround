@@ -90,7 +90,7 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     .select("id,university,major,year,score_band,note")
     .eq("exam_slug", "transfer")
     .order("year", { ascending: false })
-    .limit(10);
+    .limit(200);
 
   if (error || !data?.length) {
     return [];

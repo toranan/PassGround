@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,10 +37,28 @@ type RankingItem = {
   votePercent: number;
 };
 
+type CutoffResultType = "불합격" | "추합" | "최초합";
+
+type CutoffItem = {
+  id: string;
+  examSlug: string;
+  university: string;
+  major: string;
+  year: number;
+  resultType: CutoffResultType;
+  note: string;
+};
+
 type AdminRankingResponse = {
   ok: boolean;
   totalVotes: number;
   rankings: RankingItem[];
+  error?: string;
+};
+
+type AdminCutoffResponse = {
+  ok: boolean;
+  cutoffs: CutoffItem[];
   error?: string;
 };
 
@@ -61,6 +79,8 @@ export default function AdminPage() {
   const [adminState, setAdminState] = useState<AdminMeResponse | null>(null);
   const [loadingRankings, setLoadingRankings] = useState(false);
   const [rankings, setRankings] = useState<RankingItem[]>([]);
+  const [loadingCutoffs, setLoadingCutoffs] = useState(false);
+  const [cutoffs, setCutoffs] = useState<CutoffItem[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -70,10 +90,25 @@ export default function AdminPage() {
     initialRank: "",
     initialVotes: "0",
   });
+  const [cutoffForm, setCutoffForm] = useState({
+    university: "",
+    major: "",
+    year: String(new Date().getFullYear()),
+    resultType: "최초합" as CutoffResultType,
+    note: "",
+  });
 
   const sortedRankings = useMemo(() => {
     return [...rankings].sort((a, b) => a.rank - b.rank || a.subject.localeCompare(b.subject));
   }, [rankings]);
+  const sortedCutoffs = useMemo(() => {
+    return [...cutoffs].sort(
+      (a, b) =>
+        b.year - a.year ||
+        a.university.localeCompare(b.university) ||
+        a.major.localeCompare(b.major)
+    );
+  }, [cutoffs]);
 
   const loadAdminMe = async () => {
     const token = getAccessToken();
@@ -115,7 +150,7 @@ export default function AdminPage() {
     }
   };
 
-  const loadRankings = async () => {
+  const loadRankings = useCallback(async () => {
     const token = getAccessToken();
     if (!token) return;
 
@@ -143,7 +178,34 @@ export default function AdminPage() {
     } finally {
       setLoadingRankings(false);
     }
-  };
+  }, [exam]);
+
+  const loadCutoffs = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingCutoffs(true);
+    try {
+      const res = await fetch(`/api/admin/cutoffs?exam=${exam}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminCutoffResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "커트라인 목록을 불러오지 못했습니다.");
+        setCutoffs([]);
+        return;
+      }
+      setCutoffs(payload.cutoffs ?? []);
+    } catch {
+      setMessage("커트라인 목록을 불러오지 못했습니다.");
+      setCutoffs([]);
+    } finally {
+      setLoadingCutoffs(false);
+    }
+  }, [exam]);
 
   useEffect(() => {
     void loadAdminMe();
@@ -151,9 +213,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (adminState?.isAdmin) {
-      void loadRankings();
+      void Promise.all([loadRankings(), loadCutoffs()]);
     }
-  }, [adminState?.isAdmin, exam]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -247,6 +309,74 @@ export default function AdminPage() {
       setMessage("강사 데이터가 삭제되었습니다.");
     } catch {
       setMessage("삭제 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveCutoff = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/cutoffs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          university: cutoffForm.university,
+          major: cutoffForm.major,
+          year: Number(cutoffForm.year),
+          resultType: cutoffForm.resultType,
+          note: cutoffForm.note,
+        }),
+      });
+
+      const payload = (await res.json().catch(() => null)) as AdminCutoffResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "커트라인 저장에 실패했습니다.");
+        return;
+      }
+
+      setCutoffs(payload.cutoffs ?? []);
+      setCutoffForm((prev) => ({ ...prev, major: "", note: "" }));
+      setMessage("커트라인 데이터가 저장되었습니다.");
+    } catch {
+      setMessage("커트라인 저장 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCutoff = async (id: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/cutoffs", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, exam }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminCutoffResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "커트라인 삭제에 실패했습니다.");
+        return;
+      }
+      setCutoffs(payload.cutoffs ?? []);
+      setMessage("커트라인 데이터가 삭제되었습니다.");
+    } catch {
+      setMessage("커트라인 삭제 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -406,6 +536,99 @@ export default function AdminPage() {
                       ))
                     ) : (
                       <p className="text-sm text-muted-foreground">등록된 강사가 없습니다.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">편입 합격 커트라인 관리</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                      <Input
+                        placeholder="학교명"
+                        value={cutoffForm.university}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, university: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="학과명"
+                        value={cutoffForm.major}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, major: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="년도"
+                        inputMode="numeric"
+                        value={cutoffForm.year}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, year: e.target.value }))
+                        }
+                      />
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        value={cutoffForm.resultType}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({
+                            ...prev,
+                            resultType: e.target.value as CutoffResultType,
+                          }))
+                        }
+                      >
+                        <option value="불합격">불합격</option>
+                        <option value="추합">추합</option>
+                        <option value="최초합">최초합</option>
+                      </select>
+                      <Input
+                        placeholder="비고 (선택)"
+                        value={cutoffForm.note}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({ ...prev, note: e.target.value }))
+                        }
+                      />
+                      <div className="md:col-span-5">
+                        <Button onClick={handleSaveCutoff} disabled={submitting}>
+                          {submitting ? "저장 중..." : "커트라인 저장"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {loadingCutoffs ? (
+                      <p className="text-sm text-muted-foreground">커트라인 목록 불러오는 중...</p>
+                    ) : sortedCutoffs.length ? (
+                      <div className="space-y-2">
+                        {sortedCutoffs.map((item) => (
+                          <div
+                            key={item.id}
+                            className="rounded-lg border border-border px-3 py-3 flex items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold">
+                                {item.year} · {item.university} {item.major}
+                              </p>
+                              <p className="text-xs text-primary mt-1">{item.resultType}</p>
+                              {item.note ? (
+                                <p className="text-xs text-muted-foreground mt-1">{item.note}</p>
+                              ) : null}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void handleDeleteCutoff(item.id)}
+                              disabled={submitting}
+                            >
+                              삭제
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        등록된 커트라인 데이터가 없습니다.
+                      </p>
                     )}
                   </CardContent>
                 </Card>
