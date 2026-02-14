@@ -50,8 +50,6 @@ type RankingRow = {
   subject: string;
   instructorName: string;
   rank: number;
-  trend: string;
-  confidence: number;
 };
 
 function formatRelativeTime(dateString: string | null): string {
@@ -269,24 +267,51 @@ async function loadPopularRows(): Promise<PopularRow[]> {
 
 async function loadRankings(): Promise<RankingRow[]> {
   const supabase = getSupabaseServer();
-  const { data, error } = await supabase
+  const { data: rankingRows, error } = await supabase
     .from("instructor_rankings")
-    .select("id,subject,instructor_name,rank,trend,confidence")
+    .select("id,subject,instructor_name,rank,confidence")
     .eq("exam_slug", "transfer")
-    .order("rank", { ascending: true })
-    .limit(12);
+    .order("subject", { ascending: true })
+    .order("instructor_name", { ascending: true })
+    .limit(200);
 
-  if (error || !data?.length) {
+  if (error || !rankingRows?.length) {
     return [];
   }
 
-  return data.map((row: { id: string; subject: string; instructor_name: string; rank: number; trend: string | null; confidence: number | null }) => ({
+  const { data: voteRows, error: voteError } = await supabase
+    .from("instructor_votes")
+    .select("instructor_name")
+    .eq("exam_slug", "transfer");
+
+  if (voteError) {
+    return [];
+  }
+
+  const voteCountMap = new Map<string, number>();
+  (voteRows ?? []).forEach((row: { instructor_name: string }) => {
+    voteCountMap.set(row.instructor_name, (voteCountMap.get(row.instructor_name) ?? 0) + 1);
+  });
+
+  const sorted = rankingRows
+    .map((row: { id: string; subject: string; instructor_name: string; rank: number; confidence: number | null }) => ({
+      ...row,
+      voteCount: (voteCountMap.get(row.instructor_name) ?? 0) + Math.max(0, row.confidence ?? 0),
+    }))
+    .sort((a, b) => {
+      if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      const bySubject = a.subject.localeCompare(b.subject);
+      if (bySubject !== 0) return bySubject;
+      return a.instructor_name.localeCompare(b.instructor_name);
+    })
+    .slice(0, 12);
+
+  return sorted.map((row, index) => ({
     id: row.id,
     subject: row.subject,
     instructorName: row.instructor_name,
-    rank: row.rank,
-    trend: row.trend ?? "-",
-    confidence: row.confidence ?? 0,
+    rank: index + 1,
   }));
 }
 

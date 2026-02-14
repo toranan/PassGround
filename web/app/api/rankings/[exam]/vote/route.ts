@@ -10,6 +10,11 @@ function resolveExam(value: string): "transfer" | "cpa" | null {
   return null;
 }
 
+function normalizeText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLength);
+}
+
 async function getVoteStatus(exam: string, userId: string) {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
@@ -81,26 +86,14 @@ export async function POST(
   }
 
   const body = await request.json().catch(() => ({}));
-  const instructorName =
-    typeof body.instructorName === "string" ? body.instructorName.trim() : "";
+  const instructorName = normalizeText(body.instructorName, 40);
+  const subject = normalizeText(body.subject, 40);
 
   if (!instructorName) {
     return NextResponse.json({ error: "강사명을 선택해 주세요." }, { status: 400 });
   }
 
   const admin = getSupabaseAdmin();
-  const { data: rankingRow } = await admin
-    .from("instructor_rankings")
-    .select("instructor_name")
-    .eq("exam_slug", exam)
-    .eq("instructor_name", instructorName)
-    .limit(1)
-    .maybeSingle<{ instructor_name: string }>();
-
-  if (!rankingRow?.instructor_name) {
-    return NextResponse.json({ error: "투표 가능한 강사가 아닙니다." }, { status: 400 });
-  }
-
   const status = await getVoteStatus(exam, user.id);
   if ("error" in status) {
     return NextResponse.json({ error: status.error }, { status: 400 });
@@ -124,6 +117,60 @@ export async function POST(
       },
       { status: 409 }
     );
+  }
+
+  const { data: rankingRow, error: rankingError } = await admin
+    .from("instructor_rankings")
+    .select("instructor_name")
+    .eq("exam_slug", exam)
+    .eq("instructor_name", instructorName)
+    .limit(1)
+    .maybeSingle<{ instructor_name: string }>();
+
+  if (rankingError) {
+    return NextResponse.json({ error: rankingError.message }, { status: 400 });
+  }
+
+  if (!rankingRow?.instructor_name) {
+    if (!subject) {
+      return NextResponse.json(
+        { error: "기타 투표는 과목과 강사명을 함께 입력해 주세요." },
+        { status: 400 }
+      );
+    }
+
+    const { data: maxRankRow, error: maxRankError } = await admin
+      .from("instructor_rankings")
+      .select("rank")
+      .eq("exam_slug", exam)
+      .order("rank", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ rank: number }>();
+
+    if (maxRankError) {
+      return NextResponse.json({ error: maxRankError.message }, { status: 400 });
+    }
+
+    const nextRank = Math.max(1, (maxRankRow?.rank ?? 0) + 1);
+    const { error: upsertError } = await admin
+      .from("instructor_rankings")
+      .upsert(
+        {
+          exam_slug: exam,
+          subject,
+          instructor_name: instructorName,
+          rank: nextRank,
+          trend: "-",
+          confidence: 0,
+          source_type: "user",
+          is_seed: false,
+        },
+        { onConflict: "exam_slug,subject,instructor_name" }
+      );
+
+    if (upsertError) {
+      return NextResponse.json({ error: upsertError.message }, { status: 400 });
+    }
   }
 
   const { error: insertError } = await admin.from("instructor_votes").insert({

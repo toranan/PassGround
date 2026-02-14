@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type RankingItem = {
@@ -12,8 +13,6 @@ type RankingItem = {
   subject: string;
   instructorName: string;
   rank: number;
-  trend: string;
-  confidence: number;
   voteCount: number;
   votePercent: number;
 };
@@ -62,8 +61,10 @@ export default function TransferInstructorRankingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [rankings, setRankings] = useState<RankingItem[]>([]);
-  const [totalVotes, setTotalVotes] = useState(0);
   const [selectedInstructor, setSelectedInstructor] = useState("");
+  const [voteMode, setVoteMode] = useState<"preset" | "other">("preset");
+  const [otherSubject, setOtherSubject] = useState("");
+  const [otherInstructor, setOtherInstructor] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState("");
   const [voteStatus, setVoteStatus] = useState<{
@@ -95,22 +96,19 @@ export default function TransferInstructorRankingPage() {
       if (!res.ok || !payload?.ok) {
         setError(payload?.error ?? "강사 순위를 불러오지 못했습니다.");
         setRankings([]);
-        setTotalVotes(0);
         return;
       }
       setRankings(payload.rankings ?? []);
-      setTotalVotes(payload.totalVotes ?? 0);
       setSelectedInstructor((prev) => prev || payload.rankings?.[0]?.instructorName || "");
     } catch {
       setError("강사 순위를 불러오지 못했습니다.");
       setRankings([]);
-      setTotalVotes(0);
     } finally {
       setLoading(false);
     }
   };
 
-  const reloadVoteStatus = async () => {
+  const reloadVoteStatus = useCallback(async () => {
     const token = getAccessToken();
     if (!token || !user?.id) {
       setVoteStatus({ hasVoted: false, instructorName: null, votedAt: null });
@@ -146,7 +144,7 @@ export default function TransferInstructorRankingPage() {
     } catch {
       setVoteStatus({ hasVoted: false, instructorName: null, votedAt: null });
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     void reloadRankings();
@@ -154,15 +152,24 @@ export default function TransferInstructorRankingPage() {
 
   useEffect(() => {
     void reloadVoteStatus();
-  }, [user?.id]);
+  }, [reloadVoteStatus]);
 
   const handleVote = async () => {
     if (!user?.id) {
       setNotice("투표하려면 회원가입/로그인이 필요합니다.");
       return;
     }
-    if (!selectedInstructor) {
-      setNotice("투표할 강사를 선택해 주세요.");
+
+    const targetInstructor =
+      voteMode === "other" ? otherInstructor.trim() : selectedInstructor.trim();
+    const targetSubject = voteMode === "other" ? otherSubject.trim() : "";
+
+    if (!targetInstructor) {
+      setNotice("투표할 강사를 선택하거나 입력해 주세요.");
+      return;
+    }
+    if (voteMode === "other" && !targetSubject) {
+      setNotice("기타 투표는 과목을 입력해 주세요.");
       return;
     }
 
@@ -183,7 +190,8 @@ export default function TransferInstructorRankingPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          instructorName: selectedInstructor,
+          instructorName: targetInstructor,
+          subject: voteMode === "other" ? targetSubject : undefined,
         }),
       });
 
@@ -199,7 +207,7 @@ export default function TransferInstructorRankingPage() {
       setNotice(
         payload.alreadyVoted
           ? `이미 ${payload.instructorName}에 투표되어 있습니다.`
-          : `${selectedInstructor} 투표가 완료되었습니다.`
+          : `${targetInstructor} 투표가 완료되었습니다.`
       );
       await Promise.all([reloadRankings(), reloadVoteStatus()]);
     } catch {
@@ -238,9 +246,6 @@ export default function TransferInstructorRankingPage() {
                 <CardTitle className="text-lg">투표판</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                  총 투표수: <span className="font-bold text-primary">{totalVotes.toLocaleString()}</span>
-                </div>
                 {!user?.id && (
                   <p className="text-sm text-amber-700">투표하려면 로그인 후 이용해 주세요.</p>
                 )}
@@ -255,13 +260,16 @@ export default function TransferInstructorRankingPage() {
                       key={item.id}
                       className="flex items-center justify-between rounded-lg border border-border px-3 py-3 cursor-pointer hover:bg-accent transition-colors"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 w-full">
                         <input
                           type="radio"
                           name="instructor-vote"
                           value={item.instructorName}
-                          checked={selectedInstructor === item.instructorName}
-                          onChange={() => setSelectedInstructor(item.instructorName)}
+                          checked={voteMode === "preset" && selectedInstructor === item.instructorName}
+                          onChange={() => {
+                            setVoteMode("preset");
+                            setSelectedInstructor(item.instructorName);
+                          }}
                           disabled={voteStatus.hasVoted}
                         />
                         <div>
@@ -269,12 +277,36 @@ export default function TransferInstructorRankingPage() {
                           <p className="text-sm font-semibold">{item.rank}위 {item.instructorName}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">{item.voteCount}표</p>
-                        <p className="text-xs text-primary">{item.votePercent}%</p>
-                      </div>
                     </label>
                   ))}
+
+                  <div className="rounded-lg border border-border px-3 py-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="instructor-vote"
+                        value="__other__"
+                        checked={voteMode === "other"}
+                        onChange={() => setVoteMode("other")}
+                        disabled={voteStatus.hasVoted}
+                      />
+                      <p className="text-sm font-semibold">기타 (직접 입력)</p>
+                    </label>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Input
+                        placeholder="과목 (예: 편입영어)"
+                        value={otherSubject}
+                        onChange={(e) => setOtherSubject(e.target.value)}
+                        disabled={voteStatus.hasVoted || voteMode !== "other"}
+                      />
+                      <Input
+                        placeholder="강사명"
+                        value={otherInstructor}
+                        onChange={(e) => setOtherInstructor(e.target.value)}
+                        disabled={voteStatus.hasVoted || voteMode !== "other"}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {!loading && rankings.length === 0 && (
@@ -283,7 +315,7 @@ export default function TransferInstructorRankingPage() {
 
                 <Button
                   onClick={handleVote}
-                  disabled={submitting || voteStatus.hasVoted || !rankings.length}
+                  disabled={submitting || voteStatus.hasVoted || (voteMode === "preset" && !rankings.length)}
                   className="bg-primary hover:bg-primary/90"
                 >
                   {voteStatus.hasVoted ? "이미 투표 완료" : submitting ? "투표 중..." : "1회 투표하기"}
@@ -295,24 +327,15 @@ export default function TransferInstructorRankingPage() {
 
             <Card className="border-none shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg">과목별 득표 비율</CardTitle>
+                <CardTitle className="text-lg">과목별 순위</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {groupedBySubject.map(([subject, items]) => (
                   <div key={subject} className="space-y-2">
                     <p className="text-sm font-semibold">{subject}</p>
                     {items.map((item) => (
-                      <div key={`${subject}-${item.id}`} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>{item.instructorName}</span>
-                          <span>{item.votePercent}%</span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${Math.min(100, Math.max(0, item.votePercent))}%` }}
-                          />
-                        </div>
+                      <div key={`${subject}-${item.id}`} className="rounded-lg border border-border px-3 py-2">
+                        <p className="text-sm font-semibold">{item.rank}위 {item.instructorName}</p>
                       </div>
                     ))}
                   </div>

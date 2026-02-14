@@ -8,8 +8,6 @@ type RankingRow = {
   subject: string;
   instructorName: string;
   rank: number;
-  trend: string;
-  confidence: number;
 };
 
 type TransferRankingTabsProps = {
@@ -43,14 +41,10 @@ export function TransferRankingTabs({ rows }: TransferRankingTabsProps) {
       <TabsContent value="all" className="mt-3 border-none p-0 bg-transparent">
         <div className="space-y-2.5">
           {allRows.map((row) => (
-            <div key={row.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+            <div key={row.id} className="rounded-lg border border-gray-100 px-3 py-2">
               <div>
                 <p className="text-xs text-gray-500">{row.subject}</p>
                 <p className="text-sm font-semibold">{row.rank}위 {row.instructorName}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">변동 {row.trend}</p>
-                <p className="text-xs text-primary">신뢰도 {row.confidence}%</p>
               </div>
             </div>
           ))}
@@ -63,14 +57,10 @@ export function TransferRankingTabs({ rows }: TransferRankingTabsProps) {
           <TabsContent key={subject} value={subject} className="mt-3 border-none p-0 bg-transparent">
             <div className="space-y-2.5">
               {subjectRows.map((row) => (
-                <div key={row.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+                <div key={row.id} className="rounded-lg border border-gray-100 px-3 py-2">
                   <div>
                     <p className="text-xs text-gray-500">{row.subject}</p>
                     <p className="text-sm font-semibold">{row.rank}위 {row.instructorName}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">변동 {row.trend}</p>
-                    <p className="text-xs text-primary">신뢰도 {row.confidence}%</p>
                   </div>
                 </div>
               ))}

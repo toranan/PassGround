@@ -10,7 +10,6 @@ type RankingRow = {
   subject: string;
   instructor_name: string;
   rank: number;
-  trend: string | null;
   confidence: number | null;
   source_type: string | null;
   is_seed: boolean;
@@ -49,10 +48,10 @@ async function loadRankingStats(exam: "transfer" | "cpa") {
   const admin = getSupabaseAdmin();
   const { data: rankingRows, error: rankingError } = await admin
     .from("instructor_rankings")
-    .select("id,subject,instructor_name,rank,trend,confidence,source_type,is_seed")
+    .select("id,subject,instructor_name,rank,confidence,source_type,is_seed")
     .eq("exam_slug", exam)
-    .order("rank", { ascending: true })
-    .order("subject", { ascending: true });
+    .order("subject", { ascending: true })
+    .order("instructor_name", { ascending: true });
 
   if (rankingError) {
     return { error: rankingError.message };
@@ -72,21 +71,40 @@ async function loadRankingStats(exam: "transfer" | "cpa") {
     voteCountMap.set(row.instructor_name, (voteCountMap.get(row.instructor_name) ?? 0) + 1);
   });
 
-  const totalVotes = Array.from(voteCountMap.values()).reduce((sum, count) => sum + count, 0);
+  const sortableRows = (rankingRows ?? []).map((row: RankingRow) => ({
+    ...row,
+    realVoteCount: voteCountMap.get(row.instructor_name) ?? 0,
+    initialVotes: Math.max(0, row.confidence ?? 0),
+    voteCount: 0,
+  }));
 
-  const rankings = (rankingRows ?? []).map((row: RankingRow) => {
-    const voteCount = voteCountMap.get(row.instructor_name) ?? 0;
-    const votePercent = totalVotes > 0 ? Number(((voteCount / totalVotes) * 100).toFixed(1)) : 0;
+  sortableRows.forEach((row) => {
+    row.voteCount = row.realVoteCount + row.initialVotes;
+  });
+
+  sortableRows.sort((a, b) => {
+    if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    const bySubject = a.subject.localeCompare(b.subject);
+    if (bySubject !== 0) return bySubject;
+    return a.instructor_name.localeCompare(b.instructor_name);
+  });
+
+  const totalVotes = sortableRows.reduce((sum, row) => sum + row.voteCount, 0);
+
+  const rankings = sortableRows.map((row, index) => {
+    const votePercent = totalVotes > 0 ? Number(((row.voteCount / totalVotes) * 100).toFixed(1)) : 0;
     return {
       id: row.id,
       subject: row.subject,
       instructorName: row.instructor_name,
-      rank: row.rank,
-      trend: row.trend ?? "-",
-      confidence: row.confidence ?? 0,
+      rank: index + 1,
+      initialRank: row.rank,
+      initialVotes: row.initialVotes,
+      realVoteCount: row.realVoteCount,
       sourceType: row.source_type ?? "manual",
       isSeed: row.is_seed,
-      voteCount,
+      voteCount: row.voteCount,
       votePercent,
     };
   });
@@ -137,18 +155,46 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const subject = normalizeText(body.subject, 40);
   const instructorName = normalizeText(body.instructorName, 40);
-  const rank = Number(body.rank);
-  const trend = normalizeText(body.trend, 20) || "-";
-  const confidenceRaw = Number(body.confidence);
-  const confidence = Number.isFinite(confidenceRaw)
-    ? Math.min(100, Math.max(0, Math.round(confidenceRaw)))
-    : 0;
+  const initialRankRaw = Number(body.initialRank);
+  const initialVotesRaw = Number(body.initialVotes);
 
-  if (!subject || !instructorName || !Number.isFinite(rank)) {
-    return NextResponse.json({ error: "subject, instructorName, rank가 필요합니다." }, { status: 400 });
+  if (!subject || !instructorName) {
+    return NextResponse.json({ error: "subject, instructorName이 필요합니다." }, { status: 400 });
   }
 
   const admin = getSupabaseAdmin();
+  const { data: existingRow, error: existingRowError } = await admin
+    .from("instructor_rankings")
+    .select("rank,confidence")
+    .eq("exam_slug", exam)
+    .eq("subject", subject)
+    .eq("instructor_name", instructorName)
+    .limit(1)
+    .maybeSingle<{ rank: number; confidence: number | null }>();
+
+  if (existingRowError) {
+    return NextResponse.json({ error: existingRowError.message }, { status: 400 });
+  }
+
+  const { data: maxRankRow, error: maxRankError } = await admin
+    .from("instructor_rankings")
+    .select("rank")
+    .eq("exam_slug", exam)
+    .order("rank", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ rank: number }>();
+
+  if (maxRankError) {
+    return NextResponse.json({ error: maxRankError.message }, { status: 400 });
+  }
+
+  const nextRank = Math.max(1, (maxRankRow?.rank ?? 0) + 1);
+  const initialRank = Number.isFinite(initialRankRaw)
+    ? Math.max(1, Math.round(initialRankRaw))
+    : Math.max(1, existingRow?.rank ?? nextRank);
+  const initialVotes = Number.isFinite(initialVotesRaw)
+    ? Math.max(0, Math.round(initialVotesRaw))
+    : Math.max(0, existingRow?.confidence ?? 0);
   const { error } = await admin
     .from("instructor_rankings")
     .upsert(
@@ -156,9 +202,9 @@ export async function POST(
         exam_slug: exam,
         subject,
         instructor_name: instructorName,
-        rank: Math.max(1, Math.round(rank)),
-        trend,
-        confidence,
+        rank: initialRank,
+        trend: "-",
+        confidence: initialVotes,
         source_type: "admin",
         is_seed: false,
       },

@@ -28,8 +28,9 @@ type RankingItem = {
   subject: string;
   instructorName: string;
   rank: number;
-  trend: string;
-  confidence: number;
+  initialRank: number;
+  initialVotes: number;
+  realVoteCount: number;
   sourceType: string;
   isSeed: boolean;
   voteCount: number;
@@ -66,9 +67,8 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     subject: "",
     instructorName: "",
-    rank: "1",
-    trend: "-",
-    confidence: "80",
+    initialRank: "",
+    initialVotes: "0",
   });
 
   const sortedRankings = useMemo(() => {
@@ -198,9 +198,8 @@ export default function AdminPage() {
         body: JSON.stringify({
           subject: form.subject,
           instructorName: form.instructorName,
-          rank: Number(form.rank),
-          trend: form.trend,
-          confidence: Number(form.confidence),
+          initialRank: form.initialRank.trim() === "" ? undefined : Number(form.initialRank),
+          initialVotes: form.initialVotes.trim() === "" ? 0 : Number(form.initialVotes),
         }),
       });
 
@@ -212,7 +211,7 @@ export default function AdminPage() {
 
       setRankings(payload.rankings ?? []);
       setTotalVotes(payload.totalVotes ?? 0);
-      setForm((prev) => ({ ...prev, instructorName: "", rank: "1" }));
+      setForm((prev) => ({ ...prev, instructorName: "", initialRank: "", initialVotes: "0" }));
       setMessage("강사 데이터가 저장되었습니다.");
     } catch {
       setMessage("저장 중 오류가 발생했습니다.");
@@ -333,9 +332,9 @@ export default function AdminPage() {
 
                 <Card className="border-none shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-lg">강사 초기값 추가/수정</CardTitle>
+                    <CardTitle className="text-lg">강사 추가</CardTitle>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-2">
                     <Input
                       placeholder="과목 (예: 편입영어)"
                       value={form.subject}
@@ -347,23 +346,21 @@ export default function AdminPage() {
                       onChange={(e) => setForm((prev) => ({ ...prev, instructorName: e.target.value }))}
                     />
                     <Input
-                      placeholder="순위"
+                      placeholder="초기순위 (예: 1)"
                       inputMode="numeric"
-                      value={form.rank}
-                      onChange={(e) => setForm((prev) => ({ ...prev, rank: e.target.value }))}
+                      value={form.initialRank}
+                      onChange={(e) => setForm((prev) => ({ ...prev, initialRank: e.target.value }))}
                     />
                     <Input
-                      placeholder="변동 (예: +2)"
-                      value={form.trend}
-                      onChange={(e) => setForm((prev) => ({ ...prev, trend: e.target.value }))}
-                    />
-                    <Input
-                      placeholder="신뢰도(0~100)"
+                      placeholder="초기득표수 (예: 30)"
                       inputMode="numeric"
-                      value={form.confidence}
-                      onChange={(e) => setForm((prev) => ({ ...prev, confidence: e.target.value }))}
+                      value={form.initialVotes}
+                      onChange={(e) => setForm((prev) => ({ ...prev, initialVotes: e.target.value }))}
                     />
-                    <div className="md:col-span-5">
+                    <div className="md:col-span-4">
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        최종순위는 (실제득표수 + 초기득표수) 기준으로 자동 계산됩니다. 동률이면 초기순위가 우선됩니다.
+                      </p>
                       <Button onClick={handleSave} disabled={submitting}>
                         {submitting ? "저장 중..." : "저장"}
                       </Button>
@@ -391,6 +388,9 @@ export default function AdminPage() {
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 {item.voteCount}표 ({item.votePercent}%)
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                초기순위 {item.initialRank} · 초기득표 {item.initialVotes} · 실투표 {item.realVoteCount}
                               </p>
                             </div>
                             <Button

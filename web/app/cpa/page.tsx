@@ -13,8 +13,6 @@ type RankingRow = {
   subject: string;
   instructorName: string;
   rank: number;
-  trend: string;
-  confidence: number;
 };
 
 type BriefingRow = {
@@ -54,24 +52,51 @@ function formatRelativeTime(dateString: string | null): string {
 
 async function loadRankings(): Promise<RankingRow[]> {
   const supabase = getSupabaseServer();
-  const { data, error } = await supabase
+  const { data: rankingRows, error } = await supabase
     .from("instructor_rankings")
-    .select("id,subject,instructor_name,rank,trend,confidence")
+    .select("id,subject,instructor_name,rank,confidence")
     .eq("exam_slug", "cpa")
-    .order("rank", { ascending: true })
-    .limit(10);
+    .order("subject", { ascending: true })
+    .order("instructor_name", { ascending: true })
+    .limit(200);
 
-  if (error || !data?.length) {
+  if (error || !rankingRows?.length) {
     return [];
   }
 
-  return data.map((row: { id: string; subject: string; instructor_name: string; rank: number; trend: string | null; confidence: number | null }) => ({
+  const { data: voteRows, error: voteError } = await supabase
+    .from("instructor_votes")
+    .select("instructor_name")
+    .eq("exam_slug", "cpa");
+
+  if (voteError) {
+    return [];
+  }
+
+  const voteCountMap = new Map<string, number>();
+  (voteRows ?? []).forEach((row: { instructor_name: string }) => {
+    voteCountMap.set(row.instructor_name, (voteCountMap.get(row.instructor_name) ?? 0) + 1);
+  });
+
+  const sorted = rankingRows
+    .map((row: { id: string; subject: string; instructor_name: string; rank: number; confidence: number | null }) => ({
+      ...row,
+      voteCount: (voteCountMap.get(row.instructor_name) ?? 0) + Math.max(0, row.confidence ?? 0),
+    }))
+    .sort((a, b) => {
+      if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      const bySubject = a.subject.localeCompare(b.subject);
+      if (bySubject !== 0) return bySubject;
+      return a.instructor_name.localeCompare(b.instructor_name);
+    })
+    .slice(0, 10);
+
+  return sorted.map((row, index) => ({
     id: row.id,
     subject: row.subject,
     instructorName: row.instructor_name,
-    rank: row.rank,
-    trend: row.trend ?? "-",
-    confidence: row.confidence ?? 0,
+    rank: index + 1,
   }));
 }
 
@@ -179,14 +204,10 @@ export default async function CpaPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {rankingRows.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+                  <div key={row.id} className="rounded-lg border border-gray-100 px-3 py-2">
                     <div>
                       <p className="text-xs text-gray-500">{row.subject}</p>
                       <p className="text-sm font-semibold">{row.rank}위 {row.instructorName}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">변동 {row.trend}</p>
-                      <p className="text-xs text-primary">신뢰도 {row.confidence}%</p>
                     </div>
                   </div>
                 ))}
