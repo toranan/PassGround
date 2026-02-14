@@ -20,9 +20,17 @@ function normalizeNextPath(value: string | null): string {
   return value;
 }
 
+function getAppOrigin(request: Request): string {
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return getSiteUrl();
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const appOrigin = getSiteUrl();
+  const appOrigin = getAppOrigin(request);
 
   if (!ENABLE_SOCIAL_AUTH) {
     return NextResponse.redirect(new URL("/signup?error=social_disabled", appOrigin));

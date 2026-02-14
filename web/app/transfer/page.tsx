@@ -5,7 +5,6 @@ import { TransferRankingTabs } from "@/components/TransferRankingTabs";
 import { TransferPredictor } from "@/components/TransferPredictor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BOARD_POST_GROUPS, CUTOFF_SEED_DATA, DAILY_BRIEFING_SEED, INSTRUCTOR_RANKING_SEED } from "@/lib/data";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -96,16 +95,7 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     .limit(10);
 
   if (error || !data?.length) {
-    return CUTOFF_SEED_DATA
-      .filter((row) => row.examSlug === "transfer")
-      .map((row) => ({
-        id: row.id,
-        university: row.university,
-        major: row.major,
-        year: row.year,
-        scoreBand: row.scoreBand,
-        note: row.note,
-      }));
+    return [];
   }
 
   return data.map((row: { id: string; university: string; major: string; year: number; score_band: string; note: string | null }) => ({
@@ -128,20 +118,7 @@ async function loadBriefings(): Promise<BriefingRow[]> {
     .limit(5);
 
   if (error || !data?.length) {
-    return DAILY_BRIEFING_SEED
-      .filter((row) => row.examSlug === "transfer")
-      .map((row) => {
-        const board = resolveTransferBriefingBoard(row.sourceLabel, row.title);
-        return {
-          id: row.id,
-          title: row.title,
-          summary: row.summary,
-          sourceLabel: row.sourceLabel,
-          publishedAt: row.publishedAt,
-          boardSlug: board.slug,
-          boardName: board.name,
-        };
-      });
+    return [];
   }
 
   return data.map((row: { id: string; title: string; summary: string; source_label: string; published_at: string }) => {
@@ -167,17 +144,7 @@ async function loadBoardRows(boardSlug: "qa" | "study-qa"): Promise<QaRow[]> {
     .eq("slug", "transfer")
     .maybeSingle();
 
-  if (!examData?.id) {
-    const fallbackPosts = BOARD_POST_GROUPS.find(
-      (group) => group.examSlug === "transfer" && group.boardSlug === boardSlug
-    )?.posts ?? [];
-    return fallbackPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      commentCount: post.comments,
-      createdAt: post.time,
-    }));
-  }
+  if (!examData?.id) return [];
 
   const { data: boardData } = await supabase
     .from("boards")
@@ -186,17 +153,7 @@ async function loadBoardRows(boardSlug: "qa" | "study-qa"): Promise<QaRow[]> {
     .eq("slug", boardSlug)
     .maybeSingle();
 
-  if (!boardData?.id) {
-    const fallbackPosts = BOARD_POST_GROUPS.find(
-      (group) => group.examSlug === "transfer" && group.boardSlug === boardSlug
-    )?.posts ?? [];
-    return fallbackPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      commentCount: post.comments,
-      createdAt: post.time,
-    }));
-  }
+  if (!boardData?.id) return [];
 
   const { data: posts } = await supabase
     .from("posts")
@@ -234,23 +191,7 @@ async function loadPopularRows(): Promise<PopularRow[]> {
     .eq("slug", "transfer")
     .maybeSingle();
 
-  if (!examData?.id) {
-    return BOARD_POST_GROUPS
-      .filter((group) => group.examSlug === "transfer")
-      .flatMap((group) =>
-        group.posts.map((post) => ({
-          id: post.id,
-          title: post.title,
-          boardSlug: group.boardSlug,
-          boardName: group.boardName,
-          commentCount: post.comments,
-          likeCount: Math.max(0, Math.floor(post.comments / 2)),
-          viewCount: post.views,
-        }))
-      )
-      .sort((a, b) => b.commentCount + b.likeCount - (a.commentCount + a.likeCount))
-      .slice(0, 5);
-  }
+  if (!examData?.id) return [];
 
   const { data: boardRows } = await supabase
     .from("boards")
@@ -336,16 +277,7 @@ async function loadRankings(): Promise<RankingRow[]> {
     .limit(12);
 
   if (error || !data?.length) {
-    return INSTRUCTOR_RANKING_SEED
-      .filter((row) => row.examSlug === "transfer")
-      .map((row) => ({
-        id: row.id,
-        subject: row.subject,
-        instructorName: row.instructorName,
-        rank: row.rank,
-        trend: row.trend,
-        confidence: row.confidence,
-      }));
+    return [];
   }
 
   return data.map((row: { id: string; subject: string; instructor_name: string; rank: number; trend: string | null; confidence: number | null }) => ({
@@ -389,6 +321,9 @@ export default async function TransferPage() {
               <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
                 <Link href="/c/transfer/study-qa">학습 Q&A</Link>
               </Button>
+              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
+                <Link href="/transfer/instructor-ranking">인기 강사 순위</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -419,13 +354,16 @@ export default async function TransferPage() {
                       </p>
                     </div>
                   ))}
+                  {!briefingRows.length && (
+                    <p className="text-sm text-muted-foreground">아직 등록된 편입 정보가 없습니다.</p>
+                  )}
                 </CardContent>
               </Card>
 
               <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/study-qa" className="hover:text-primary transition-colors">
+                    <Link href="/transfer/instructor-ranking" className="hover:text-primary transition-colors">
                       편입 인기 강사 순위
                     </Link>
                   </CardTitle>

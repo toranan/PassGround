@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BOARD_POST_GROUPS, DAILY_BRIEFING_SEED, INSTRUCTOR_RANKING_SEED } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
@@ -63,16 +62,7 @@ async function loadRankings(): Promise<RankingRow[]> {
     .limit(10);
 
   if (error || !data?.length) {
-    return INSTRUCTOR_RANKING_SEED
-      .filter((row) => row.examSlug === "cpa")
-      .map((row) => ({
-        id: row.id,
-        subject: row.subject,
-        instructorName: row.instructorName,
-        rank: row.rank,
-        trend: row.trend,
-        confidence: row.confidence,
-      }));
+    return [];
   }
 
   return data.map((row: { id: string; subject: string; instructor_name: string; rank: number; trend: string | null; confidence: number | null }) => ({
@@ -95,15 +85,7 @@ async function loadBriefings(): Promise<BriefingRow[]> {
     .limit(5);
 
   if (error || !data?.length) {
-    return DAILY_BRIEFING_SEED
-      .filter((row) => row.examSlug === "cpa")
-      .map((row) => ({
-        id: row.id,
-        title: row.title,
-        summary: row.summary,
-        sourceLabel: row.sourceLabel,
-        publishedAt: row.publishedAt,
-      }));
+    return [];
   }
 
   return data.map((row: { id: string; title: string; summary: string; source_label: string; published_at: string }) => ({
@@ -124,15 +106,7 @@ async function loadQaRows(): Promise<QaRow[]> {
     .eq("slug", "cpa")
     .maybeSingle();
 
-  if (!examData?.id) {
-    const fallbackPosts = BOARD_POST_GROUPS.find((group) => group.examSlug === "cpa" && group.boardSlug === "qa")?.posts ?? [];
-    return fallbackPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      commentCount: post.comments,
-      createdAt: post.time,
-    }));
-  }
+  if (!examData?.id) return [];
 
   const { data: boardData } = await supabase
     .from("boards")
@@ -141,15 +115,7 @@ async function loadQaRows(): Promise<QaRow[]> {
     .eq("slug", "qa")
     .maybeSingle();
 
-  if (!boardData?.id) {
-    const fallbackPosts = BOARD_POST_GROUPS.find((group) => group.examSlug === "cpa" && group.boardSlug === "qa")?.posts ?? [];
-    return fallbackPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      commentCount: post.comments,
-      createdAt: post.time,
-    }));
-  }
+  if (!boardData?.id) return [];
 
   const { data: posts } = await supabase
     .from("posts")
@@ -224,6 +190,7 @@ export default async function CpaPage() {
                     </div>
                   </div>
                 ))}
+                {!rankingRows.length && <p className="text-sm text-gray-500">아직 등록된 강사 순위가 없습니다.</p>}
               </CardContent>
             </Card>
 
@@ -255,6 +222,7 @@ export default async function CpaPage() {
                       <p className="text-[11px] text-primary mt-2">{row.sourceLabel} · {row.publishedAt}</p>
                     </div>
                   ))}
+                  {!briefingRows.length && <p className="text-sm text-gray-500">아직 등록된 CPA 브리핑이 없습니다.</p>}
                 </CardContent>
               </Card>
 
