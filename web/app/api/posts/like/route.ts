@@ -6,6 +6,20 @@ function isValidUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
+function isDuplicateLikeConflict(error: { code?: string | null; message?: string | null } | null): boolean {
+  if (!error) return false;
+  if (error.code === "23505") return true;
+  return (error.message ?? "").toLowerCase().includes("duplicate key value");
+}
+
+async function getLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, postId: string): Promise<number> {
+  const { count } = await admin
+    .from("post_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", postId);
+  return count ?? 0;
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const postId = typeof body.postId === "string" ? body.postId.trim() : "";
@@ -69,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true, liked: false });
+    return NextResponse.json({ ok: true, liked: false, likeCount: await getLikeCount(admin, postId) });
   }
 
   const { error } = await admin.from("post_likes").insert({
@@ -78,8 +92,14 @@ export async function POST(request: Request) {
   });
 
   if (error) {
+    if (isDuplicateLikeConflict(error)) {
+      // Concurrent like requests can race on UNIQUE/PK; treat as already-liked success.
+      const likeCount = await getLikeCount(admin, postId);
+      return NextResponse.json({ ok: true, liked: true, likeCount: likeCount || 1 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, liked: true });
+  const likeCount = await getLikeCount(admin, postId);
+  return NextResponse.json({ ok: true, liked: true, likeCount: likeCount || 1 });
 }

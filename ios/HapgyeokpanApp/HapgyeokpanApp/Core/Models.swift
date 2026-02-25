@@ -74,6 +74,8 @@ struct PostsResponse: Codable {
     let exam: ExamInfo
     let board: BoardMeta
     let posts: [PostSummary]
+    let hasMore: Bool?
+    let nextCursor: String?
     let source: String?
 }
 
@@ -140,6 +142,7 @@ struct GenericOKResponse: Codable {
 struct LikeResponse: Codable {
     let ok: Bool
     let liked: Bool
+    let likeCount: Int?
 }
 
 struct AdoptResponse: Codable {

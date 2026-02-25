@@ -4,6 +4,20 @@ import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+type PostRow = {
+  id: string;
+  title: string;
+  content?: string | null;
+  author_name: string | null;
+  created_at: string | null;
+  view_count?: number | null;
+};
+
+type CursorPayload = {
+  createdAt: string;
+  id: string;
+};
+
 function formatRelativeTime(value: string | null): string {
   if (!value) return "방금";
   if (value.includes("분") || value.includes("시간") || value.includes("일")) {
@@ -27,8 +41,25 @@ function formatRelativeTime(value: string | null): string {
 
 function parseLimit(value: string | null): number {
   const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return 50;
-  return Math.min(120, Math.max(1, Math.round(numeric)));
+  if (!Number.isFinite(numeric)) return 20;
+  return Math.min(60, Math.max(1, Math.round(numeric)));
+}
+
+function encodeCursor(payload: CursorPayload): string {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeCursor(raw: string | null): CursorPayload | null {
+  if (!raw) return null;
+  try {
+    const decoded = Buffer.from(raw, "base64url").toString("utf8");
+    const parsed = JSON.parse(decoded) as Partial<CursorPayload>;
+    if (!parsed.createdAt || !parsed.id) return null;
+    if (Number.isNaN(new Date(parsed.createdAt).getTime())) return null;
+    return { createdAt: parsed.createdAt, id: parsed.id };
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: Request) {
@@ -36,6 +67,7 @@ export async function GET(request: Request) {
   const exam = (searchParams.get("exam") ?? "").trim();
   const board = (searchParams.get("board") ?? "").trim();
   const limit = parseLimit(searchParams.get("limit"));
+  const cursor = decodeCursor(searchParams.get("cursor"));
 
   if (!exam || !board) {
     return NextResponse.json({ error: "exam, board 파라미터가 필요합니다." }, { status: 400 });
@@ -68,32 +100,41 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
-  let postsData:
-    | {
-      id: string;
-      title: string;
-      content?: string | null;
-      author_name: string | null;
-      created_at: string | null;
-      view_count?: number | null;
-    }[]
-    | null = null;
+  let postsData: PostRow[] | null = null;
 
-  const { data: modernPosts, error: modernError } = await supabase
+  let modernQuery = supabase
     .from("posts")
     .select("id,title,content,author_name,created_at,view_count")
     .eq("board_id", boardRow.id)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("id", { ascending: false })
+    .limit(limit + 1);
+
+  if (cursor) {
+    modernQuery = modernQuery.or(
+      `created_at.lt."${cursor.createdAt}",and(created_at.eq."${cursor.createdAt}",id.lt.${cursor.id})`
+    );
+  }
+
+  const { data: modernPosts, error: modernError } = await modernQuery;
   postsData = modernPosts;
 
   if ((!postsData || postsData.length === 0) && modernError?.message?.includes("view_count")) {
-    const { data: legacyPosts } = await supabase
+    let legacyQuery = supabase
       .from("posts")
       .select("id,title,content,author_name,created_at")
       .eq("board_id", boardRow.id)
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .order("id", { ascending: false })
+      .limit(limit + 1);
+
+    if (cursor) {
+      legacyQuery = legacyQuery.or(
+        `created_at.lt."${cursor.createdAt}",and(created_at.eq."${cursor.createdAt}",id.lt.${cursor.id})`
+      );
+    }
+
+    const { data: legacyPosts } = await legacyQuery;
 
     postsData = (legacyPosts ?? []).map((post) => ({
       ...post,
@@ -108,11 +149,15 @@ export async function GET(request: Request) {
       exam: { slug: examInfo.examSlug, name: examInfo.examName },
       board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
       posts: [],
+      hasMore: false,
+      nextCursor: null,
       source: "db-empty",
     });
   }
 
-  const postIds = postsData.map((post) => post.id);
+  const hasMore = postsData.length > limit;
+  const pageRows = hasMore ? postsData.slice(0, limit) : postsData;
+  const postIds = pageRows.map((post) => post.id);
   const [{ data: commentRows }, { data: likeRows }] = await Promise.all([
     supabase.from("comments").select("post_id").in("post_id", postIds),
     admin.from("post_likes").select("post_id").in("post_id", postIds),
@@ -128,7 +173,7 @@ export async function GET(request: Request) {
     likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1);
   });
 
-  const posts = postsData.map((post) => ({
+  const posts = pageRows.map((post) => ({
     id: post.id,
     title: post.title,
     content: post.content?.substring(0, 100) || "",
@@ -141,12 +186,20 @@ export async function GET(request: Request) {
     isSample: false,
   }));
 
+  const last = pageRows[pageRows.length - 1];
+  const nextCursor =
+    hasMore && last?.created_at
+      ? encodeCursor({ createdAt: last.created_at, id: last.id })
+      : null;
+
   return NextResponse.json({
     ok: true,
     writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
     exam: { slug: examInfo.examSlug, name: examInfo.examName },
     board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
     posts,
+    hasMore,
+    nextCursor,
     source: "db",
   });
 }

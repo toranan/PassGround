@@ -47,23 +47,51 @@ final class APIClient {
         )
     }
 
-    func fetchBoards(baseURL: URL, exam: ExamSlug) async throws -> BoardsResponse {
-        try await request(baseURL: baseURL, path: "api/mobile/boards/\(exam.rawValue)")
-    }
-
-    func fetchPosts(baseURL: URL, exam: ExamSlug, board: String) async throws -> PostsResponse {
+    func fetchBoards(
+        baseURL: URL,
+        exam: ExamSlug,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> BoardsResponse {
         try await request(
             baseURL: baseURL,
-            path: "api/mobile/posts",
-            query: [
-                URLQueryItem(name: "exam", value: exam.rawValue),
-                URLQueryItem(name: "board", value: board),
-                URLQueryItem(name: "limit", value: "70")
-            ]
+            path: "api/mobile/boards/\(exam.rawValue)",
+            cachePolicy: cachePolicy
         )
     }
 
-    func fetchPostDetail(baseURL: URL, exam: ExamSlug, board: String, postId: String, userId: String?) async throws -> PostDetailResponse {
+    func fetchPosts(
+        baseURL: URL,
+        exam: ExamSlug,
+        board: String,
+        limit: Int = 20,
+        cursor: String? = nil,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> PostsResponse {
+        var query: [URLQueryItem] = [
+            URLQueryItem(name: "exam", value: exam.rawValue),
+            URLQueryItem(name: "board", value: board),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+        if let cursor, !cursor.isEmpty {
+            query.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/mobile/posts",
+            query: query,
+            cachePolicy: cachePolicy
+        )
+    }
+
+    func fetchPostDetail(
+        baseURL: URL,
+        exam: ExamSlug,
+        board: String,
+        postId: String,
+        userId: String?,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> PostDetailResponse {
         var query: [URLQueryItem] = [
             URLQueryItem(name: "exam", value: exam.rawValue),
             URLQueryItem(name: "board", value: board)
@@ -74,7 +102,8 @@ final class APIClient {
         return try await request(
             baseURL: baseURL,
             path: "api/mobile/posts/\(postId)",
-            query: query
+            query: query,
+            cachePolicy: cachePolicy
         )
     }
 
@@ -246,8 +275,10 @@ final class APIClient {
         do {
             (responseData, response) = try await session.data(for: request)
         } catch {
-            Self.logTransportError(error, url: url)
-            if !Self.isCancellation(error) {
+            if Self.isCancellation(error) {
+                Self.logger.debug("REQUEST_CANCELLED url=\(url.absoluteString, privacy: .public)")
+            } else {
+                Self.logTransportError(error, url: url)
                 Self.raiseDebugIssue("Upload transport failure: \(error.localizedDescription)\n\(url.absoluteString)")
             }
             throw error
@@ -444,7 +475,8 @@ final class APIClient {
         method: String = "GET",
         query: [URLQueryItem] = [],
         body: (any Encodable)? = nil,
-        accessToken: String? = nil
+        accessToken: String? = nil,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     ) async throws -> T {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
             throw APIClientError.invalidURL
@@ -460,6 +492,7 @@ final class APIClient {
 
         var request = URLRequest(url: url)
         request.httpMethod = method
+        request.cachePolicy = cachePolicy
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         if let accessToken, !accessToken.isEmpty {
@@ -477,8 +510,10 @@ final class APIClient {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            Self.logTransportError(error, url: url)
-            if !Self.isCancellation(error) {
+            if Self.isCancellation(error) {
+                Self.logger.debug("REQUEST_CANCELLED url=\(url.absoluteString, privacy: .public)")
+            } else {
+                Self.logTransportError(error, url: url)
                 Self.raiseDebugIssue("Network transport failure: \(error.localizedDescription)\n\(url.absoluteString)")
             }
             throw error
@@ -590,14 +625,29 @@ final class APIClient {
         logger.error("HTTP_ERROR \(statusCode, privacy: .public) url=\(url.absoluteString, privacy: .public) err=\(error.localizedDescription, privacy: .public) body=\(snippet, privacy: .public)")
     }
 
-    private static func isCancellation(_ error: Error) -> Bool {
+    static func isCancellationError(_ error: Error) -> Bool {
         if error is CancellationError {
             return true
         }
         if let urlError = error as? URLError, urlError.code == .cancelled {
             return true
         }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+            return true
+        }
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error,
+           isCancellationError(underlying) {
+            return true
+        }
+        if nsError.localizedDescription.lowercased().contains("cancelled") {
+            return true
+        }
         return false
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        isCancellationError(error)
     }
 
     private static func raiseDebugIssue(_ message: String) {

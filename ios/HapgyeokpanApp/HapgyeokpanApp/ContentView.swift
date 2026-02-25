@@ -13,42 +13,58 @@ enum DesignSystem {
 
 struct ContentView: View {
     @State private var selectedTab: TabSelection = .home
+    @State private var loadedTabs: Set<TabSelection> = [.home]
 
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                switch selectedTab {
-                case .home:
-                    NavigationStack {
-                        TransferHomeView()
-                    }
-                case .community:
-                    NavigationStack {
-                        CommunityBoardsView()
-                    }
-                case .ranking:
-                    NavigationStack {
-                        RankingView()
-                    }
-                case .verification:
-                    NavigationStack {
-                        VerificationView()
-                    }
-                case .mypage:
-                    NavigationStack {
-                        MyPageView()
+            ZStack {
+                ForEach(TabSelection.allCases, id: \.self) { tab in
+                    if loadedTabs.contains(tab) {
+                        tabRoot(for: tab)
+                            .opacity(selectedTab == tab ? 1 : 0)
+                            .allowsHitTesting(selectedTab == tab)
+                            .accessibilityHidden(selectedTab != tab)
                     }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onChange(of: selectedTab) { tab in
+                loadedTabs.insert(tab)
+            }
 
             MainBottomTabBar(selectedTab: $selectedTab)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
+
+    @ViewBuilder
+    private func tabRoot(for tab: TabSelection) -> some View {
+        switch tab {
+        case .home:
+            NavigationStack {
+                TransferHomeView()
+            }
+        case .community:
+            NavigationStack {
+                CommunityBoardsView()
+            }
+        case .ranking:
+            NavigationStack {
+                RankingView()
+            }
+        case .verification:
+            NavigationStack {
+                VerificationView()
+            }
+        case .mypage:
+            NavigationStack {
+                MyPageView()
+            }
+        }
+    }
 }
 
-enum TabSelection: String {
+enum TabSelection: String, CaseIterable {
     case home = "홈"
     case community = "커뮤니티"
     case ranking = "랭킹"

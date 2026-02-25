@@ -50,7 +50,7 @@ struct CommunityBoardsView: View {
             }
         }
         .refreshable {
-            await loadBoards()
+            await loadBoards(forceRefresh: true)
         }
     }
 
@@ -119,11 +119,12 @@ struct CommunityBoardsView: View {
         .background(Color.white)
     }
 
-    private func loadBoards() async {
+    private func loadBoards(forceRefresh: Bool = false) async {
         loading = true
         message = ""
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
         do {
-            let response = try await api.fetchBoards(baseURL: config.baseURL, exam: exam)
+            let response = try await api.fetchBoards(baseURL: config.baseURL, exam: exam, cachePolicy: cachePolicy)
             if response.boards.isEmpty {
                 boards = fallbackBoards(for: exam)
                 message = "기본 게시판 목록을 표시합니다."
@@ -132,6 +133,10 @@ struct CommunityBoardsView: View {
             }
             writable = response.writable
         } catch {
+            if isCancellation(error) {
+                loading = false
+                return
+            }
             boards = fallbackBoards(for: exam)
             message = readableErrorMessage(error)
         }
@@ -160,5 +165,9 @@ struct CommunityBoardsView: View {
             }
         }
         return error.localizedDescription
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        APIClient.isCancellationError(error)
     }
 }

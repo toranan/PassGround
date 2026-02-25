@@ -4,6 +4,7 @@ private let webPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 
 struct BoardPostsView: View {
     @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var communityStore: CommunityStore
 
     private let api = APIClient()
 
@@ -13,9 +14,14 @@ struct BoardPostsView: View {
 
     @State private var posts: [PostSummary] = []
     @State private var loading = false
+    @State private var loadingMore = false
     @State private var errorMessage = ""
     @State private var showComposer = false
     @State private var searchText = ""
+    @State private var nextCursor: String?
+    @State private var hasMore = true
+    @State private var didBootstrap = false
+    private let pageSize = 20
 
     private var filteredPosts: [PostSummary] {
         let token = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -67,13 +73,8 @@ struct BoardPostsView: View {
 
                     Divider()
 
-                    if loading {
-                        VStack {
-                            ProgressView("게시글 로딩 중...")
-                                .padding(.vertical, 40)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white)
+                    if loading && posts.isEmpty {
+                        skeletonList
                     } else if filteredPosts.isEmpty {
                         Text(searchText.isEmpty ? "아직 게시글이 없습니다." : "검색 결과가 없습니다.")
                             .font(.subheadline)
@@ -90,8 +91,24 @@ struct BoardPostsView: View {
                                     BlindCommunityPostCell(post: post)
                                 }
                                 .buttonStyle(.plain)
+                                .onAppear {
+                                    guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                                    guard let lastID = posts.last?.id, lastID == post.id else { return }
+                                    Task { await loadPosts(reset: false) }
+                                }
 
                                 Divider()
+                            }
+
+                            if loadingMore {
+                                HStack {
+                                    Spacer()
+                                    ProgressView("더 불러오는 중...")
+                                        .font(.caption)
+                                        .padding(.vertical, 12)
+                                    Spacer()
+                                }
+                                .background(Color.white)
                             }
                         }
                     }
@@ -102,10 +119,18 @@ struct BoardPostsView: View {
             .navigationTitle(board.name)
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await loadPosts()
+                guard !didBootstrap else { return }
+                didBootstrap = true
+                let fresh = applyCachedSnapshotIfAvailable()
+                if !fresh {
+                    await loadPosts(reset: true)
+                }
+            }
+            .onAppear {
+                _ = applyCachedSnapshotIfAvailable()
             }
             .refreshable {
-                await loadPosts()
+                await loadPosts(reset: true, forceRefresh: true)
             }
 
             if writable {
@@ -124,23 +149,118 @@ struct BoardPostsView: View {
                 .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 4)
             }
         }
-        .sheet(isPresented: $showComposer) {
+        .sheet(isPresented: $showComposer, onDismiss: {
+            Task { await loadPosts(reset: true, forceRefresh: true) }
+        }) {
             NavigationStack {
                 PostComposerView(exam: exam, boardSlug: board.slug)
             }
         }
     }
 
-    private func loadPosts() async {
-        loading = true
+    private var skeletonList: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<6, id: \.self) { index in
+                VStack(alignment: .leading, spacing: 10) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.18))
+                        .frame(height: 18)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.14))
+                        .frame(height: 14)
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.12))
+                            .frame(width: 40, height: 12)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.12))
+                            .frame(width: 54, height: 12)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.12))
+                            .frame(width: 54, height: 12)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+
+                if index < 5 {
+                    Divider()
+                }
+            }
+        }
+        .background(Color.white)
+    }
+
+    @discardableResult
+    private func applyCachedSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.postsSnapshot(exam: exam, board: board.slug) else {
+            return false
+        }
+        posts = snapshot.posts
+        nextCursor = snapshot.nextCursor
+        hasMore = snapshot.hasMore
         errorMessage = ""
+        let age = Date().timeIntervalSince(snapshot.updatedAt)
+        return age <= CommunityStore.freshWindow
+    }
+
+    private func loadPosts(reset: Bool, forceRefresh: Bool = false) async {
+        if reset {
+            if loading { return }
+            loading = true
+            errorMessage = ""
+        } else {
+            if loading || loadingMore || !hasMore { return }
+            loadingMore = true
+        }
+        defer {
+            if reset {
+                loading = false
+            } else {
+                loadingMore = false
+            }
+        }
+
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
+        let cursor = reset ? nil : nextCursor
+
         do {
-            let response = try await api.fetchPosts(baseURL: config.baseURL, exam: exam, board: board.slug)
-            posts = response.posts
+            let response = try await api.fetchPosts(
+                baseURL: config.baseURL,
+                exam: exam,
+                board: board.slug,
+                limit: pageSize,
+                cursor: cursor,
+                cachePolicy: cachePolicy
+            )
+
+            if reset {
+                posts = response.posts
+            } else {
+                var seen = Set(posts.map(\.id))
+                let appended = response.posts.filter { seen.insert($0.id).inserted }
+                posts.append(contentsOf: appended)
+            }
+
+            nextCursor = response.nextCursor
+            hasMore = response.hasMore ?? (response.nextCursor?.isEmpty == false)
+            communityStore.savePostsSnapshot(
+                exam: exam,
+                board: board.slug,
+                posts: posts,
+                nextCursor: nextCursor,
+                hasMore: hasMore
+            )
         } catch {
+            if isCancellation(error) {
+                return
+            }
             errorMessage = error.localizedDescription
         }
-        loading = false
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        APIClient.isCancellationError(error)
     }
 }
 

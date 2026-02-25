@@ -11,6 +11,7 @@ private let webPrimaryColor = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct PostDetailView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var communityStore: CommunityStore
 
     private let api = APIClient()
 
@@ -24,6 +25,7 @@ struct PostDetailView: View {
 
     @State private var likeCount = 0
     @State private var liked = false
+    @State private var likeUpdating = false
 
     @State private var commentText = ""
     @State private var replyTargetID: String?
@@ -60,7 +62,7 @@ struct PostDetailView: View {
         .navigationTitle("게시글")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
-        .refreshable { await load() }
+        .refreshable { await load(forceRefresh: true) }
     }
 
     @ViewBuilder
@@ -103,6 +105,7 @@ struct PostDetailView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .disabled(likeUpdating)
 
             Label("\(detail.comments.count)", systemImage: "message")
                 .foregroundStyle(.secondary)
@@ -266,37 +269,67 @@ struct PostDetailView: View {
         return CommentNode(id: node.id, item: node.item, children: children)
     }
 
-    private func load() async {
+    private func load(forceRefresh: Bool = false) async {
         loading = true
         message = ""
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
         do {
             let response = try await api.fetchPostDetail(
                 baseURL: config.baseURL,
                 exam: exam,
                 board: boardSlug,
                 postId: postId,
-                userId: session.user?.id
+                userId: session.user?.id,
+                cachePolicy: cachePolicy
             )
             detail = response
             likeCount = response.post.likeCount
             liked = response.viewerLiked ?? false
         } catch {
+            if isCancellation(error) {
+                loading = false
+                return
+            }
             message = error.localizedDescription
         }
         loading = false
     }
 
+    @MainActor
     private func toggleLike() async {
         guard let userID = session.user?.id else {
             message = "로그인 후 이용해 주세요."
             return
         }
+        if likeUpdating { return }
+
+        let previousLiked = liked
+        let previousCount = likeCount
+
+        // Optimistic update: reflect immediately, rollback on failure.
+        let optimisticLiked = !previousLiked
+        liked = optimisticLiked
+        likeCount = max(0, previousCount + (optimisticLiked ? 1 : -1))
+        communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
+        likeUpdating = true
+        defer { likeUpdating = false }
+
         do {
             let response = try await api.toggleLike(baseURL: config.baseURL, postId: postId, userId: userID)
             liked = response.liked
-            likeCount += response.liked ? 1 : -1
-            if likeCount < 0 { likeCount = 0 }
+            if let serverLikeCount = response.likeCount {
+                likeCount = max(0, serverLikeCount)
+                communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
+            } else if liked != optimisticLiked {
+                // Reconcile in case server result differs from optimistic state.
+                likeCount = max(0, previousCount + (liked ? 1 : -1))
+                communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
+            }
         } catch {
+            liked = previousLiked
+            likeCount = previousCount
+            communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
+            if isCancellation(error) { return }
             message = error.localizedDescription
         }
     }
@@ -319,6 +352,7 @@ struct PostDetailView: View {
             message = "등록 완료"
             await load()
         } catch {
+            if isCancellation(error) { return }
             message = error.localizedDescription
         }
     }
@@ -335,7 +369,12 @@ struct PostDetailView: View {
             message = "채택 완료"
             await load()
         } catch {
+            if isCancellation(error) { return }
             message = error.localizedDescription
         }
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        APIClient.isCancellationError(error)
     }
 }

@@ -71,7 +71,7 @@ struct TransferHomeView: View {
             }
         }
         .refreshable {
-            await load()
+            await load(forceRefresh: true)
         }
     }
 
@@ -154,28 +154,53 @@ struct TransferHomeView: View {
         }
     }
 
-    private func load() async {
+    private func load(forceRefresh: Bool = false) async {
         loading = true
         errorMessage = ""
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
 
         do {
-            let boardsResponse = try await api.fetchBoards(baseURL: config.baseURL, exam: exam)
+            let boardsResponse = try await api.fetchBoards(
+                baseURL: config.baseURL,
+                exam: exam,
+                cachePolicy: cachePolicy
+            )
             var boards = boardsResponse.boards.isEmpty ? fallbackBoards(for: exam) : Array(boardsResponse.boards.prefix(8))
             boards = boards.filter { $0.slug != "free" }
 
-            var merged: [HomeFeedItem] = []
-            for board in boards {
-                let postsResponse = try await api.fetchPosts(baseURL: config.baseURL, exam: exam, board: board.slug)
-                let rows = postsResponse.posts.map { post in
-                    HomeFeedItem(
-                        id: "\(board.slug)-\(post.id)",
-                        boardSlug: board.slug,
-                        boardName: board.name,
-                        post: post,
-                        createdAt: Self.parseDate(post.createdAt)
-                    )
+            let baseURL = config.baseURL
+            let examValue = exam
+            let merged: [HomeFeedItem] = try await withThrowingTaskGroup(of: [HomeFeedItem].self) { group in
+                for board in boards {
+                    let boardSlug = board.slug
+                    let boardName = board.name
+                    group.addTask {
+                        let api = APIClient()
+                        let postsResponse = try await api.fetchPosts(
+                            baseURL: baseURL,
+                            exam: examValue,
+                            board: boardSlug,
+                            limit: 20,
+                            cursor: nil,
+                            cachePolicy: cachePolicy
+                        )
+                        return postsResponse.posts.map { post in
+                            HomeFeedItem(
+                                id: "\(boardSlug)-\(post.id)",
+                                boardSlug: boardSlug,
+                                boardName: boardName,
+                                post: post,
+                                createdAt: Self.parseDate(post.createdAt)
+                            )
+                        }
+                    }
                 }
-                merged.append(contentsOf: rows)
+
+                var rows: [HomeFeedItem] = []
+                for try await partial in group {
+                    rows.append(contentsOf: partial)
+                }
+                return rows
             }
 
             let deduped = Self.deduplicateByPostID(merged)
@@ -189,9 +214,11 @@ struct TransferHomeView: View {
             latestPosts = deduped
                 .sorted { $0.createdAt > $1.createdAt }
         } catch {
+            if isCancellation(error) {
+                loading = false
+                return
+            }
             errorMessage = Self.readableErrorMessage(error, baseURL: config.baseURL)
-            realtimePosts = []
-            latestPosts = []
         }
 
         loading = false
@@ -219,7 +246,7 @@ struct TransferHomeView: View {
         return Array(map.values)
     }
 
-    private static func parseDate(_ value: String?) -> Date {
+    nonisolated private static func parseDate(_ value: String?) -> Date {
         guard let value, !value.isEmpty else { return .distantPast }
 
         let isoWithFraction = ISO8601DateFormatter()
@@ -245,5 +272,9 @@ struct TransferHomeView: View {
             }
         }
         return error.localizedDescription
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        APIClient.isCancellationError(error)
     }
 }
