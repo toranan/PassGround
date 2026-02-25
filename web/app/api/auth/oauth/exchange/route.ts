@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -71,11 +72,22 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "서버 설정 오류" }, { status: 500 });
         }
 
+        const cookieStore = await cookies();
         const anon = createClient(supabaseUrl, supabaseAnonKey, {
             auth: {
+                flowType: "pkce",
                 autoRefreshToken: false,
-                persistSession: false,
+                persistSession: true,
                 detectSessionInUrl: false,
+                storage: {
+                    getItem: (key) => cookieStore.get(key)?.value ?? null,
+                    setItem: (key, value) => {
+                        cookieStore.set(key, value, { path: "/", maxAge: 60 * 10, sameSite: "lax", secure: true });
+                    },
+                    removeItem: (key) => {
+                        cookieStore.delete(key);
+                    },
+                },
             },
         });
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { ENABLE_SOCIAL_AUTH } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
@@ -75,11 +76,22 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/signup?error=server_config", appOrigin));
   }
 
+  const cookieStore = await cookies();
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
+      flowType: "pkce",
       autoRefreshToken: false,
-      persistSession: false,
+      persistSession: true,
       detectSessionInUrl: false,
+      storage: {
+        getItem: (key) => cookieStore.get(key)?.value ?? null,
+        setItem: (key, value) => {
+          cookieStore.set(key, value, { path: "/", maxAge: 60 * 10, sameSite: "lax", secure: true });
+        },
+        removeItem: (key) => {
+          cookieStore.delete(key);
+        },
+      },
     },
   });
 
