@@ -23,5 +23,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, source: "seed", cutoffs: fallback });
   }
 
-  return NextResponse.json({ ok: true, source: "db", cutoffs: data });
+  const cutoffs = data.map((d: any) => ({
+    id: d.id,
+    examSlug: d.exam_slug,
+    university: d.university,
+    major: d.major,
+    year: d.year,
+    scoreBand: d.score_band,
+    note: d.note,
+    source: d.source,
+  }));
+
+  return NextResponse.json({ ok: true, source: "db", cutoffs });
 }

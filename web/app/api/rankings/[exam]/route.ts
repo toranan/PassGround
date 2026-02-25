@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { INSTRUCTOR_RANKING_SEED } from "@/lib/data";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
@@ -40,8 +41,31 @@ export async function GET(
     .order("instructor_name", { ascending: true })
     .limit(100);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error || !data || data.length === 0) {
+    const fallbackRows = INSTRUCTOR_RANKING_SEED.filter((r) => r.examSlug === exam);
+    const sortedFallback = fallbackRows.sort((a, b) => {
+      if (a.confidence !== b.confidence) return b.confidence - a.confidence;
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      const bySubject = a.subject.localeCompare(b.subject);
+      if (bySubject !== 0) return bySubject;
+      return a.instructorName.localeCompare(b.instructorName);
+    });
+
+    const totalVotesFallback = sortedFallback.reduce((sum, row) => sum + row.confidence, 0);
+    const fallbackRankings = sortedFallback.map((row, index) => {
+      const votePercent = totalVotesFallback > 0 ? Number(((row.confidence / totalVotesFallback) * 100).toFixed(1)) : 0;
+      return {
+        id: row.id,
+        examSlug: row.examSlug,
+        subject: row.subject,
+        instructorName: row.instructorName,
+        rank: index + 1,
+        voteCount: row.confidence,
+        votePercent,
+      };
+    });
+
+    return NextResponse.json({ ok: true, source: "seed", totalVotes: totalVotesFallback, rankings: fallbackRankings });
   }
 
   const { data: voteRows, error: voteError } = await supabase
