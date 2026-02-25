@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
+import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
 
 type User = {
   id?: string;
@@ -45,10 +46,11 @@ type CutoffItem = {
   university: string;
   major: string;
   year: number;
-  waitlistCutoff: number;
-  initialCutoff: number;
+  waitlistCutoff: number | null;
+  initialCutoff: number | null;
   memo: string;
   inputBasis: InputBasisType;
+  track: CutoffTrackType;
 };
 
 type AdminRankingResponse = {
@@ -96,6 +98,7 @@ export default function AdminPage() {
     university: "",
     major: "",
     year: String(new Date().getFullYear()),
+    track: "general" as CutoffTrackType,
     inputBasis: "wrong" as InputBasisType,
     waitlistCutoff: "",
     initialCutoff: "",
@@ -110,7 +113,8 @@ export default function AdminPage() {
       (a, b) =>
         b.year - a.year ||
         a.university.localeCompare(b.university) ||
-        a.major.localeCompare(b.major)
+        a.major.localeCompare(b.major) ||
+        a.track.localeCompare(b.track)
     );
   }, [cutoffs]);
 
@@ -336,6 +340,7 @@ export default function AdminPage() {
           university: cutoffForm.university,
           major: cutoffForm.major,
           year: Number(cutoffForm.year),
+          track: cutoffForm.track,
           inputBasis: cutoffForm.inputBasis,
           waitlistCutoff:
             cutoffForm.waitlistCutoff.trim() === "" ? undefined : Number(cutoffForm.waitlistCutoff),
@@ -553,7 +558,7 @@ export default function AdminPage() {
                     <CardTitle className="text-lg">편입 합격 커트라인 관리</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-8 gap-2">
                       <Input
                         placeholder="학교명"
                         value={cutoffForm.university}
@@ -576,6 +581,19 @@ export default function AdminPage() {
                           setCutoffForm((prev) => ({ ...prev, year: e.target.value }))
                         }
                       />
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        value={cutoffForm.track}
+                        onChange={(e) =>
+                          setCutoffForm((prev) => ({
+                            ...prev,
+                            track: e.target.value as CutoffTrackType,
+                          }))
+                        }
+                      >
+                        <option value="general">일반</option>
+                        <option value="academic">학사</option>
+                      </select>
                       <select
                         className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                         value={cutoffForm.inputBasis}
@@ -612,7 +630,7 @@ export default function AdminPage() {
                           setCutoffForm((prev) => ({ ...prev, memo: e.target.value }))
                         }
                       />
-                      <div className="md:col-span-7">
+                      <div className="md:col-span-8">
                         <Button onClick={handleSaveCutoff} disabled={submitting}>
                           {submitting ? "저장 중..." : "커트라인 저장"}
                         </Button>
@@ -630,7 +648,7 @@ export default function AdminPage() {
                           >
                             <div>
                               <p className="text-sm font-semibold">
-                                {item.year} · {item.university} {item.major}
+                                {item.year} · {item.university} {item.major} ({cutoffTrackLabel(item.track)})
                               </p>
                               <p className="text-xs text-primary mt-1">
                                 추합권 {item.waitlistCutoff ?? "-"}

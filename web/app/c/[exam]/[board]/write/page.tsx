@@ -18,6 +18,9 @@ export default async function BoardWritePage({ params }: BoardWritePageProps) {
   if (!ENABLE_CPA && exam === "cpa") {
     notFound();
   }
+  if (exam === "transfer" && board === "cutoff") {
+    notFound();
+  }
   if (exam === "cpa" && !ENABLE_CPA_WRITE) {
     notFound();
   }

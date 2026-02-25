@@ -5,12 +5,14 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
 import { getIsMemberSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type CutoffRow = {
   id: string;
   university: string;
   major: string;
+  track: CutoffTrackType;
   year: number;
   scoreBand: string;
   note: string;
@@ -33,6 +35,7 @@ type PredictorResult = {
   note: string;
   university: string;
   major: string;
+  track: CutoffTrackType;
   year: number;
 };
 
@@ -56,23 +59,20 @@ const RESULT_EMOJI: Record<ResultType, string> = {
 
 export function TransferPredictor({ rows }: TransferPredictorProps) {
   const availableRows = rows.filter((row) => row.university && row.year && row.scoreBand);
+  const trackOptions: CutoffTrackType[] = ["general", "academic"];
+  const [track, setTrack] = useState<CutoffTrackType>("general");
+  const [university, setUniversity] = useState("");
+  const [year, setYear] = useState<string>("");
+  const [major, setMajor] = useState<string>("");
+
+  const rowsByTrack = useMemo(
+    () => availableRows.filter((row) => row.track === track),
+    [availableRows, track]
+  );
 
   const universities = useMemo(
-    () => Array.from(new Set(availableRows.map((row) => row.university))),
-    [availableRows]
-  );
-
-  const [university, setUniversity] = useState(universities[0] ?? "");
-  const [year, setYear] = useState<string>(
-    availableRows.find((row) => row.university === (universities[0] ?? ""))?.year?.toString() ?? ""
-  );
-  const [major, setMajor] = useState<string>(
-    availableRows.find(
-      (row) =>
-        row.university === (universities[0] ?? "") &&
-        row.year.toString() ===
-          (availableRows.find((item) => item.university === (universities[0] ?? ""))?.year?.toString() ?? "")
-    )?.major ?? ""
+    () => Array.from(new Set(rowsByTrack.map((row) => row.university))),
+    [rowsByTrack]
   );
   const [inputType, setInputType] = useState<InputType>("wrong");
   const [wrongCount, setWrongCount] = useState("");
@@ -91,33 +91,44 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
     () => false
   );
 
+  const selectedUniversity = universities.includes(university) ? university : (universities[0] ?? "");
+
   const yearOptions = useMemo(() => {
     return Array.from(
       new Set(
-        availableRows
-          .filter((row) => row.university === university)
+        rowsByTrack
+          .filter((row) => row.university === selectedUniversity)
           .map((row) => row.year)
       )
     ).sort((a, b) => b - a);
-  }, [availableRows, university]);
+  }, [rowsByTrack, selectedUniversity]);
+
+  const selectedYear = yearOptions.some((item) => item.toString() === year)
+    ? year
+    : (yearOptions[0]?.toString() ?? "");
 
   const majorOptions = useMemo(() => {
-    const targetYear = Number(year);
+    const targetYear = Number(selectedYear);
     return Array.from(
       new Set(
-        availableRows
-          .filter((row) => row.university === university && row.year === targetYear)
+        rowsByTrack
+          .filter((row) => row.university === selectedUniversity && row.year === targetYear)
           .map((row) => row.major)
       )
     );
-  }, [availableRows, university, year]);
+  }, [rowsByTrack, selectedUniversity, selectedYear]);
+
+  const selectedMajor = majorOptions.includes(major) ? major : (majorOptions[0] ?? "");
 
   const selectedRow = useMemo(() => {
-    const targetYear = Number(year);
-    return availableRows.find(
-      (row) => row.university === university && row.year === targetYear && row.major === major
+    const targetYear = Number(selectedYear);
+    return rowsByTrack.find(
+      (row) =>
+        row.university === selectedUniversity &&
+        row.year === targetYear &&
+        row.major === selectedMajor
     );
-  }, [availableRows, university, year, major]);
+  }, [rowsByTrack, selectedUniversity, selectedYear, selectedMajor]);
 
   const resetReels = () => {
     setReelResult("-");
@@ -154,11 +165,12 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         inputValue,
         waitlistCutoff: null,
         initialCutoff: null,
-        reason: "선택한 학교/년도/전공은 아직 등록된 정보가 없습니다.",
+        reason: "선택한 전형(일반/학사)의 학교/년도/전공은 아직 등록된 정보가 없습니다.",
         note: "",
-        university: university || "-",
-        major: major || "-",
-        year: Number(year) || 0,
+        university: selectedUniversity || "-",
+        major: selectedMajor || "-",
+        track,
+        year: Number(selectedYear) || 0,
       };
       setReelResult(fallbackResult.resultType);
       setReelStrategy(fallbackResult.strategy);
@@ -186,6 +198,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         note: selectedRow.note || "",
         university: selectedRow.university,
         major: selectedRow.major,
+        track: selectedRow.track,
         year: selectedRow.year,
       };
       setReelResult(mismatchResult.resultType);
@@ -208,6 +221,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         note: selectedRow.note || "",
         university: selectedRow.university,
         major: selectedRow.major,
+        track: selectedRow.track,
         year: selectedRow.year,
       };
       setReelResult(missingCutoffResult.resultType);
@@ -260,6 +274,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
       note: selectedRow.note || "",
       university: selectedRow.university,
       major: selectedRow.major,
+      track: selectedRow.track,
       year: selectedRow.year,
     };
 
@@ -288,12 +303,30 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <select
-            value={university}
+            value={track}
+            onChange={(e) => {
+              setTrack(e.target.value as CutoffTrackType);
+              setResult(null);
+              setError("");
+              resetReels();
+            }}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            disabled={!isMember}
+          >
+            {trackOptions.map((item) => (
+              <option key={item} value={item}>
+                {cutoffTrackLabel(item)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedUniversity}
             onChange={(e) => {
               const nextUniversity = e.target.value;
-              const rowsBySchool = availableRows.filter((row) => row.university === nextUniversity);
+              const rowsBySchool = rowsByTrack.filter((row) => row.university === nextUniversity);
               const nextYear = rowsBySchool[0]?.year?.toString() ?? "";
               const nextMajor =
                 rowsBySchool.find((row) => row.year.toString() === nextYear)?.major ?? "";
@@ -315,12 +348,12 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           </select>
 
           <select
-            value={year}
+            value={selectedYear}
             onChange={(e) => {
               const nextYear = e.target.value;
               const nextMajor =
-                availableRows.find(
-                  (row) => row.university === university && row.year.toString() === nextYear
+                rowsByTrack.find(
+                  (row) => row.university === selectedUniversity && row.year.toString() === nextYear
                 )?.major ?? "";
               setYear(nextYear);
               setMajor(nextMajor);
@@ -339,7 +372,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           </select>
 
           <select
-            value={major}
+            value={selectedMajor}
             onChange={(e) => {
               setMajor(e.target.value);
               setResult(null);
@@ -421,7 +454,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
         </div>
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-xs text-muted-foreground">학교/년도/전공 선택 후 점수 또는 틀린 개수 중 하나를 입력해 결과를 확인합니다.</p>
+          <p className="text-xs text-muted-foreground">일반/학사, 학교/년도/전공 선택 후 점수 또는 틀린 개수 중 하나를 입력해 결과를 확인합니다.</p>
           <Button
             onClick={handleRun}
             disabled={running || !isMember}
@@ -437,7 +470,7 @@ export function TransferPredictor({ rows }: TransferPredictorProps) {
           <div className={`rounded-xl border px-4 py-4 ${RESULT_STYLE[result.resultType]}`}>
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-sm font-semibold">
-                {result.university} · {result.major} · {result.year}년 기준
+                {result.university} · {result.major} · {cutoffTrackLabel(result.track)} · {result.year}년 기준
               </p>
               <span className="text-lg font-extrabold tracking-tight flex items-center gap-1">
                 <span>{RESULT_EMOJI[result.resultType]}</span>

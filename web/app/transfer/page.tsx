@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { CutoffTable } from "@/components/CutoffTable";
 import { TransferRankingTabs } from "@/components/TransferRankingTabs";
 import { TransferPredictor } from "@/components/TransferPredictor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { decodeMajorAndTrack, type CutoffTrackType } from "@/lib/cutoffTrack";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ type CutoffRow = {
   id: string;
   university: string;
   major: string;
+  track: CutoffTrackType;
   year: number;
   scoreBand: string;
   note: string;
@@ -27,7 +28,7 @@ type BriefingRow = {
   summary: string;
   sourceLabel: string;
   publishedAt: string;
-  boardSlug: "qa" | "study-qa" | "cutoff" | "free";
+  boardSlug: "qa" | "study-qa" | "free";
   boardName: string;
 };
 
@@ -75,15 +76,15 @@ function formatRelativeTime(dateString: string | null): string {
   return date.toLocaleDateString("ko-KR");
 }
 
-function resolveTransferBriefingBoard(sourceLabel: string, title: string): { slug: "qa" | "study-qa" | "cutoff" | "free"; name: string } {
+function resolveTransferBriefingBoard(sourceLabel: string, title: string): { slug: "qa" | "study-qa" | "free"; name: string } {
   const combined = `${sourceLabel} ${title}`;
   if (combined.includes("입학처") || combined.includes("요강") || combined.includes("커트")) {
-    return { slug: "cutoff", name: "커트라인 제보" };
+    return { slug: "qa", name: "학습법공유" };
   }
   if (combined.includes("학원") || combined.includes("모의고사") || combined.includes("학습")) {
-    return { slug: "study-qa", name: "학습 Q&A" };
+    return { slug: "study-qa", name: "학습질문" };
   }
-  return { slug: "qa", name: "전략 Q&A" };
+  return { slug: "qa", name: "학습법공유" };
 }
 
 async function loadCutoffs(): Promise<CutoffRow[]> {
@@ -108,6 +109,7 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     note: string | null;
     source: string | null;
   }) => {
+    const decoded = decodeMajorAndTrack(row.major);
     let waitlistCutoff: number | null = null;
     let initialCutoff: number | null = null;
     let memo = row.note ?? "-";
@@ -136,7 +138,8 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     return {
       id: row.id,
       university: row.university,
-      major: row.major,
+      major: decoded.major,
+      track: decoded.track,
       year: row.year,
       scoreBand: row.score_band,
       note: memo,
@@ -382,10 +385,10 @@ export default async function TransferPage() {
                 <Link href="/community/transfer">편입 커뮤니티</Link>
               </Button>
               <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
-                <Link href="/c/transfer/qa">전략 Q&A</Link>
+                <Link href="/c/transfer/qa">학습법공유</Link>
               </Button>
               <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
-                <Link href="/c/transfer/study-qa">학습 Q&A</Link>
+                <Link href="/c/transfer/study-qa">학습질문</Link>
               </Button>
               <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
                 <Link href="/transfer/instructor-ranking">인기 강사 순위</Link>
@@ -398,14 +401,39 @@ export default async function TransferPage() {
           <div className="container mx-auto px-4 grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
             <div className="space-y-4">
               <TransferPredictor rows={cutoffRows} />
-              <CutoffTable rows={cutoffRows} />
+              <Card className="border border-border shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    <Link href="/c/transfer/free" className="hover:text-primary transition-colors">
+                      오늘의 인기글
+                    </Link>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {popularRows.map((row) => (
+                    <Link
+                      key={row.id}
+                      href={`/c/transfer/${row.boardSlug}/${row.id}`}
+                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
+                    >
+                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
+                        {row.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {row.boardName} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
+                      </p>
+                    </Link>
+                  ))}
+                  {!popularRows.length && <p className="text-sm text-muted-foreground">아직 집계된 인기글이 없습니다.</p>}
+                </CardContent>
+              </Card>
             </div>
 
             <div className="space-y-4">
               <Card className="border border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    <Link href="/c/transfer/cutoff" className="hover:text-primary transition-colors">
+                    <Link href="/c/transfer/qa" className="hover:text-primary transition-colors">
                       AI 오늘의 편입 정보
                     </Link>
                   </CardTitle>
@@ -443,7 +471,7 @@ export default async function TransferPage() {
                 <CardHeader>
                   <CardTitle className="text-lg">
                     <Link href="/c/transfer/qa" className="hover:text-primary transition-colors">
-                      편입 전략 Q&A
+                      편입 학습법공유
                     </Link>
                   </CardTitle>
                 </CardHeader>
@@ -468,7 +496,7 @@ export default async function TransferPage() {
                 <CardHeader>
                   <CardTitle className="text-lg">
                     <Link href="/c/transfer/study-qa" className="hover:text-primary transition-colors">
-                      편입 학습 Q&A
+                      편입 학습질문
                     </Link>
                   </CardTitle>
                 </CardHeader>
@@ -485,36 +513,10 @@ export default async function TransferPage() {
                       <p className="text-xs text-muted-foreground mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
                     </Link>
                   ))}
-                  {!studyQaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 학습 Q&A가 없습니다.</p>}
+                  {!studyQaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 학습질문이 없습니다.</p>}
                 </CardContent>
               </Card>
 
-              <Card className="border border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/c/transfer/free" className="hover:text-primary transition-colors">
-                      오늘의 인기글
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {popularRows.map((row) => (
-                    <Link
-                      key={row.id}
-                      href={`/c/transfer/${row.boardSlug}/${row.id}`}
-                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
-                        {row.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {row.boardName} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
-                      </p>
-                    </Link>
-                  ))}
-                  {!popularRows.length && <p className="text-sm text-muted-foreground">아직 집계된 인기글이 없습니다.</p>}
-                </CardContent>
-              </Card>
             </div>
           </div>
         </section>

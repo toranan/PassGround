@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
 import { getIsMemberSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type CutoffRow = {
   id: string;
   university: string;
   major: string;
+  track: CutoffTrackType;
   year: number;
   scoreBand: string;
   note: string;
@@ -45,7 +47,9 @@ export function CutoffTable({ rows }: CutoffTableProps) {
         {rows.map((row) => (
           <div key={row.id} className="rounded-lg border border-gray-100 p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-semibold text-sm">{row.university} {row.major}</p>
+              <p className="font-semibold text-sm">
+                {row.university} {row.major} ({cutoffTrackLabel(row.track)})
+              </p>
               <span className="text-xs text-gray-500">{row.year}</span>
             </div>
             <p className="text-sm text-primary font-semibold mt-1">

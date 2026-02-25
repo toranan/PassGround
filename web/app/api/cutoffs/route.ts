@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const supabase = getSupabaseServer();
   const { data, error } = await supabase
     .from("cutoff_scores")
-    .select("id,exam_slug,university,major,year,score_band,note")
+    .select("id,exam_slug,university,major,year,score_band,note,source")
     .eq("exam_slug", exam)
     .order("year", { ascending: false })
     .limit(30);

@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
+import {
+  decodeMajorAndTrack,
+  encodeMajorWithTrack,
+  parseCutoffTrack,
+  type CutoffTrackType,
+} from "@/lib/cutoffTrack";
 
 const INPUT_BASIS_TYPES = ["wrong", "score"] as const;
 
 type InputBasisType = (typeof INPUT_BASIS_TYPES)[number];
+type InputTrackType = CutoffTrackType;
 type StoredCutoffMeta = {
   waitlistCutoff: number | null;
   initialCutoff: number | null;
@@ -114,34 +121,38 @@ async function loadCutoffs(exam: "transfer" | "cpa") {
       score_band: string;
       note: string | null;
       source: string | null;
-    }) => ({
-      ...(function () {
-        const basis = parseInputBasis(row.source) ?? "wrong";
-        const parsedMeta = parseStoredMeta(row.note);
-        if (parsedMeta) {
-          return {
+    }) => {
+      const decoded = decodeMajorAndTrack(row.major);
+      const basis = parseInputBasis(row.source) ?? "wrong";
+      const parsedMeta = parseStoredMeta(row.note);
+      const cutoffMeta = parsedMeta
+        ? {
             waitlistCutoff: parsedMeta.waitlistCutoff,
             initialCutoff: parsedMeta.initialCutoff,
             memo: parsedMeta.memo,
             inputBasis: basis,
-          };
-        }
+          }
+        : (() => {
+            const numbers = row.score_band.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+            return {
+              waitlistCutoff: Number.isFinite(numbers[0]) ? numbers[0] : 0,
+              initialCutoff: Number.isFinite(numbers[1]) ? numbers[1] : 0,
+              memo: row.note ?? "",
+              inputBasis: basis,
+            };
+          })();
 
-        const numbers = row.score_band.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
-        return {
-          waitlistCutoff: Number.isFinite(numbers[0]) ? numbers[0] : 0,
-          initialCutoff: Number.isFinite(numbers[1]) ? numbers[1] : 0,
-          memo: row.note ?? "",
-          inputBasis: basis,
-        };
-      })(),
-      id: row.id,
-      examSlug: row.exam_slug,
-      university: row.university,
-      major: row.major,
-      year: row.year,
-      displayBand: row.score_band,
-    })),
+      return {
+        ...cutoffMeta,
+        id: row.id,
+        examSlug: row.exam_slug,
+        university: row.university,
+        major: decoded.major,
+        track: decoded.track,
+        year: row.year,
+        displayBand: row.score_band,
+      };
+    }),
   };
 }
 
@@ -183,6 +194,7 @@ export async function POST(request: Request) {
 
   const university = normalizeText(body.university, 40);
   const major = normalizeText(body.major, 40);
+  const track = (parseCutoffTrack(body.track) ?? "general") as InputTrackType;
   const yearRaw = Number(body.year);
   const inputBasis = parseInputBasis(body.inputBasis) ?? "wrong";
   const waitlistCutoffRaw = Number(body.waitlistCutoff);
@@ -238,6 +250,7 @@ export async function POST(request: Request) {
     initialCutoff: safeInitial,
     memo,
   };
+  const storedMajor = encodeMajorWithTrack(major, track);
 
   const admin = getSupabaseAdmin();
   const { error } = await admin
@@ -246,7 +259,7 @@ export async function POST(request: Request) {
       {
         exam_slug: exam,
         university,
-        major,
+        major: storedMajor,
         year,
         score_band: formatScoreBand(inputBasis, safeWaitlist, safeInitial),
         note: JSON.stringify(storedMeta),

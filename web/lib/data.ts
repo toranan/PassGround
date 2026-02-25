@@ -12,7 +12,7 @@ export const EXAM_CATEGORIES: ExamCategory[] = [
     name: "편입",
     slug: "transfer",
     icon: "GraduationCap",
-    description: "합격 가능성 예측, 커트라인, 전략형 Q&A",
+    description: "합격 가능성 예측, 커트라인, 학습법공유/학습질문 커뮤니티",
   },
   {
     id: "2",
@@ -47,21 +47,15 @@ export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
     boards: [
       {
         id: "transfer-qa",
-        name: "전략 Q&A",
+        name: "학습법공유",
         slug: "qa",
         description: "대학/전형/학습 전략 질문과 답변",
       },
       {
         id: "transfer-study-qa",
-        name: "학습 Q&A",
+        name: "학습질문",
         slug: "study-qa",
         description: "영어/수학/논술 과목별 공부법 질문과 답변",
-      },
-      {
-        id: "transfer-cutoff",
-        name: "커트라인 제보",
-        slug: "cutoff",
-        description: "대학별 합격 점수 제보와 비교",
       },
       {
         id: "transfer-free",
@@ -131,7 +125,7 @@ export const BOARD_POST_GROUPS: BoardPostGroup[] = [
   {
     examSlug: "transfer",
     boardSlug: "qa",
-    boardName: "전략 Q&A",
+    boardName: "학습법공유",
     posts: [
       {
         id: "transfer-qa-1",
@@ -154,7 +148,7 @@ export const BOARD_POST_GROUPS: BoardPostGroup[] = [
   {
     examSlug: "transfer",
     boardSlug: "study-qa",
-    boardName: "학습 Q&A",
+    boardName: "학습질문",
     posts: [
       {
         id: "transfer-study-qa-1",
@@ -170,29 +164,6 @@ export const BOARD_POST_GROUPS: BoardPostGroup[] = [
         author: "수학재도전",
         comments: 9,
         views: 198,
-        time: "1시간 전",
-      },
-    ],
-  },
-  {
-    examSlug: "transfer",
-    boardSlug: "cutoff",
-    boardName: "커트라인 제보",
-    posts: [
-      {
-        id: "transfer-cutoff-1",
-        title: "2025 중앙대 전전(일반) 최종합격 91.3 공유",
-        author: "합격생A",
-        comments: 9,
-        views: 410,
-        time: "31분 전",
-      },
-      {
-        id: "transfer-cutoff-2",
-        title: "한양대 기계 컷 89 후반대였던 것 같습니다",
-        author: "작년응시",
-        comments: 7,
-        views: 256,
         time: "1시간 전",
       },
     ],

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     default: "합격판 - 편입 전략 커뮤니티",
     template: "%s | 합격판",
   },
-  description: "편입 합격 커트라인 조회, 전략 Q&A, 인증 기반 수험 정보 커뮤니티",
+  description: "편입 합격 커트라인 조회, 학습법공유/학습질문, 인증 기반 수험 정보 커뮤니티",
   keywords: ["편입", "편입 커트라인", "편입 합격예측", "편입 커뮤니티", "합격판"],
   alternates: {
     canonical: "/",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     siteName: "합격판",
     title: "합격판 - 편입 전략 커뮤니티",
-    description: "편입 합격 커트라인 조회, 전략 Q&A, 인증 기반 수험 정보 커뮤니티",
+    description: "편입 합격 커트라인 조회, 학습법공유/학습질문, 인증 기반 수험 정보 커뮤니티",
     url: "/",
   },
 };

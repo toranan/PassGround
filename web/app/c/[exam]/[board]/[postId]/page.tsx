@@ -54,6 +54,9 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   if (!ENABLE_CPA && exam === "cpa") {
     notFound();
   }
+  if (exam === "transfer" && board === "cutoff") {
+    notFound();
+  }
   const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
   const supabase = getSupabaseServer();
@@ -76,7 +79,12 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     }
     | null = null;
   let commentsData: CommentRow[] = [];
-  let boardName = boardData?.name ?? "게시판";
+  let boardName =
+    exam === "transfer" && board === "qa"
+      ? "학습법공유"
+      : exam === "transfer" && board === "study-qa"
+        ? "학습질문"
+        : (boardData?.name ?? "게시판");
   let likeCount = 0;
   let adoptedCommentId: string | null = null;
   let isSamplePost = false;

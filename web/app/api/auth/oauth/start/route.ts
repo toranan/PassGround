@@ -20,6 +20,25 @@ function normalizeNextPath(value: string | null): string {
   return value;
 }
 
+function parseMobileFlag(value: string | null): boolean {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true";
+}
+
+function normalizeAppRedirect(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "hapgyeokpan:") {
+      return null;
+    }
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+  } catch {
+    return null;
+  }
+}
+
 function getAppOrigin(request: Request): string {
   try {
     return new URL(request.url).origin;
@@ -38,6 +57,8 @@ export async function GET(request: Request) {
 
   const provider = parseProvider(url.searchParams.get("provider"));
   const nextPath = normalizeNextPath(url.searchParams.get("next"));
+  const isMobile = parseMobileFlag(url.searchParams.get("mobile"));
+  const mobileRedirect = normalizeAppRedirect(url.searchParams.get("app_redirect"));
 
   if (!provider) {
     return NextResponse.redirect(new URL("/signup?error=invalid_provider", appOrigin));
@@ -62,8 +83,15 @@ export async function GET(request: Request) {
     },
   });
 
-  const callbackUrl = new URL("/auth/callback", appOrigin);
+  const callbackPath = isMobile ? "/auth/mobile-callback" : "/auth/callback";
+  const callbackUrl = new URL(callbackPath, appOrigin);
   callbackUrl.searchParams.set("next", nextPath);
+  if (isMobile) {
+    if (!mobileRedirect) {
+      return NextResponse.redirect(new URL("/signup?error=invalid_mobile_redirect", appOrigin));
+    }
+    callbackUrl.searchParams.set("app_redirect", mobileRedirect);
+  }
 
   const oauthProvider: SupportedOAuthProvider = provider;
   const { data, error } = await supabase.auth.signInWithOAuth({

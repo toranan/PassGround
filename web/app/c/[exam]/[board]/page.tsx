@@ -49,6 +49,9 @@ export default async function BoardPage({ params }: BoardPageProps) {
   if (!ENABLE_CPA && exam === "cpa") {
     notFound();
   }
+  if (exam === "transfer" && board === "cutoff") {
+    notFound();
+  }
   const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);
@@ -65,7 +68,12 @@ export default async function BoardPage({ params }: BoardPageProps) {
     .maybeSingle();
 
   const boardId = boardData?.id ?? null;
-  const boardName = boardData?.name ?? boardNameFromList;
+  const boardName =
+    exam === "transfer" && board === "qa"
+      ? "학습법공유"
+      : exam === "transfer" && board === "study-qa"
+        ? "학습질문"
+        : (boardData?.name ?? boardNameFromList);
 
   // Fetch posts with real comment count and like count
   let dbPosts: { id: string; title: string; author: string; comments: number; likes: number; views: number; timeLabel: string }[] = [];
