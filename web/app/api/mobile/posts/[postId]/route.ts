@@ -57,6 +57,69 @@ function isMissingRelation(error: { code?: string | null; message?: string | nul
   return message.includes(`relation "${relation.toLowerCase()}" does not exist`);
 }
 
+function noStore(response: NextResponse) {
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
+async function resolveLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, postId: string): Promise<number> {
+  if (postStatsAvailable !== false) {
+    const { data: statsRow, error: statsError } = await admin
+      .from("post_stats")
+      .select("like_count")
+      .eq("post_id", postId)
+      .maybeSingle<{ like_count: number | null }>();
+
+    if (!statsError && statsRow) {
+      postStatsAvailable = true;
+      return Math.max(0, statsRow.like_count ?? 0);
+    }
+    if (isMissingRelation(statsError, "post_stats")) {
+      postStatsAvailable = false;
+    }
+  }
+
+  const { count } = await admin
+    .from("post_likes")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", postId);
+  return count ?? 0;
+}
+
+async function isViewerLiked(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  postId: string,
+  requestedUserId: string
+): Promise<boolean> {
+  if (!isValidUUID(requestedUserId)) return false;
+  const { data: likedRow } = await admin
+    .from("post_likes")
+    .select("post_id")
+    .eq("post_id", postId)
+    .eq("user_id", requestedUserId)
+    .maybeSingle<{ post_id: string }>();
+  return Boolean(likedRow);
+}
+
+function bumpViewCountBestEffort(admin: ReturnType<typeof getSupabaseAdmin>, postId: string) {
+  void (async () => {
+    try {
+      const { data: viewData } = await admin
+        .from("posts")
+        .select("view_count")
+        .eq("id", postId)
+        .maybeSingle<{ view_count: number | null }>();
+
+      await admin
+        .from("posts")
+        .update({ view_count: (viewData?.view_count ?? 0) + 1 })
+        .eq("id", postId);
+    } catch {
+      // Legacy schema may not include view_count.
+    }
+  })();
+}
+
 export async function GET(
   request: Request,
   context: { params: ParamsLike | Promise<ParamsLike> }
@@ -103,21 +166,6 @@ export async function GET(
     return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
-  try {
-    const { data: viewData } = await admin
-      .from("posts")
-      .select("view_count")
-      .eq("id", postId)
-      .maybeSingle<{ view_count: number | null }>();
-
-    await admin
-      .from("posts")
-      .update({ view_count: (viewData?.view_count ?? 0) + 1 })
-      .eq("id", postId);
-  } catch {
-    // Legacy schema may not include view_count.
-  }
-
   let postData:
     | {
       id: string;
@@ -156,11 +204,29 @@ export async function GET(
     return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
   }
 
-  const { data: commentsData } = await supabase
+  bumpViewCountBestEffort(admin, postId);
+
+  const commentsPromise = supabase
     .from("comments")
     .select("id,author_name,content,created_at,parent_id")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
+
+  const adoptionPromise = supabase
+    .from("answer_adoptions")
+    .select("comment_id")
+    .eq("post_id", postId)
+    .maybeSingle<{ comment_id: string }>();
+
+  const [commentsResult, adoptionResult, likeCount, viewerLiked] = await Promise.all([
+    commentsPromise,
+    adoptionPromise,
+    resolveLikeCount(admin, postId),
+    isViewerLiked(admin, postId, requestedUserId),
+  ]);
+
+  const commentsData = commentsResult.data ?? [];
+  const adoptionData = adoptionResult.data;
 
   const authorNames = Array.from(
     new Set((commentsData ?? []).map((comment) => comment.author_name).filter(Boolean))
@@ -180,49 +246,6 @@ export async function GET(
     });
   }
 
-  let likeCount = 0;
-  let likeCountResolved = false;
-  if (postStatsAvailable !== false) {
-    const { data: statsRow, error: statsError } = await admin
-      .from("post_stats")
-      .select("like_count")
-      .eq("post_id", postId)
-      .maybeSingle<{ like_count: number | null }>();
-
-    if (!statsError && statsRow) {
-      postStatsAvailable = true;
-      likeCount = Math.max(0, statsRow.like_count ?? 0);
-      likeCountResolved = true;
-    } else if (isMissingRelation(statsError, "post_stats")) {
-      postStatsAvailable = false;
-    }
-  }
-
-  if (!likeCountResolved) {
-    const { count } = await admin
-      .from("post_likes")
-      .select("*", { count: "exact", head: true })
-      .eq("post_id", postId);
-    likeCount = count ?? 0;
-  }
-
-  let viewerLiked = false;
-  if (isValidUUID(requestedUserId)) {
-    const { data: likedRow } = await admin
-      .from("post_likes")
-      .select("post_id")
-      .eq("post_id", postId)
-      .eq("user_id", requestedUserId)
-      .maybeSingle<{ post_id: string }>();
-    viewerLiked = Boolean(likedRow);
-  }
-
-  const { data: adoptionData } = await supabase
-    .from("answer_adoptions")
-    .select("comment_id")
-    .eq("post_id", postId)
-    .maybeSingle<{ comment_id: string }>();
-
   const comments = (commentsData ?? []).map((comment: CommentRow) => ({
     id: comment.id,
     authorName: comment.author_name,
@@ -233,23 +256,25 @@ export async function GET(
     verificationLevel: verificationMap.get(comment.author_name) ?? "none",
   }));
 
-  return NextResponse.json({
-    ok: true,
-    writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-    isSamplePost: false,
-    viewerLiked,
-    board: { slug: boardInfo.slug, name: boardData.name ?? boardInfo.name },
-    post: {
-      id: postData.id,
-      title: postData.title,
-      content: postData.content,
-      authorName: postData.author_name ?? "익명",
-      createdAt: postData.created_at,
-      timeLabel: formatRelativeTime(postData.created_at),
-      viewCount: postData.view_count ?? 0,
-      likeCount,
-    },
-    adoptedCommentId: adoptionData?.comment_id ?? null,
-    comments,
-  });
+  return noStore(
+    NextResponse.json({
+      ok: true,
+      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
+      isSamplePost: false,
+      viewerLiked,
+      board: { slug: boardInfo.slug, name: boardData.name ?? boardInfo.name },
+      post: {
+        id: postData.id,
+        title: postData.title,
+        content: postData.content,
+        authorName: postData.author_name ?? "익명",
+        createdAt: postData.created_at,
+        timeLabel: formatRelativeTime(postData.created_at),
+        viewCount: postData.view_count ?? 0,
+        likeCount,
+      },
+      adoptedCommentId: adoptionData?.comment_id ?? null,
+      comments,
+    })
+  );
 }

@@ -18,6 +18,11 @@ type VoteRow = {
   instructor_name: string;
 };
 
+function withCache(response: NextResponse) {
+  response.headers.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=40");
+  return response;
+}
+
 export async function GET(
   _request: Request,
   context: { params: ParamsLike | Promise<ParamsLike> }
@@ -65,7 +70,9 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({ ok: true, source: "seed", totalVotes: totalVotesFallback, rankings: fallbackRankings });
+    return withCache(
+      NextResponse.json({ ok: true, source: "seed", totalVotes: totalVotesFallback, rankings: fallbackRankings })
+    );
   }
 
   const { data: voteRows, error: voteError } = await supabase
@@ -116,5 +123,7 @@ export async function GET(
     };
   });
 
-  return NextResponse.json({ ok: true, source: "db", totalVotes, rankings });
+  return withCache(
+    NextResponse.json({ ok: true, source: "db", totalVotes, rankings })
+  );
 }

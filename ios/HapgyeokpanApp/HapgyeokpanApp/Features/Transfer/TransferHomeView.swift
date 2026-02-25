@@ -5,6 +5,7 @@ private let homePrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct TransferHomeView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
 
@@ -66,6 +67,11 @@ struct TransferHomeView: View {
         }
         .onAppear {
             refreshIfStale()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshIfStale()
+            }
         }
         .refreshable {
             await load(forceRefresh: true)

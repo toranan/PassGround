@@ -120,11 +120,16 @@ final class APIClient {
         )
     }
 
-    func fetchCutoffs(baseURL: URL, exam: ExamSlug) async throws -> CutoffResponse {
+    func fetchCutoffs(
+        baseURL: URL,
+        exam: ExamSlug,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> CutoffResponse {
         try await request(
             baseURL: baseURL,
             path: "api/cutoffs",
-            query: [URLQueryItem(name: "exam", value: exam.rawValue)]
+            query: [URLQueryItem(name: "exam", value: exam.rawValue)],
+            cachePolicy: cachePolicy
         )
     }
 
@@ -132,8 +137,16 @@ final class APIClient {
         try await request(baseURL: baseURL, path: "api/daily/\(exam.rawValue)")
     }
 
-    func fetchRankings(baseURL: URL, exam: ExamSlug) async throws -> RankingResponse {
-        try await request(baseURL: baseURL, path: "api/rankings/\(exam.rawValue)")
+    func fetchRankings(
+        baseURL: URL,
+        exam: ExamSlug,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> RankingResponse {
+        try await request(
+            baseURL: baseURL,
+            path: "api/rankings/\(exam.rawValue)",
+            cachePolicy: cachePolicy
+        )
     }
 
     func fetchVoteStatus(baseURL: URL, exam: ExamSlug, accessToken: String) async throws -> VoteStatusResponse {

@@ -5,6 +5,7 @@ private let communityPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct CommunityBoardsView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
 
@@ -57,6 +58,11 @@ struct CommunityBoardsView: View {
         }
         .onAppear {
             refreshBoardsIfStale()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshBoardsIfStale()
+            }
         }
         .refreshable {
             await loadBoards(forceRefresh: true)

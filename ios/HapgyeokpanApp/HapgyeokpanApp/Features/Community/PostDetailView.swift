@@ -350,7 +350,8 @@ struct PostDetailView: View {
             commentText = ""
             replyTargetID = nil
             message = "등록 완료"
-            await load()
+            communityStore.incrementCommentCount(postId: postId, delta: 1)
+            await load(forceRefresh: true)
         } catch {
             if isCancellation(error) { return }
             message = error.localizedDescription

@@ -3,6 +3,22 @@ import { CUTOFF_SEED_DATA } from "@/lib/data";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
+type CutoffRow = {
+  id: string;
+  exam_slug: string | null;
+  university: string;
+  major: string;
+  year: number;
+  score_band: string;
+  note: string | null;
+  source: string | null;
+};
+
+function withCache(response: NextResponse) {
+  response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=120");
+  return response;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const exam = searchParams.get("exam")?.trim() || "transfer";
@@ -20,10 +36,10 @@ export async function GET(request: Request) {
 
   if (error || !data?.length) {
     const fallback = CUTOFF_SEED_DATA.filter((row) => row.examSlug === exam);
-    return NextResponse.json({ ok: true, source: "seed", cutoffs: fallback });
+    return withCache(NextResponse.json({ ok: true, source: "seed", cutoffs: fallback }));
   }
 
-  const cutoffs = data.map((d: any) => ({
+  const cutoffs = (data as CutoffRow[]).map((d) => ({
     id: d.id,
     examSlug: d.exam_slug,
     university: d.university,
@@ -34,5 +50,5 @@ export async function GET(request: Request) {
     source: d.source,
   }));
 
-  return NextResponse.json({ ok: true, source: "db", cutoffs });
+  return withCache(NextResponse.json({ ok: true, source: "db", cutoffs }));
 }

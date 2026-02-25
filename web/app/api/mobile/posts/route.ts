@@ -85,6 +85,11 @@ function aggregateCounts(rows: { post_id: string }[] | null | undefined): Map<st
   return map;
 }
 
+function withCache(response: NextResponse) {
+  response.headers.set("Cache-Control", "public, s-maxage=8, stale-while-revalidate=24");
+  return response;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const exam = (searchParams.get("exam") ?? "").trim();
@@ -166,16 +171,18 @@ export async function GET(request: Request) {
   }
 
   if (!postsData || postsData.length === 0) {
-    return NextResponse.json({
-      ok: true,
-      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-      exam: { slug: examInfo.examSlug, name: examInfo.examName },
-      board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
-      posts: [],
-      hasMore: false,
-      nextCursor: null,
-      source: "db-empty",
-    });
+    return withCache(
+      NextResponse.json({
+        ok: true,
+        writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
+        exam: { slug: examInfo.examSlug, name: examInfo.examName },
+        board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
+        posts: [],
+        hasMore: false,
+        nextCursor: null,
+        source: "db-empty",
+      })
+    );
   }
 
   const hasMore = postsData.length > limit;
@@ -237,14 +244,16 @@ export async function GET(request: Request) {
       ? encodeCursor({ createdAt: last.created_at, id: last.id })
       : null;
 
-  return NextResponse.json({
-    ok: true,
-    writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-    exam: { slug: examInfo.examSlug, name: examInfo.examName },
-    board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
-    posts,
-    hasMore,
-    nextCursor,
-    source: "db",
-  });
+  return withCache(
+    NextResponse.json({
+      ok: true,
+      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
+      exam: { slug: examInfo.examSlug, name: examInfo.examName },
+      board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
+      posts,
+      hasMore,
+      nextCursor,
+      source: "db",
+    })
+  );
 }

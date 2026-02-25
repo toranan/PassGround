@@ -5,6 +5,7 @@ private let webPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct BoardPostsView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
 
@@ -21,6 +22,7 @@ struct BoardPostsView: View {
     @State private var nextCursor: String?
     @State private var hasMore = true
     @State private var didBootstrap = false
+    @State private var lastAutoRefreshAt = Date.distantPast
     private let pageSize = 20
 
     private var filteredPosts: [PostSummary] {
@@ -127,7 +129,12 @@ struct BoardPostsView: View {
                 }
             }
             .onAppear {
-                _ = applyCachedSnapshotIfAvailable()
+                refreshIfStale()
+            }
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .active {
+                    refreshIfStale()
+                }
             }
             .refreshable {
                 await loadPosts(reset: true, forceRefresh: true)
@@ -257,6 +264,16 @@ struct BoardPostsView: View {
             }
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func refreshIfStale() {
+        let fresh = applyCachedSnapshotIfAvailable()
+        guard !fresh else { return }
+        guard !loading else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
+        lastAutoRefreshAt = now
+        Task { await loadPosts(reset: true) }
     }
 
     private func isCancellation(_ error: Error) -> Bool {

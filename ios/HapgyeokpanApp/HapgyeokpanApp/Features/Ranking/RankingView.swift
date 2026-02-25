@@ -3,6 +3,8 @@ import SwiftUI
 struct RankingView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
 
@@ -27,6 +29,9 @@ struct RankingView: View {
     // Modals
     @State private var showVoteSheet = false
     @State private var voteMessage = ""
+    @State private var didBootstrap = false
+    @State private var lastAutoRefreshAt = Date.distantPast
+    @State private var lastVoteStatusFetchAt = Date.distantPast
 
     var body: some View {
         ScrollView {
@@ -80,10 +85,29 @@ struct RankingView: View {
         .navigationTitle("")
         .navigationBarHidden(true)
         .task {
-            await loadData()
+            guard !didBootstrap else { return }
+            didBootstrap = true
+            let fresh = applyCachedSnapshotIfAvailable()
+            if !fresh {
+                await loadData()
+            }
+            await refreshVoteStatusIfNeeded()
+        }
+        .onAppear {
+            refreshIfStale()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshIfStale()
+            }
+        }
+        .onChange(of: showVoteSheet) { open in
+            if open {
+                Task { await refreshVoteStatusIfNeeded(forceRefresh: true) }
+            }
         }
         .refreshable {
-            await loadData()
+            await loadData(forceRefresh: true)
         }
         .sheet(isPresented: $showVoteSheet) {
             voteSheetView
@@ -378,37 +402,79 @@ struct RankingView: View {
     }
 
     // MARK: - Data Tasks
-    private func loadData() async {
+    private func loadData(forceRefresh: Bool = false) async {
+        if loading { return }
         loading = true
         errorMessage = ""
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
 
         do {
-            async let cutoffsTask = api.fetchCutoffs(baseURL: config.baseURL, exam: exam)
-            async let rankingTask = api.fetchRankings(baseURL: config.baseURL, exam: exam)
+            async let cutoffsTask = api.fetchCutoffs(baseURL: config.baseURL, exam: exam, cachePolicy: cachePolicy)
+            async let rankingTask = api.fetchRankings(baseURL: config.baseURL, exam: exam, cachePolicy: cachePolicy)
             
             let (cutoffResponse, rankingResponse) = try await (cutoffsTask, rankingTask)
             
             cutoffs = cutoffResponse.cutoffs
             rankings = rankingResponse.rankings
+            communityStore.saveRankingSnapshot(exam: exam, rankings: rankings, cutoffs: cutoffs)
             
             if selectedInstructor.isEmpty {
                 selectedInstructor = rankings.first?.instructorName ?? ""
             }
 
-            if session.isLoggedIn {
-                voteStatus = try? await api.fetchVoteStatus(
-                    baseURL: config.baseURL,
-                    exam: exam,
-                    accessToken: session.accessToken
-                )
-            } else {
-                voteStatus = nil
-            }
+            await refreshVoteStatusIfNeeded(forceRefresh: forceRefresh)
         } catch {
             errorMessage = error.localizedDescription
         }
 
         loading = false
+    }
+
+    @discardableResult
+    private func applyCachedSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.rankingSnapshot(exam: exam) else {
+            return false
+        }
+        rankings = snapshot.rankings
+        cutoffs = snapshot.cutoffs
+        if selectedInstructor.isEmpty {
+            selectedInstructor = rankings.first?.instructorName ?? ""
+        }
+        let age = Date().timeIntervalSince(snapshot.updatedAt)
+        return age <= CommunityStore.rankingFreshWindow
+    }
+
+    private func refreshIfStale() {
+        let fresh = applyCachedSnapshotIfAvailable()
+        if fresh {
+            Task { await refreshVoteStatusIfNeeded() }
+            return
+        }
+        guard !loading else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
+        lastAutoRefreshAt = now
+        Task { await loadData() }
+    }
+
+    private func refreshVoteStatusIfNeeded(forceRefresh: Bool = false) async {
+        guard session.isLoggedIn else {
+            voteStatus = nil
+            return
+        }
+        let now = Date()
+        if !forceRefresh {
+            let statusFresh = now.timeIntervalSince(lastVoteStatusFetchAt) <= 60
+            if statusFresh && voteStatus != nil {
+                return
+            }
+        }
+        voteStatus = try? await api.fetchVoteStatus(
+            baseURL: config.baseURL,
+            exam: exam,
+            accessToken: session.accessToken
+        )
+        lastVoteStatusFetchAt = Date()
     }
 
     private func vote() async {
@@ -438,7 +504,7 @@ struct RankingView: View {
             )
             voteStatus = status
             voteMessage = "투표 완료"
-            await loadData()
+            await loadData(forceRefresh: true)
         } catch {
             voteMessage = error.localizedDescription
         }

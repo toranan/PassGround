@@ -39,6 +39,11 @@ function formatRelativeTime(value: string | null): string {
   return date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
 }
 
+function withCache(response: NextResponse) {
+  response.headers.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=120");
+  return response;
+}
+
 export async function GET(
   _request: Request,
   context: { params: ParamsLike | Promise<ParamsLike> }
@@ -114,14 +119,16 @@ export async function GET(
     };
   });
 
-  return NextResponse.json({
-    ok: true,
-    exam: {
-      slug: group.examSlug,
-      name: group.examName,
-      description: group.description,
-    },
-    writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-    boards,
-  });
+  return withCache(
+    NextResponse.json({
+      ok: true,
+      exam: {
+        slug: group.examSlug,
+        name: group.examName,
+        description: group.description,
+      },
+      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
+      boards,
+    })
+  );
 }
