@@ -14,6 +14,8 @@ type CommentRow = {
   parent_id: string | null;
 };
 
+let postStatsAvailable: boolean | null = null;
+
 function isValidUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
@@ -46,6 +48,13 @@ function verificationLabel(level: string | null | undefined): string {
     default:
       return "none";
   }
+}
+
+function isMissingRelation(error: { code?: string | null; message?: string | null } | null, relation: string): boolean {
+  if (!error) return false;
+  if (error.code === "42P01") return true;
+  const message = (error.message ?? "").toLowerCase();
+  return message.includes(`relation "${relation.toLowerCase()}" does not exist`);
 }
 
 export async function GET(
@@ -171,10 +180,31 @@ export async function GET(
     });
   }
 
-  const { count: likeCount } = await admin
-    .from("post_likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", postId);
+  let likeCount = 0;
+  let likeCountResolved = false;
+  if (postStatsAvailable !== false) {
+    const { data: statsRow, error: statsError } = await admin
+      .from("post_stats")
+      .select("like_count")
+      .eq("post_id", postId)
+      .maybeSingle<{ like_count: number | null }>();
+
+    if (!statsError && statsRow) {
+      postStatsAvailable = true;
+      likeCount = Math.max(0, statsRow.like_count ?? 0);
+      likeCountResolved = true;
+    } else if (isMissingRelation(statsError, "post_stats")) {
+      postStatsAvailable = false;
+    }
+  }
+
+  if (!likeCountResolved) {
+    const { count } = await admin
+      .from("post_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", postId);
+    likeCount = count ?? 0;
+  }
 
   let viewerLiked = false;
   if (isValidUUID(requestedUserId)) {
@@ -217,7 +247,7 @@ export async function GET(
       createdAt: postData.created_at,
       timeLabel: formatRelativeTime(postData.created_at),
       viewCount: postData.view_count ?? 0,
-      likeCount: likeCount ?? 0,
+      likeCount,
     },
     adoptedCommentId: adoptionData?.comment_id ?? null,
     comments,

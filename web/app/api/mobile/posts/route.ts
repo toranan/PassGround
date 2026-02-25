@@ -18,6 +18,14 @@ type CursorPayload = {
   id: string;
 };
 
+type PostStatsRow = {
+  post_id: string;
+  comment_count: number | null;
+  like_count: number | null;
+};
+
+let postStatsAvailable: boolean | null = null;
+
 function formatRelativeTime(value: string | null): string {
   if (!value) return "방금";
   if (value.includes("분") || value.includes("시간") || value.includes("일")) {
@@ -60,6 +68,21 @@ function decodeCursor(raw: string | null): CursorPayload | null {
   } catch {
     return null;
   }
+}
+
+function isMissingRelation(error: { code?: string | null; message?: string | null } | null, relation: string): boolean {
+  if (!error) return false;
+  if (error.code === "42P01") return true;
+  const message = (error.message ?? "").toLowerCase();
+  return message.includes(`relation "${relation.toLowerCase()}" does not exist`);
+}
+
+function aggregateCounts(rows: { post_id: string }[] | null | undefined): Map<string, number> {
+  const map = new Map<string, number>();
+  (rows ?? []).forEach((row) => {
+    map.set(row.post_id, (map.get(row.post_id) ?? 0) + 1);
+  });
+  return map;
 }
 
 export async function GET(request: Request) {
@@ -158,20 +181,42 @@ export async function GET(request: Request) {
   const hasMore = postsData.length > limit;
   const pageRows = hasMore ? postsData.slice(0, limit) : postsData;
   const postIds = pageRows.map((post) => post.id);
-  const [{ data: commentRows }, { data: likeRows }] = await Promise.all([
-    supabase.from("comments").select("post_id").in("post_id", postIds),
-    admin.from("post_likes").select("post_id").in("post_id", postIds),
-  ]);
-
   const commentCountMap = new Map<string, number>();
   const likeCountMap = new Map<string, number>();
 
-  (commentRows ?? []).forEach((row: { post_id: string }) => {
-    commentCountMap.set(row.post_id, (commentCountMap.get(row.post_id) ?? 0) + 1);
-  });
-  (likeRows ?? []).forEach((row: { post_id: string }) => {
-    likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1);
-  });
+  let missingPostIds = [...postIds];
+  if (postStatsAvailable !== false) {
+    const { data: statsRows, error: statsError } = await admin
+      .from("post_stats")
+      .select("post_id,comment_count,like_count")
+      .in("post_id", postIds);
+
+    if (!statsError && statsRows) {
+      postStatsAvailable = true;
+      (statsRows as PostStatsRow[]).forEach((row) => {
+        commentCountMap.set(row.post_id, Math.max(0, row.comment_count ?? 0));
+        likeCountMap.set(row.post_id, Math.max(0, row.like_count ?? 0));
+      });
+      missingPostIds = postIds.filter((postId) => !commentCountMap.has(postId) || !likeCountMap.has(postId));
+    } else if (isMissingRelation(statsError, "post_stats")) {
+      postStatsAvailable = false;
+    }
+  }
+
+  if (missingPostIds.length > 0) {
+    const [{ data: commentRows }, { data: likeRows }] = await Promise.all([
+      supabase.from("comments").select("post_id").in("post_id", missingPostIds),
+      admin.from("post_likes").select("post_id").in("post_id", missingPostIds),
+    ]);
+
+    const fallbackCommentMap = aggregateCounts(commentRows as { post_id: string }[] | null | undefined);
+    const fallbackLikeMap = aggregateCounts(likeRows as { post_id: string }[] | null | undefined);
+
+    missingPostIds.forEach((postId) => {
+      commentCountMap.set(postId, fallbackCommentMap.get(postId) ?? 0);
+      likeCountMap.set(postId, fallbackLikeMap.get(postId) ?? 0);
+    });
+  }
 
   const posts = pageRows.map((post) => ({
     id: post.id,

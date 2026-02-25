@@ -2,29 +2,20 @@ import SwiftUI
 
 private let homePrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 
-private struct HomeFeedItem: Identifiable {
-    let id: String
-    let boardSlug: String
-    let boardName: String
-    let post: PostSummary
-    let createdAt: Date
-
-    var hotScore: Int {
-        post.likeCount * 3 + post.commentCount * 2 + min(10, post.viewCount / 20)
-    }
-}
-
 struct TransferHomeView: View {
     @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var communityStore: CommunityStore
 
     private let api = APIClient()
 
     @State private var exam: ExamSlug = .transfer
-    @State private var realtimePosts: [HomeFeedItem] = []
-    @State private var latestPosts: [HomeFeedItem] = []
+    @State private var realtimePosts: [HomeFeedPost] = []
+    @State private var latestPosts: [HomeFeedPost] = []
 
     @State private var loading = false
     @State private var errorMessage = ""
+    @State private var didBootstrap = false
+    @State private var lastAutoRefreshAt = Date.distantPast
 
     var body: some View {
         ScrollView {
@@ -49,9 +40,9 @@ struct TransferHomeView: View {
 
                 // 피드 목록
                 postsSection(title: "🔥 실시간 인기글", items: realtimePosts, emptyText: "실시간 인기글이 없습니다.")
-                
+
                 Divider().background(Color(.systemGray5)).frame(height: 8)
-                
+
                 postsSection(title: "🕒 최신글", items: latestPosts, emptyText: "최신글이 없습니다.")
             }
             .padding(.bottom, 20)
@@ -66,9 +57,15 @@ struct TransferHomeView: View {
             }
         }
         .task {
-            if realtimePosts.isEmpty && latestPosts.isEmpty {
+            guard !didBootstrap else { return }
+            didBootstrap = true
+            let fresh = applyCachedSnapshotIfAvailable()
+            if !fresh {
                 await load()
             }
+        }
+        .onAppear {
+            refreshIfStale()
         }
         .refreshable {
             await load(forceRefresh: true)
@@ -79,7 +76,7 @@ struct TransferHomeView: View {
         // 프리미엄/광고 배너 예시
         ZStack(alignment: .leading) {
             Color.black
-            
+
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("2026 편입 합격의 기준이 되다")
@@ -101,7 +98,7 @@ struct TransferHomeView: View {
         }
     }
 
-    private func postsSection(title: String, items: [HomeFeedItem], emptyText: String) -> some View {
+    private func postsSection(title: String, items: [HomeFeedPost], emptyText: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.headline.weight(.bold))
@@ -155,64 +152,32 @@ struct TransferHomeView: View {
     }
 
     private func load(forceRefresh: Bool = false) async {
+        if loading { return }
         loading = true
         errorMessage = ""
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
 
         do {
-            let boardsResponse = try await api.fetchBoards(
-                baseURL: config.baseURL,
-                exam: exam,
-                cachePolicy: cachePolicy
-            )
-            var boards = boardsResponse.boards.isEmpty ? fallbackBoards(for: exam) : Array(boardsResponse.boards.prefix(8))
-            boards = boards.filter { $0.slug != "free" }
-
-            let baseURL = config.baseURL
-            let examValue = exam
-            let merged: [HomeFeedItem] = try await withThrowingTaskGroup(of: [HomeFeedItem].self) { group in
-                for board in boards {
-                    let boardSlug = board.slug
-                    let boardName = board.name
-                    group.addTask {
-                        let api = APIClient()
-                        let postsResponse = try await api.fetchPosts(
-                            baseURL: baseURL,
-                            exam: examValue,
-                            board: boardSlug,
-                            limit: 20,
-                            cursor: nil,
-                            cachePolicy: cachePolicy
-                        )
-                        return postsResponse.posts.map { post in
-                            HomeFeedItem(
-                                id: "\(boardSlug)-\(post.id)",
-                                boardSlug: boardSlug,
-                                boardName: boardName,
-                                post: post,
-                                createdAt: Self.parseDate(post.createdAt)
-                            )
-                        }
-                    }
-                }
-
-                var rows: [HomeFeedItem] = []
-                for try await partial in group {
-                    rows.append(contentsOf: partial)
-                }
-                return rows
+            do {
+                let response = try await api.fetchHomeFeed(
+                    baseURL: config.baseURL,
+                    exam: exam,
+                    cachePolicy: cachePolicy
+                )
+                realtimePosts = response.realtimePosts
+                latestPosts = response.latestPosts
+            } catch {
+                guard shouldFallbackToLegacyHomeAPI(error) else { throw error }
+                let legacy = try await loadLegacyHomeFeed(cachePolicy: cachePolicy)
+                realtimePosts = legacy.realtimePosts
+                latestPosts = legacy.latestPosts
             }
 
-            let deduped = Self.deduplicateByPostID(merged)
-
-            realtimePosts = deduped
-                .sorted {
-                    if $0.hotScore != $1.hotScore { return $0.hotScore > $1.hotScore }
-                    return $0.createdAt > $1.createdAt
-                }
-
-            latestPosts = deduped
-                .sorted { $0.createdAt > $1.createdAt }
+            communityStore.saveHomeSnapshot(
+                exam: exam,
+                realtimePosts: realtimePosts,
+                latestPosts: latestPosts
+            )
         } catch {
             if isCancellation(error) {
                 loading = false
@@ -224,7 +189,85 @@ struct TransferHomeView: View {
         loading = false
     }
 
+    private func loadLegacyHomeFeed(
+        cachePolicy: URLRequest.CachePolicy
+    ) async throws -> (realtimePosts: [HomeFeedPost], latestPosts: [HomeFeedPost]) {
+        let boardsResponse = try await api.fetchBoards(
+            baseURL: config.baseURL,
+            exam: exam,
+            cachePolicy: cachePolicy
+        )
+        var boards = boardsResponse.boards.isEmpty ? fallbackBoards(for: exam) : Array(boardsResponse.boards.prefix(8))
+        boards = boards.filter { $0.slug != "free" }
+
+        let baseURL = config.baseURL
+        let examValue = exam
+        let merged: [HomeFeedPost] = try await withThrowingTaskGroup(of: [HomeFeedPost].self) { group in
+            for board in boards {
+                let boardSlug = board.slug
+                let boardName = board.name
+                group.addTask {
+                    let api = APIClient()
+                    let postsResponse = try await api.fetchPosts(
+                        baseURL: baseURL,
+                        exam: examValue,
+                        board: boardSlug,
+                        limit: 20,
+                        cursor: nil,
+                        cachePolicy: cachePolicy
+                    )
+                    return postsResponse.posts.map { post in
+                        HomeFeedPost(
+                            id: "\(boardSlug)-\(post.id)",
+                            boardSlug: boardSlug,
+                            boardName: boardName,
+                            post: post
+                        )
+                    }
+                }
+            }
+
+            var rows: [HomeFeedPost] = []
+            for try await partial in group {
+                rows.append(contentsOf: partial)
+            }
+            return rows
+        }
+
+        let deduped = Self.deduplicateByPostID(merged)
+
+        let realtime = deduped.sorted {
+            if $0.hotScore != $1.hotScore { return $0.hotScore > $1.hotScore }
+            return Self.parseDate($0.post.createdAt) > Self.parseDate($1.post.createdAt)
+        }
+        let latest = deduped.sorted {
+            Self.parseDate($0.post.createdAt) > Self.parseDate($1.post.createdAt)
+        }
+        return (realtimePosts: realtime, latestPosts: latest)
+    }
+
+    @discardableResult
+    private func applyCachedSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.homeSnapshot(exam: exam) else {
+            return false
+        }
+        realtimePosts = snapshot.realtimePosts
+        latestPosts = snapshot.latestPosts
+        errorMessage = ""
+        return Date().timeIntervalSince(snapshot.updatedAt) <= CommunityStore.homeFreshWindow
+    }
+
+    private func refreshIfStale() {
+        let fresh = applyCachedSnapshotIfAvailable()
+        guard !fresh, !loading else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
+        lastAutoRefreshAt = now
+        Task { await load() }
+    }
+
     private func fallbackBoards(for exam: ExamSlug) -> [BoardInfo] {
+        _ = exam
         return [
             BoardInfo(id: "transfer-qa", slug: "qa", name: "학습법공유", description: "대학/전형/학습 전략 질문과 답변", preview: []),
             BoardInfo(id: "transfer-study-qa", slug: "study-qa", name: "학습질문", description: "영어/수학/논술 과목별 공부법 질문과 답변", preview: []),
@@ -232,18 +275,20 @@ struct TransferHomeView: View {
         ]
     }
 
-    private static func deduplicateByPostID(_ items: [HomeFeedItem]) -> [HomeFeedItem] {
-        var map: [String: HomeFeedItem] = [:]
+    private static func deduplicateByPostID(_ items: [HomeFeedPost]) -> [HomeFeedPost] {
+        var map: [String: HomeFeedPost] = [:]
         for item in items {
-            if let existing = map[item.post.id] {
-                if item.createdAt > existing.createdAt {
-                    map[item.post.id] = item
-                }
-            } else {
+            let current = map[item.post.id]
+            if current == nil || parseDate(item.post.createdAt) > parseDate(current?.post.createdAt) {
                 map[item.post.id] = item
             }
         }
         return Array(map.values)
+    }
+
+    private func shouldFallbackToLegacyHomeAPI(_ error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        return message.contains("http 404") || message.contains("api 경로를 찾지 못했습니다")
     }
 
     nonisolated private static func parseDate(_ value: String?) -> Date {

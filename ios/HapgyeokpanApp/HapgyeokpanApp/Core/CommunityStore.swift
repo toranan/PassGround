@@ -3,6 +3,8 @@ import Foundation
 @MainActor
 final class CommunityStore: ObservableObject {
     static let freshWindow: TimeInterval = 25
+    static let boardsFreshWindow: TimeInterval = 90
+    static let homeFreshWindow: TimeInterval = 60
 
     struct PostsSnapshot {
         let posts: [PostSummary]
@@ -11,7 +13,21 @@ final class CommunityStore: ObservableObject {
         let updatedAt: Date
     }
 
+    struct BoardsSnapshot {
+        let boards: [BoardInfo]
+        let writable: Bool
+        let updatedAt: Date
+    }
+
+    struct HomeSnapshot {
+        let realtimePosts: [HomeFeedPost]
+        let latestPosts: [HomeFeedPost]
+        let updatedAt: Date
+    }
+
     private var postSnapshots: [String: PostsSnapshot] = [:]
+    private var boardSnapshots: [String: BoardsSnapshot] = [:]
+    private var homeSnapshots: [String: HomeSnapshot] = [:]
 
     private func key(exam: ExamSlug, board: String) -> String {
         "\(exam.rawValue)#\(board)"
@@ -19,6 +35,14 @@ final class CommunityStore: ObservableObject {
 
     func postsSnapshot(exam: ExamSlug, board: String) -> PostsSnapshot? {
         postSnapshots[key(exam: exam, board: board)]
+    }
+
+    func boardsSnapshot(exam: ExamSlug) -> BoardsSnapshot? {
+        boardSnapshots[exam.rawValue]
+    }
+
+    func homeSnapshot(exam: ExamSlug) -> HomeSnapshot? {
+        homeSnapshots[exam.rawValue]
     }
 
     func savePostsSnapshot(
@@ -32,6 +56,30 @@ final class CommunityStore: ObservableObject {
             posts: posts,
             nextCursor: nextCursor,
             hasMore: hasMore,
+            updatedAt: Date()
+        )
+    }
+
+    func saveBoardsSnapshot(
+        exam: ExamSlug,
+        boards: [BoardInfo],
+        writable: Bool
+    ) {
+        boardSnapshots[exam.rawValue] = BoardsSnapshot(
+            boards: boards,
+            writable: writable,
+            updatedAt: Date()
+        )
+    }
+
+    func saveHomeSnapshot(
+        exam: ExamSlug,
+        realtimePosts: [HomeFeedPost],
+        latestPosts: [HomeFeedPost]
+    ) {
+        homeSnapshots[exam.rawValue] = HomeSnapshot(
+            realtimePosts: realtimePosts,
+            latestPosts: latestPosts,
             updatedAt: Date()
         )
     }

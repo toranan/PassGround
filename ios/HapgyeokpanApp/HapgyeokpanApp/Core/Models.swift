@@ -79,6 +79,25 @@ struct PostsResponse: Codable {
     let source: String?
 }
 
+struct HomeFeedResponse: Codable {
+    let ok: Bool
+    let exam: ExamInfo
+    let realtimePosts: [HomeFeedPost]
+    let latestPosts: [HomeFeedPost]
+    let source: String?
+}
+
+struct HomeFeedPost: Codable, Identifiable {
+    let id: String
+    let boardSlug: String
+    let boardName: String
+    let post: PostSummary
+
+    var hotScore: Int {
+        post.likeCount * 3 + post.commentCount * 2 + min(10, post.viewCount / 20)
+    }
+}
+
 struct BoardMeta: Codable {
     let slug: String
     let name: String

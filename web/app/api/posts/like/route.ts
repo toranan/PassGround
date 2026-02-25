@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+let postStatsAvailable: boolean | null = null;
+
 function isValidUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
@@ -12,7 +14,31 @@ function isDuplicateLikeConflict(error: { code?: string | null; message?: string
   return (error.message ?? "").toLowerCase().includes("duplicate key value");
 }
 
+function isMissingRelation(error: { code?: string | null; message?: string | null } | null, relation: string): boolean {
+  if (!error) return false;
+  if (error.code === "42P01") return true;
+  const message = (error.message ?? "").toLowerCase();
+  return message.includes(`relation "${relation.toLowerCase()}" does not exist`);
+}
+
 async function getLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, postId: string): Promise<number> {
+  if (postStatsAvailable !== false) {
+    const { data: statsRow, error: statsError } = await admin
+      .from("post_stats")
+      .select("like_count")
+      .eq("post_id", postId)
+      .maybeSingle<{ like_count: number | null }>();
+
+    if (!statsError && statsRow) {
+      postStatsAvailable = true;
+      return Math.max(0, statsRow.like_count ?? 0);
+    }
+
+    if (isMissingRelation(statsError, "post_stats")) {
+      postStatsAvailable = false;
+    }
+  }
+
   const { count } = await admin
     .from("post_likes")
     .select("*", { count: "exact", head: true })

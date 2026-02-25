@@ -84,6 +84,19 @@ final class APIClient {
         )
     }
 
+    func fetchHomeFeed(
+        baseURL: URL,
+        exam: ExamSlug,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> HomeFeedResponse {
+        try await request(
+            baseURL: baseURL,
+            path: "api/mobile/home",
+            query: [URLQueryItem(name: "exam", value: exam.rawValue)],
+            cachePolicy: cachePolicy
+        )
+    }
+
     func fetchPostDetail(
         baseURL: URL,
         exam: ExamSlug,

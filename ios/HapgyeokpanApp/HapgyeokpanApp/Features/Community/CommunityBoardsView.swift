@@ -4,6 +4,7 @@ private let communityPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 
 struct CommunityBoardsView: View {
     @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var communityStore: CommunityStore
 
     private let api = APIClient()
 
@@ -12,6 +13,8 @@ struct CommunityBoardsView: View {
     @State private var writable = true
     @State private var loading = false
     @State private var message = ""
+    @State private var didBootstrap = false
+    @State private var lastAutoRefreshAt = Date.distantPast
 
     var body: some View {
         ScrollView {
@@ -45,9 +48,15 @@ struct CommunityBoardsView: View {
             }
         }
         .task {
-            if boards.isEmpty {
+            guard !didBootstrap else { return }
+            didBootstrap = true
+            let fresh = applyCachedSnapshotIfAvailable()
+            if !fresh {
                 await loadBoards()
             }
+        }
+        .onAppear {
+            refreshBoardsIfStale()
         }
         .refreshable {
             await loadBoards(forceRefresh: true)
@@ -120,27 +129,50 @@ struct CommunityBoardsView: View {
     }
 
     private func loadBoards(forceRefresh: Bool = false) async {
+        if loading { return }
         loading = true
         message = ""
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
         do {
             let response = try await api.fetchBoards(baseURL: config.baseURL, exam: exam, cachePolicy: cachePolicy)
-            if response.boards.isEmpty {
-                boards = fallbackBoards(for: exam)
-                message = "기본 게시판 목록을 표시합니다."
-            } else {
-                boards = response.boards
-            }
+            let resolvedBoards = response.boards.isEmpty ? fallbackBoards(for: exam) : response.boards
+            boards = resolvedBoards
             writable = response.writable
+            communityStore.saveBoardsSnapshot(exam: exam, boards: resolvedBoards, writable: writable)
+            if response.boards.isEmpty {
+                message = "기본 게시판 목록을 표시합니다."
+            }
         } catch {
             if isCancellation(error) {
                 loading = false
                 return
             }
-            boards = fallbackBoards(for: exam)
+            if boards.isEmpty {
+                boards = fallbackBoards(for: exam)
+            }
             message = readableErrorMessage(error)
         }
         loading = false
+    }
+
+    @discardableResult
+    private func applyCachedSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.boardsSnapshot(exam: exam) else {
+            return false
+        }
+        boards = snapshot.boards
+        writable = snapshot.writable
+        message = ""
+        return Date().timeIntervalSince(snapshot.updatedAt) <= CommunityStore.boardsFreshWindow
+    }
+
+    private func refreshBoardsIfStale() {
+        let fresh = applyCachedSnapshotIfAvailable()
+        guard !fresh, !loading else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
+        lastAutoRefreshAt = now
+        Task { await loadBoards() }
     }
 
     private func fallbackBoards(for exam: ExamSlug) -> [BoardInfo] {
