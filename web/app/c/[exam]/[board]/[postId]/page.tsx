@@ -6,7 +6,6 @@ import { CommentList } from "@/components/CommentList";
 import { LikeButton } from "@/components/LikeButton";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { BOARD_POST_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { ChevronLeft, Eye, MessageCircle, Share2, Bookmark, User } from "lucide-react";
 
@@ -79,7 +78,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     }
     | null = null;
   let commentsData: CommentRow[] = [];
-  let boardName =
+  const boardName =
     exam === "transfer" && board === "qa"
       ? "학습법공유"
       : exam === "transfer" && board === "study-qa"
@@ -87,7 +86,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         : (boardData?.name ?? "게시판");
   let likeCount = 0;
   let adoptedCommentId: string | null = null;
-  let isSamplePost = false;
+  const isSamplePost = false;
 
   if (boardData?.id && isValidUUID(postId)) {
     const admin = getSupabaseAdmin();
@@ -178,27 +177,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         .maybeSingle<{ comment_id: string }>();
 
       adoptedCommentId = adoptionData?.comment_id ?? null;
-    }
-  }
-
-  if (!postData) {
-    const fallbackGroup = BOARD_POST_GROUPS.find(
-      (group) => group.examSlug === exam && group.boardSlug === board
-    );
-    const fallbackPost = fallbackGroup?.posts.find((p) => p.id === postId);
-
-    if (fallbackPost) {
-      postData = {
-        id: fallbackPost.id,
-        title: fallbackPost.title,
-        content: `합격판 회원분들 안녕하세요.\n\n이번에 \${fallbackPost.title} 관련해서 진짜 궁금한 점이 있어서 글 남깁니다.\n주변에 물어봐도 다 말이 다르고, 인터넷에는 광고밖에 없어서 너무 답답하네요 ㅠㅠ\n\n혹시 경험해 보신 선배님들이나 비슷한 고민 하셨던 분들 계실까요?\n작은 팁이라도 좋으니 댓글 남겨주시면 정말 감사하겠습니다!\n\n(다들 요즘 컨디션 관리 잘 하고 계시죠? 끝까지 파이팅합시다🔥)`,
-        author_name: fallbackPost.author,
-        created_at: new Date(Date.now() - fallbackPost.views * 1000 * 10).toISOString(),
-        view_count: fallbackPost.views,
-      };
-      boardName = fallbackGroup?.boardName ?? "게시판";
-      likeCount = Math.floor(Math.random() * 15);
-      isSamplePost = true;
     }
   }
 

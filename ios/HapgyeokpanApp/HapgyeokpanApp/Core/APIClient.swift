@@ -34,6 +34,19 @@ final class APIClient {
         self.decoder = JSONDecoder()
     }
 
+    func finalizeOAuth(baseURL: URL, accessToken: String, refreshToken: String) async throws -> OAuthExchangeResponse {
+        struct Body: Encodable { 
+            let accessToken: String
+            let refreshToken: String
+        }
+        return try await request(
+            baseURL: baseURL,
+            path: "api/auth/oauth/finalize",
+            method: "POST",
+            body: Body(accessToken: accessToken, refreshToken: refreshToken)
+        )
+    }
+
     func fetchBoards(baseURL: URL, exam: ExamSlug) async throws -> BoardsResponse {
         try await request(baseURL: baseURL, path: "api/mobile/boards/\(exam.rawValue)")
     }

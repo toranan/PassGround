@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { CutoffMaskedTitle } from "@/components/CutoffMaskedTitle";
 import { Button } from "@/components/ui/button";
-import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { MessageCircle, Heart, Eye, ChevronLeft, PenSquare } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -33,14 +33,6 @@ function formatRelativeTime(timeStr: string): string {
   if (diffHours < 24) return `${diffHours}시간`;
   if (diffDays < 7) return `${diffDays}일`;
   return date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
-}
-
-function deterministicLikeCount(seed: string, base: number): number {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) % 97;
-  }
-  return (hash % 15) + Math.floor(base / 3);
 }
 
 export default async function BoardPage({ params }: BoardPageProps) {
@@ -147,20 +139,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
     }
   }
 
-  const fallbackGroup = BOARD_POST_GROUPS.find(
-    (group) => group.examSlug === exam && group.boardSlug === board
-  );
-  const fallbackPosts = (fallbackGroup?.posts ?? []).map((post) => ({
-    id: post.id,
-    title: post.title,
-    author: post.author,
-    comments: post.comments,
-    likes: deterministicLikeCount(post.id, post.comments),
-    views: post.views,
-    timeLabel: post.time,
-  }));
-
-  const posts = dbPosts.length ? dbPosts : fallbackPosts;
+  const posts = dbPosts;
   const shouldMaskCutoffTitles = exam === "transfer" && board === "cutoff";
 
   return (

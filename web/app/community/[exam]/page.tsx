@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { CutoffMaskedTitle } from "@/components/CutoffMaskedTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { BadgeCheck, ChevronRight, Coins } from "lucide-react";
@@ -55,17 +55,6 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
   const latestPostsByBoard = new Map<string, PreviewPost[]>();
   const boardSlugs = group.boards.map((board) => board.slug);
 
-  const fallbackPostsByBoard = new Map(
-    BOARD_POST_GROUPS.filter((item) => item.examSlug === group.examSlug).map((item) => [
-      item.boardSlug,
-      item.posts.slice(0, 3).map((post) => ({
-        id: post.id,
-        title: post.title,
-        timeLabel: post.time,
-      })),
-    ])
-  );
-
   try {
     const supabase = getSupabaseServer();
     const { data: boardRows } = await supabase
@@ -112,14 +101,6 @@ export default async function CommunityExamPage({ params }: CommunityExamPagePro
   } catch {
     // Fall back to local seed preview if DB read fails.
   }
-
-  boardSlugs.forEach((slug) => {
-    if ((latestPostsByBoard.get(slug) ?? []).length > 0) return;
-    const fallback = fallbackPostsByBoard.get(slug);
-    if (fallback && fallback.length > 0) {
-      latestPostsByBoard.set(slug, fallback);
-    }
-  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

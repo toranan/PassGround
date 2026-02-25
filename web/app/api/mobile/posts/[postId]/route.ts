@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -76,41 +76,7 @@ export async function GET(
   }
 
   if (!isValidUUID(postId)) {
-    const fallbackGroup = BOARD_POST_GROUPS.find(
-      (group) => group.examSlug === exam && group.boardSlug === board
-    );
-    const fallbackPost = fallbackGroup?.posts.find((item) => item.id === postId);
-
-    if (!fallbackPost) {
-      return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-      isSamplePost: true,
-      board: { slug: boardInfo.slug, name: boardInfo.name },
-      post: {
-        id: fallbackPost.id,
-        title: fallbackPost.title,
-        content: `합격판 회원분들 안녕하세요.
-
-이번에 ${fallbackPost.title} 관련해서 진짜 궁금한 점이 있어서 글 남깁니다.
-주변에 물어봐도 다 말이 다르고, 인터넷에는 광고밖에 없어서 너무 답답하네요 ㅠㅠ
-
-혹시 경험해 보신 선배님들이나 비슷한 고민 하셨던 분들 계실까요?
-작은 팁이라도 좋으니 댓글 남겨주시면 정말 감사하겠습니다!
-
-(다들 요즘 컨디션 관리 잘 하고 계시죠? 끝까지 파이팅합시다🔥)`,
-        authorName: fallbackPost.author,
-        createdAt: null,
-        timeLabel: fallbackPost.time,
-        viewCount: fallbackPost.views,
-        likeCount: Math.max(0, Math.floor(fallbackPost.comments / 2)),
-      },
-      adoptedCommentId: null,
-      comments: [],
-    });
+    return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
   }
 
   const supabase = getSupabaseServer();

@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
-
-function deterministicLikeCount(seed: string, base: number): number {
-  let hash = 0;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash * 31 + seed.charCodeAt(index)) % 97;
-  }
-  return (hash % 15) + Math.floor(base / 3);
-}
 
 function formatRelativeTime(value: string | null): string {
   if (!value) return "방금";
@@ -62,20 +54,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "지원하지 않는 게시판입니다." }, { status: 400 });
   }
 
-  const fallbackGroup = BOARD_POST_GROUPS.find((group) => group.examSlug === exam && group.boardSlug === board);
-  const fallbackPosts = (fallbackGroup?.posts ?? []).map((post) => ({
-    id: post.id,
-    title: post.title,
-    authorName: post.author,
-    commentCount: post.comments,
-    likeCount: deterministicLikeCount(post.id, post.comments),
-    viewCount: post.views,
-    timeLabel: post.time,
-    content: "합격판 게시글 미리보기 내용입니다.",
-    createdAt: null,
-    isSample: true,
-  }));
-
   const supabase = getSupabaseServer();
   const { data: boardRow } = await supabase
     .from("boards")
@@ -85,14 +63,7 @@ export async function GET(request: Request) {
     .maybeSingle<{ id: string; name: string }>();
 
   if (!boardRow?.id) {
-    return NextResponse.json({
-      ok: true,
-      writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
-      exam: { slug: examInfo.examSlug, name: examInfo.examName },
-      board: { slug: boardInfo.slug, name: boardInfo.name, description: boardInfo.description },
-      posts: fallbackPosts,
-      source: "seed",
-    });
+    return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
   let postsData:
@@ -134,8 +105,8 @@ export async function GET(request: Request) {
       writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
       exam: { slug: examInfo.examSlug, name: examInfo.examName },
       board: { slug: boardInfo.slug, name: boardRow.name ?? boardInfo.name, description: boardInfo.description },
-      posts: fallbackPosts,
-      source: "seed",
+      posts: [],
+      source: "db-empty",
     });
   }
 

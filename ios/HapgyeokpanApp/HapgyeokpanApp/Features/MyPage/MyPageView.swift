@@ -354,8 +354,21 @@ struct MyPageView: View {
 
         do {
             let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
-            session.save(user: result.user, tokens: result.session)
-            nicknameInput = result.user.nickname
+            let authResponse: OAuthExchangeResponse
+            
+            switch result {
+            case .pkcePayload(let response):
+                authResponse = response
+            case .implicitTokens(let access, let refresh):
+                authResponse = try await api.finalizeOAuth(
+                    baseURL: config.baseURL,
+                    accessToken: access,
+                    refreshToken: refresh
+                )
+            }
+            
+            session.save(user: authResponse.user, tokens: authResponse.session)
+            nicknameInput = authResponse.user.nickname
             message = "로그인 완료"
             await refreshData()
         } catch {

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>74CDDC7D-7FF6-4DD4-B4EE-C1FEB7238F31</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>74CDDC7D-7FF6-4DD4-B4EE-C1FEB7238F31.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>HapgyeokpanApp project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>HapgyeokpanApp</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project HapgyeokpanApp with scheme HapgyeokpanApp and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>793709565.49454904</real>
+			<key>timeStoppedRecording</key>
+			<real>793709571.60991704</real>
+			<key>title</key>
+			<string>Building project HapgyeokpanApp with scheme HapgyeokpanApp and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>74CDDC7D-7FF6-4DD4-B4EE-C1FEB7238F31</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

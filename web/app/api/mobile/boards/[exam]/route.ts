@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BOARD_POST_GROUPS, COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
@@ -59,18 +59,6 @@ export async function GET(
   }
 
   const boardSlugs = group.boards.map((board) => board.slug);
-  const fallbackPreview = new Map(
-    BOARD_POST_GROUPS.filter((item) => item.examSlug === exam).map((item) => [
-      item.boardSlug,
-      item.posts.slice(0, 3).map((post) => ({
-        id: post.id,
-        title: post.title,
-        authorName: post.author,
-        timeLabel: post.time,
-      })),
-    ])
-  );
-
   const previewsByBoard = new Map<string, Array<{ id: string; title: string; authorName: string; timeLabel: string }>>();
 
   try {
@@ -116,7 +104,7 @@ export async function GET(
   }
 
   const boards = group.boards.map((board) => {
-    const preview = previewsByBoard.get(board.slug) ?? fallbackPreview.get(board.slug) ?? [];
+    const preview = previewsByBoard.get(board.slug) ?? [];
     return {
       id: board.id,
       slug: board.slug,

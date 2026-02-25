@@ -1,0 +1,23 @@
+{
+  "/Users/anseung-won/Desktop/프로젝트/합격판/ios/HapgyeokpanApp/HapgyeokpanApp/ContentView.swift" : {
+    "const-values" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/ContentView.dia",
+    "object" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/ContentView.swiftdeps"
+  },
+  "/Users/anseung-won/Desktop/프로젝트/합격판/ios/HapgyeokpanApp/HapgyeokpanApp/Core/AppConfig.swift" : {
+    "const-values" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/AppConfig.swiftconstvalues",
+    "dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/AppConfig.d",
+    "diagnostics" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/AppConfig.dia",
+    "object" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/AppConfig.o",
+    "swift-dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/AppConfig.swiftdeps"
+  },
+  "/Users/anseung-won/Desktop/프로젝트/합격판/ios/HapgyeokpanApp/HapgyeokpanApp/HapgyeokpanApp.swift" : {
+    "const-values" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/HapgyeokpanApp.swiftconstvalues",
+    "dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/HapgyeokpanApp.d",
+    "diagnostics" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/HapgyeokpanApp.dia",
+    "object" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/HapgyeokpanApp.o",
+    "swift-dependencies" : "/Users/anseung-won/Desktop/프로젝트/합격판/.derivedData/Build/Intermediates.noindex/HapgyeokpanApp.build/Debug-iphoneos/HapgyeokpanApp.build/Objects-normal/arm64/HapgyeokpanApp.swiftdeps"
+  }
+}
