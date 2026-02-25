@@ -270,10 +270,16 @@ struct PostDetailView: View {
         loading = true
         message = ""
         do {
-            let response = try await api.fetchPostDetail(baseURL: config.baseURL, exam: exam, board: boardSlug, postId: postId)
+            let response = try await api.fetchPostDetail(
+                baseURL: config.baseURL,
+                exam: exam,
+                board: boardSlug,
+                postId: postId,
+                userId: session.user?.id
+            )
             detail = response
             likeCount = response.post.likeCount
-            liked = false
+            liked = response.viewerLiked ?? false
         } catch {
             message = error.localizedDescription
         }

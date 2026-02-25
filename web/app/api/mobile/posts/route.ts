@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 function formatRelativeTime(value: string | null): string {
   if (!value) return "방금";
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseServer();
+  const admin = getSupabaseAdmin();
   const { data: boardRow } = await supabase
     .from("boards")
     .select("id,name,exams!inner(slug)")
@@ -113,7 +115,7 @@ export async function GET(request: Request) {
   const postIds = postsData.map((post) => post.id);
   const [{ data: commentRows }, { data: likeRows }] = await Promise.all([
     supabase.from("comments").select("post_id").in("post_id", postIds),
-    supabase.from("post_likes").select("post_id").in("post_id", postIds),
+    admin.from("post_likes").select("post_id").in("post_id", postIds),
   ]);
 
   const commentCountMap = new Map<string, number>();

@@ -63,14 +63,18 @@ final class APIClient {
         )
     }
 
-    func fetchPostDetail(baseURL: URL, exam: ExamSlug, board: String, postId: String) async throws -> PostDetailResponse {
-        try await request(
+    func fetchPostDetail(baseURL: URL, exam: ExamSlug, board: String, postId: String, userId: String?) async throws -> PostDetailResponse {
+        var query: [URLQueryItem] = [
+            URLQueryItem(name: "exam", value: exam.rawValue),
+            URLQueryItem(name: "board", value: board)
+        ]
+        if let userId, !userId.isEmpty {
+            query.append(URLQueryItem(name: "userId", value: userId))
+        }
+        return try await request(
             baseURL: baseURL,
             path: "api/mobile/posts/\(postId)",
-            query: [
-                URLQueryItem(name: "exam", value: exam.rawValue),
-                URLQueryItem(name: "board", value: board)
-            ]
+            query: query
         )
     }
 

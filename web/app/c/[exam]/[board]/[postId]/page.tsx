@@ -164,7 +164,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         verification_level: verificationMap.get(comment.author_name) ?? "none",
       }));
 
-      const { count } = await supabase
+      const { count } = await admin
         .from("post_likes")
         .select("*", { count: "exact", head: true })
         .eq("post_id", postData.id);

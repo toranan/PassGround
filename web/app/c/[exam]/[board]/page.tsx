@@ -7,6 +7,7 @@ import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { MessageCircle, Heart, Eye, ChevronLeft, PenSquare } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type BoardPageProps = {
   params: Promise<{
@@ -52,6 +53,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
     examInfo?.boards.find((b) => b.slug === board)?.name ?? "게시판";
 
   const supabase = getSupabaseServer();
+  const admin = getSupabaseAdmin();
   const { data: boardData } = await supabase
     .from("boards")
     .select("id,name,exams!inner(slug)")
@@ -110,7 +112,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
         .in("post_id", postIds);
 
       // Get like counts for all posts
-      const { data: likeCounts } = await supabase
+      const { data: likeCounts } = await admin
         .from("post_likes")
         .select("post_id")
         .in("post_id", postIds);

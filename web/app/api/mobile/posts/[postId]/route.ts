@@ -57,6 +57,7 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const exam = (searchParams.get("exam") ?? "").trim();
   const board = (searchParams.get("board") ?? "").trim();
+  const requestedUserId = (searchParams.get("userId") ?? "").trim();
 
   if (!exam || !board) {
     return NextResponse.json({ error: "exam, board 파라미터가 필요합니다." }, { status: 400 });
@@ -170,10 +171,21 @@ export async function GET(
     });
   }
 
-  const { count: likeCount } = await supabase
+  const { count: likeCount } = await admin
     .from("post_likes")
     .select("*", { count: "exact", head: true })
     .eq("post_id", postId);
+
+  let viewerLiked = false;
+  if (isValidUUID(requestedUserId)) {
+    const { data: likedRow } = await admin
+      .from("post_likes")
+      .select("post_id")
+      .eq("post_id", postId)
+      .eq("user_id", requestedUserId)
+      .maybeSingle<{ post_id: string }>();
+    viewerLiked = Boolean(likedRow);
+  }
 
   const { data: adoptionData } = await supabase
     .from("answer_adoptions")
@@ -195,6 +207,7 @@ export async function GET(
     ok: true,
     writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
     isSamplePost: false,
+    viewerLiked,
     board: { slug: boardInfo.slug, name: boardData.name ?? boardInfo.name },
     post: {
       id: postData.id,

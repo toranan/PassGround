@@ -100,6 +100,7 @@ struct PostDetailResponse: Codable {
     let ok: Bool
     let writable: Bool
     let isSamplePost: Bool
+    let viewerLiked: Bool?
     let board: BoardMetaLite
     let post: PostDetail
     let adoptedCommentId: String?
