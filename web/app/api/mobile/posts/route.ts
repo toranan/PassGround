@@ -71,6 +71,7 @@ export async function GET(request: Request) {
     likeCount: deterministicLikeCount(post.id, post.comments),
     viewCount: post.views,
     timeLabel: post.time,
+    content: "합격판 게시글 미리보기 내용입니다.",
     createdAt: null,
     isSample: true,
   }));
@@ -98,6 +99,7 @@ export async function GET(request: Request) {
     | {
       id: string;
       title: string;
+      content?: string | null;
       author_name: string | null;
       created_at: string | null;
       view_count?: number | null;
@@ -106,7 +108,7 @@ export async function GET(request: Request) {
 
   const { data: modernPosts, error: modernError } = await supabase
     .from("posts")
-    .select("id,title,author_name,created_at,view_count")
+    .select("id,title,content,author_name,created_at,view_count")
     .eq("board_id", boardRow.id)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -115,7 +117,7 @@ export async function GET(request: Request) {
   if ((!postsData || postsData.length === 0) && modernError?.message?.includes("view_count")) {
     const { data: legacyPosts } = await supabase
       .from("posts")
-      .select("id,title,author_name,created_at")
+      .select("id,title,content,author_name,created_at")
       .eq("board_id", boardRow.id)
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -156,6 +158,7 @@ export async function GET(request: Request) {
   const posts = postsData.map((post) => ({
     id: post.id,
     title: post.title,
+    content: post.content?.substring(0, 100) || "",
     authorName: (post.author_name ?? "익명").trim() || "익명",
     commentCount: commentCountMap.get(post.id) ?? 0,
     likeCount: likeCountMap.get(post.id) ?? 0,
