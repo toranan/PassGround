@@ -21,9 +21,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "게시글 정보가 없습니다." }, { status: 400 });
   }
 
-  // UUID 형식 검증 (샘플 게시글은 UUID 형식이 아님)
-  if (!isValidUUID(postId)) {
-    return NextResponse.json({ error: "샘플 게시글에는 댓글을 작성할 수 없습니다." }, { status: 400 });
+  // UUID 형식 검증 (목록 조회 전용 게시글은 쓰기 불가)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(postId)) {
+    return NextResponse.json({ error: "기본 목록 게시글에는 댓글을 작성할 수 없습니다." }, { status: 400 });
   }
   if (parentId && !isValidUUID(parentId)) {
     return NextResponse.json({ error: "유효하지 않은 답글 대상입니다." }, { status: 400 });

@@ -93,7 +93,15 @@ export async function GET(
       post: {
         id: fallbackPost.id,
         title: fallbackPost.title,
-        content: `이 게시글은 샘플 데이터입니다.\n\n${fallbackPost.title}\n\n실제 서비스에서는 회원이 작성한 실제 본문이 표시됩니다.`,
+        content: `합격판 회원분들 안녕하세요.
+
+이번에 ${fallbackPost.title} 관련해서 진짜 궁금한 점이 있어서 글 남깁니다.
+주변에 물어봐도 다 말이 다르고, 인터넷에는 광고밖에 없어서 너무 답답하네요 ㅠㅠ
+
+혹시 경험해 보신 선배님들이나 비슷한 고민 하셨던 분들 계실까요?
+작은 팁이라도 좋으니 댓글 남겨주시면 정말 감사하겠습니다!
+
+(다들 요즘 컨디션 관리 잘 하고 계시죠? 끝까지 파이팅합시다🔥)`,
         authorName: fallbackPost.author,
         createdAt: null,
         timeLabel: fallbackPost.time,
@@ -162,9 +170,9 @@ export async function GET(
       .maybeSingle();
     postData = legacyPost
       ? {
-          ...legacyPost,
-          view_count: 0,
-        }
+        ...legacyPost,
+        view_count: 0,
+      }
       : null;
   }
 

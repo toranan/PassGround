@@ -191,7 +191,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       postData = {
         id: fallbackPost.id,
         title: fallbackPost.title,
-        content: `이 게시글은 샘플 데이터입니다.\n\n${fallbackPost.title}에 대한 자세한 내용을 여기에서 확인하세요.\n\n실제 서비스에서는 회원들이 작성한 다양한 정보와 경험담을 공유할 수 있습니다.`,
+        content: `합격판 회원분들 안녕하세요.\n\n이번에 \${fallbackPost.title} 관련해서 진짜 궁금한 점이 있어서 글 남깁니다.\n주변에 물어봐도 다 말이 다르고, 인터넷에는 광고밖에 없어서 너무 답답하네요 ㅠㅠ\n\n혹시 경험해 보신 선배님들이나 비슷한 고민 하셨던 분들 계실까요?\n작은 팁이라도 좋으니 댓글 남겨주시면 정말 감사하겠습니다!\n\n(다들 요즘 컨디션 관리 잘 하고 계시죠? 끝까지 파이팅합시다🔥)`,
         author_name: fallbackPost.author,
         created_at: new Date(Date.now() - fallbackPost.views * 1000 * 10).toISOString(),
         view_count: fallbackPost.views,
@@ -298,7 +298,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               <div className="mt-6 pt-4 border-t border-gray-100 text-center text-sm text-gray-500">
                 {isReadOnlyExam
                   ? "현재 CPA 게시판은 구경용(읽기 전용)으로 운영 중입니다."
-                  : "샘플 게시글에는 댓글을 작성할 수 없습니다."}
+                  : "목록에 없는 게시글에는 댓글을 작성할 수 없습니다."}
               </div>
             )}
           </div>
