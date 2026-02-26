@@ -52,9 +52,9 @@ struct ContentView: View {
             NavigationStack {
                 RankingView()
             }
-        case .verification:
+        case .schedule:
             NavigationStack {
-                VerificationView()
+                ScheduleView()
             }
         case .mypage:
             NavigationStack {
@@ -68,7 +68,7 @@ enum TabSelection: String, CaseIterable {
     case home = "홈"
     case community = "커뮤니티"
     case ranking = "랭킹"
-    case verification = "인증"
+    case schedule = "일정"
     case mypage = "마이"
 }
 
@@ -82,7 +82,7 @@ struct MainBottomTabBar: View {
                 TabBarButton(title: "홈", iconName: "house.fill", tab: .home, selectedTab: $selectedTab)
                 TabBarButton(title: "커뮤니티", iconName: "text.bubble.fill", tab: .community, selectedTab: $selectedTab)
                 TabBarButton(title: "랭킹", iconName: "chart.bar.fill", tab: .ranking, selectedTab: $selectedTab)
-                TabBarButton(title: "인증", iconName: "checkmark.seal.fill", tab: .verification, selectedTab: $selectedTab)
+                TabBarButton(title: "일정", iconName: "calendar.badge.clock", tab: .schedule, selectedTab: $selectedTab)
                 TabBarButton(title: "마이", iconName: "person.crop.circle.fill", tab: .mypage, selectedTab: $selectedTab)
             }
             .padding(.horizontal, 8)

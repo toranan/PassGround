@@ -6,6 +6,8 @@ final class CommunityStore: ObservableObject {
     static let boardsFreshWindow: TimeInterval = 90
     static let homeFreshWindow: TimeInterval = 60
     static let rankingFreshWindow: TimeInterval = 45
+    static let detailFreshWindow: TimeInterval = 90
+    static let scheduleFreshWindow: TimeInterval = 180
 
     struct PostsSnapshot: Codable {
         let posts: [PostSummary]
@@ -32,11 +34,23 @@ final class CommunityStore: ObservableObject {
         let updatedAt: Date
     }
 
+    struct PostDetailSnapshot: Codable {
+        let response: PostDetailResponse
+        let updatedAt: Date
+    }
+
+    struct ScheduleSnapshot: Codable {
+        let schedules: [ExamScheduleItem]
+        let updatedAt: Date
+    }
+
     private struct PersistedState: Codable {
         let postSnapshots: [String: PostsSnapshot]
         let boardSnapshots: [String: BoardsSnapshot]
         let homeSnapshots: [String: HomeSnapshot]
         let rankingSnapshots: [String: RankingSnapshot]?
+        let detailSnapshots: [String: PostDetailSnapshot]?
+        let scheduleSnapshots: [String: ScheduleSnapshot]?
     }
 
     private enum Keys {
@@ -47,6 +61,8 @@ final class CommunityStore: ObservableObject {
     private var boardSnapshots: [String: BoardsSnapshot] = [:]
     private var homeSnapshots: [String: HomeSnapshot] = [:]
     private var rankingSnapshots: [String: RankingSnapshot] = [:]
+    private var detailSnapshots: [String: PostDetailSnapshot] = [:]
+    private var scheduleSnapshots: [String: ScheduleSnapshot] = [:]
 
     init() {
         restore()
@@ -70,6 +86,19 @@ final class CommunityStore: ObservableObject {
 
     func rankingSnapshot(exam: ExamSlug) -> RankingSnapshot? {
         rankingSnapshots[exam.rawValue]
+    }
+
+    func scheduleSnapshot(exam: ExamSlug) -> ScheduleSnapshot? {
+        scheduleSnapshots[exam.rawValue]
+    }
+
+    func postDetailSnapshot(postId: String) -> PostDetailSnapshot? {
+        detailSnapshots[postId]
+    }
+
+    func hasFreshPostDetailSnapshot(postId: String) -> Bool {
+        guard let snapshot = detailSnapshots[postId] else { return false }
+        return Date().timeIntervalSince(snapshot.updatedAt) <= Self.detailFreshWindow
     }
 
     func savePostsSnapshot(
@@ -127,6 +156,17 @@ final class CommunityStore: ObservableObject {
         persist()
     }
 
+    func savePostDetailSnapshot(postId: String, response: PostDetailResponse) {
+        guard !postId.isEmpty else { return }
+        detailSnapshots[postId] = PostDetailSnapshot(response: response, updatedAt: Date())
+        persist()
+    }
+
+    func saveScheduleSnapshot(exam: ExamSlug, schedules: [ExamScheduleItem]) {
+        scheduleSnapshots[exam.rawValue] = ScheduleSnapshot(schedules: schedules, updatedAt: Date())
+        persist()
+    }
+
     func updateLikeCount(postId: String, likeCount: Int) {
         guard !postId.isEmpty else { return }
 
@@ -163,6 +203,31 @@ final class CommunityStore: ObservableObject {
                 latestPosts: updatedLatest,
                 updatedAt: Date()
             )
+            changed = true
+        }
+
+        if let snapshot = detailSnapshots[postId] {
+            let response = snapshot.response
+            let updatedResponse = PostDetailResponse(
+                ok: response.ok,
+                writable: response.writable,
+                isSamplePost: response.isSamplePost,
+                viewerLiked: response.viewerLiked,
+                board: response.board,
+                post: PostDetail(
+                    id: response.post.id,
+                    title: response.post.title,
+                    content: response.post.content,
+                    authorName: response.post.authorName,
+                    createdAt: response.post.createdAt,
+                    timeLabel: response.post.timeLabel,
+                    viewCount: response.post.viewCount,
+                    likeCount: safeLikeCount
+                ),
+                adoptedCommentId: response.adoptedCommentId,
+                comments: response.comments
+            )
+            detailSnapshots[postId] = PostDetailSnapshot(response: updatedResponse, updatedAt: Date())
             changed = true
         }
 
@@ -256,6 +321,8 @@ final class CommunityStore: ObservableObject {
         boardSnapshots = state.boardSnapshots
         homeSnapshots = state.homeSnapshots
         rankingSnapshots = state.rankingSnapshots ?? [:]
+        detailSnapshots = state.detailSnapshots ?? [:]
+        scheduleSnapshots = state.scheduleSnapshots ?? [:]
     }
 
     private func persist() {
@@ -263,7 +330,9 @@ final class CommunityStore: ObservableObject {
             postSnapshots: postSnapshots,
             boardSnapshots: boardSnapshots,
             homeSnapshots: homeSnapshots,
-            rankingSnapshots: rankingSnapshots
+            rankingSnapshots: rankingSnapshots,
+            detailSnapshots: detailSnapshots,
+            scheduleSnapshots: scheduleSnapshots
         )
         guard let data = try? JSONEncoder().encode(state) else { return }
         UserDefaults.standard.set(data, forKey: Keys.persistedState)

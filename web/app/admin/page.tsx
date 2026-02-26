@@ -66,9 +66,47 @@ type AdminCutoffResponse = {
   error?: string;
 };
 
+type ScheduleItem = {
+  id: string;
+  examSlug: string;
+  title: string;
+  category: string;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  organizer: string | null;
+  linkUrl: string | null;
+  isOfficial: boolean;
+  note: string | null;
+};
+
+type AdminScheduleResponse = {
+  ok: boolean;
+  schedules: ScheduleItem[];
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
+}
+
+function toLocalDateTimeInput(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatDateLabel(value: string | null): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function AdminPage() {
@@ -85,6 +123,8 @@ export default function AdminPage() {
   const [rankings, setRankings] = useState<RankingItem[]>([]);
   const [loadingCutoffs, setLoadingCutoffs] = useState(false);
   const [cutoffs, setCutoffs] = useState<CutoffItem[]>([]);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -104,6 +144,16 @@ export default function AdminPage() {
     initialCutoff: "",
     memo: "",
   });
+  const [scheduleForm, setScheduleForm] = useState({
+    title: "",
+    category: "원서접수",
+    startsAt: toLocalDateTimeInput(new Date()),
+    endsAt: "",
+    location: "",
+    organizer: "",
+    linkUrl: "",
+    note: "",
+  });
 
   const sortedRankings = useMemo(() => {
     return [...rankings].sort((a, b) => a.rank - b.rank || a.subject.localeCompare(b.subject));
@@ -117,6 +167,14 @@ export default function AdminPage() {
         a.track.localeCompare(b.track)
     );
   }, [cutoffs]);
+  const sortedSchedules = useMemo(() => {
+    return [...schedules].sort((a, b) => {
+      const left = new Date(a.startsAt).getTime();
+      const right = new Date(b.startsAt).getTime();
+      if (left !== right) return left - right;
+      return a.title.localeCompare(b.title);
+    });
+  }, [schedules]);
 
   const loadAdminMe = async () => {
     const token = getAccessToken();
@@ -215,15 +273,42 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadSchedules = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingSchedules(true);
+    try {
+      const res = await fetch(`/api/admin/schedules?exam=${exam}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminScheduleResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "일정 목록을 불러오지 못했습니다.");
+        setSchedules([]);
+        return;
+      }
+      setSchedules(payload.schedules ?? []);
+    } catch {
+      setMessage("일정 목록을 불러오지 못했습니다.");
+      setSchedules([]);
+    } finally {
+      setLoadingSchedules(false);
+    }
+  }, [exam]);
+
   useEffect(() => {
     void loadAdminMe();
   }, [user?.id]);
 
   useEffect(() => {
     if (adminState?.isAdmin) {
-      void Promise.all([loadRankings(), loadCutoffs()]);
+      void Promise.all([loadRankings(), loadCutoffs(), loadSchedules()]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -390,6 +475,102 @@ export default function AdminPage() {
       setMessage("커트라인 데이터가 삭제되었습니다.");
     } catch {
       setMessage("커트라인 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveSchedule = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const startsAtDate = scheduleForm.startsAt ? new Date(scheduleForm.startsAt) : null;
+    const endsAtDate = scheduleForm.endsAt ? new Date(scheduleForm.endsAt) : null;
+    if (!scheduleForm.title.trim() || !startsAtDate || Number.isNaN(startsAtDate.getTime())) {
+      setMessage("일정 제목과 시작일시는 필수입니다.");
+      return;
+    }
+    if (scheduleForm.endsAt && (!endsAtDate || Number.isNaN(endsAtDate.getTime()))) {
+      setMessage("종료일시 형식이 올바르지 않습니다.");
+      return;
+    }
+    if (endsAtDate && endsAtDate.getTime() < startsAtDate.getTime()) {
+      setMessage("종료일시는 시작일시보다 이후여야 합니다.");
+      return;
+    }
+
+    const startsAtIso = startsAtDate.toISOString();
+    const endsAtIso = endsAtDate ? endsAtDate.toISOString() : null;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/schedules", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          title: scheduleForm.title,
+          category: scheduleForm.category,
+          startsAt: startsAtIso,
+          endsAt: endsAtIso,
+          location: scheduleForm.location,
+          organizer: scheduleForm.organizer,
+          linkUrl: scheduleForm.linkUrl,
+          note: scheduleForm.note,
+          isOfficial: true,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminScheduleResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "일정 저장에 실패했습니다.");
+        return;
+      }
+      setSchedules(payload.schedules ?? []);
+      setScheduleForm((prev) => ({
+        ...prev,
+        title: "",
+        endsAt: "",
+        location: "",
+        organizer: "",
+        linkUrl: "",
+        note: "",
+      }));
+      setMessage("일정이 저장되었습니다.");
+    } catch {
+      setMessage("일정 저장 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/schedules", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, exam }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminScheduleResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "일정 삭제에 실패했습니다.");
+        return;
+      }
+      setSchedules(payload.schedules ?? []);
+      setMessage("일정이 삭제되었습니다.");
+    } catch {
+      setMessage("일정 삭제 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -676,6 +857,131 @@ export default function AdminPage() {
                     ) : (
                       <p className="text-sm text-muted-foreground">
                         등록된 커트라인 데이터가 없습니다.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">공식 일정 관리</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                      <Input
+                        placeholder="일정 제목"
+                        value={scheduleForm.title}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, title: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="카테고리 (예: 원서접수)"
+                        value={scheduleForm.category}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, category: e.target.value }))
+                        }
+                      />
+                      <Input
+                        type="datetime-local"
+                        value={scheduleForm.startsAt}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, startsAt: e.target.value }))
+                        }
+                      />
+                      <Input
+                        type="datetime-local"
+                        value={scheduleForm.endsAt}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, endsAt: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="장소 (선택)"
+                        value={scheduleForm.location}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, location: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="주관 기관 (선택)"
+                        value={scheduleForm.organizer}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, organizer: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="공식 링크 URL (선택)"
+                        value={scheduleForm.linkUrl}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, linkUrl: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="메모 (선택)"
+                        value={scheduleForm.note}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, note: e.target.value }))
+                        }
+                      />
+                      <div className="md:col-span-4">
+                        <Button onClick={handleSaveSchedule} disabled={submitting}>
+                          {submitting ? "저장 중..." : "공식 일정 저장"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {loadingSchedules ? (
+                      <p className="text-sm text-muted-foreground">일정 목록 불러오는 중...</p>
+                    ) : sortedSchedules.length ? (
+                      <div className="space-y-2">
+                        {sortedSchedules.map((item) => (
+                          <div
+                            key={item.id}
+                            className="rounded-lg border border-border px-3 py-3 flex items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold">
+                                {item.title}
+                              </p>
+                              <p className="text-xs text-primary mt-1">
+                                {item.category} · {formatDateLabel(item.startsAt)}
+                                {item.endsAt ? ` ~ ${formatDateLabel(item.endsAt)}` : ""}
+                              </p>
+                              {item.location ? (
+                                <p className="text-xs text-muted-foreground mt-1">장소: {item.location}</p>
+                              ) : null}
+                              {item.organizer ? (
+                                <p className="text-xs text-muted-foreground">주관: {item.organizer}</p>
+                              ) : null}
+                              {item.linkUrl ? (
+                                <a
+                                  className="text-xs text-blue-600 underline"
+                                  href={item.linkUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  공식 링크
+                                </a>
+                              ) : null}
+                              {item.note ? (
+                                <p className="text-xs text-muted-foreground mt-1">{item.note}</p>
+                              ) : null}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void handleDeleteSchedule(item.id)}
+                              disabled={submitting}
+                            >
+                              삭제
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        등록된 일정 데이터가 없습니다.
                       </p>
                     )}
                   </CardContent>

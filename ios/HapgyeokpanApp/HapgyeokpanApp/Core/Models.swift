@@ -311,6 +311,40 @@ struct DailyBriefing: Codable, Identifiable {
     }
 }
 
+struct ScheduleResponse: Codable {
+    let ok: Bool
+    let source: String
+    let schedules: [ExamScheduleItem]
+}
+
+struct ExamScheduleItem: Codable, Identifiable, Equatable {
+    let id: String
+    let examSlug: String
+    let title: String
+    let category: String
+    let startsAt: String
+    let endsAt: String?
+    let location: String?
+    let organizer: String?
+    let linkUrl: String?
+    let isOfficial: Bool
+    let note: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case examSlug = "exam_slug"
+        case title
+        case category
+        case startsAt = "starts_at"
+        case endsAt = "ends_at"
+        case location
+        case organizer
+        case linkUrl = "link_url"
+        case isOfficial = "is_official"
+        case note
+    }
+}
+
 struct AdminMeResponse: Codable {
     let ok: Bool
     let isAdmin: Bool

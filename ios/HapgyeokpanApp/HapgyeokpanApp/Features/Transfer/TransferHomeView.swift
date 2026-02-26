@@ -5,6 +5,7 @@ private let homePrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct TransferHomeView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
+    @EnvironmentObject private var session: SessionStore
     @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
@@ -17,6 +18,7 @@ struct TransferHomeView: View {
     @State private var errorMessage = ""
     @State private var didBootstrap = false
     @State private var lastAutoRefreshAt = Date.distantPast
+    @State private var prefetchedPostIDs: Set<String> = []
 
     var body: some View {
         ScrollView {
@@ -122,7 +124,13 @@ struct TransferHomeView: View {
                 let rows = Array(items.prefix(3))
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
                     NavigationLink {
-                        PostDetailView(exam: exam, boardSlug: item.boardSlug, postId: item.post.id)
+                        PostDetailView(
+                            exam: exam,
+                            boardSlug: item.boardSlug,
+                            postId: item.post.id,
+                            initialPost: item.post,
+                            boardName: item.boardName
+                        )
                     } label: {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(item.post.title)
@@ -147,6 +155,9 @@ struct TransferHomeView: View {
                         .background(Color.white)
                     }
                     .buttonStyle(.plain)
+                    .onAppear {
+                        Task { await prefetchPostDetail(item) }
+                    }
 
                     if index < rows.count - 1 {
                         Divider()
@@ -270,6 +281,32 @@ struct TransferHomeView: View {
         guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
         lastAutoRefreshAt = now
         Task { await load() }
+    }
+
+    private func prefetchPostDetail(_ item: HomeFeedPost) async {
+        let postId = item.post.id
+        guard !postId.isEmpty else { return }
+        guard !prefetchedPostIDs.contains(postId) else { return }
+        if communityStore.hasFreshPostDetailSnapshot(postId: postId) {
+            prefetchedPostIDs.insert(postId)
+            return
+        }
+
+        prefetchedPostIDs.insert(postId)
+        do {
+            let response = try await api.fetchPostDetail(
+                baseURL: config.baseURL,
+                exam: exam,
+                board: item.boardSlug,
+                postId: postId,
+                userId: session.user?.id,
+                cachePolicy: .useProtocolCachePolicy
+            )
+            communityStore.savePostDetailSnapshot(postId: postId, response: response)
+        } catch {
+            if isCancellation(error) { return }
+            prefetchedPostIDs.remove(postId)
+        }
     }
 
     private func fallbackBoards(for exam: ExamSlug) -> [BoardInfo] {

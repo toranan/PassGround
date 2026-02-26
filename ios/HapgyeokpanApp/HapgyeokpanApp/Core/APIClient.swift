@@ -137,6 +137,19 @@ final class APIClient {
         try await request(baseURL: baseURL, path: "api/daily/\(exam.rawValue)")
     }
 
+    func fetchSchedules(
+        baseURL: URL,
+        exam: ExamSlug,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> ScheduleResponse {
+        try await request(
+            baseURL: baseURL,
+            path: "api/schedules",
+            query: [URLQueryItem(name: "exam", value: exam.rawValue)],
+            cachePolicy: cachePolicy
+        )
+    }
+
     func fetchRankings(
         baseURL: URL,
         exam: ExamSlug,

@@ -18,10 +18,14 @@ struct PostDetailView: View {
     let exam: ExamSlug
     let boardSlug: String
     let postId: String
+    let initialPost: PostSummary?
+    let boardName: String?
 
     @State private var detail: PostDetailResponse?
     @State private var loading = false
     @State private var message = ""
+    @State private var hasLoadedRemote = false
+    @State private var didBootstrap = false
 
     @State private var likeCount = 0
     @State private var liked = false
@@ -30,10 +34,32 @@ struct PostDetailView: View {
     @State private var commentText = ""
     @State private var replyTargetID: String?
 
+    init(
+        exam: ExamSlug,
+        boardSlug: String,
+        postId: String,
+        initialPost: PostSummary? = nil,
+        boardName: String? = nil
+    ) {
+        self.exam = exam
+        self.boardSlug = boardSlug
+        self.postId = postId
+        self.initialPost = initialPost
+        self.boardName = boardName
+
+        if let initialPost {
+            _detail = State(initialValue: Self.seedDetail(from: initialPost, boardSlug: boardSlug, boardName: boardName))
+            _likeCount = State(initialValue: max(0, initialPost.likeCount))
+        } else {
+            _detail = State(initialValue: nil)
+            _likeCount = State(initialValue: 0)
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 8) {
-                if loading {
+                if loading && detail == nil {
                     ProgressView("로딩 중...")
                         .padding(.top, 40)
                 }
@@ -61,7 +87,12 @@ struct PostDetailView: View {
         .background(Color(.systemGray6))
         .navigationTitle("게시글")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
+        .task {
+            guard !didBootstrap else { return }
+            didBootstrap = true
+            _ = applyCachedDetailSnapshotIfAvailable()
+            await load()
+        }
         .refreshable { await load(forceRefresh: true) }
     }
 
@@ -128,7 +159,7 @@ struct PostDetailView: View {
                 .padding(.vertical, 12)
 
             if detail.comments.isEmpty {
-                Text("아직 댓글이 없습니다.")
+                Text(hasLoadedRemote ? "아직 댓글이 없습니다." : "댓글 불러오는 중...")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
@@ -270,9 +301,17 @@ struct PostDetailView: View {
     }
 
     private func load(forceRefresh: Bool = false) async {
-        loading = true
+        let needsBlockingLoading = (detail == nil)
+        if needsBlockingLoading {
+            loading = true
+        }
         message = ""
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
+        defer {
+            if needsBlockingLoading {
+                loading = false
+            }
+        }
         do {
             let response = try await api.fetchPostDetail(
                 baseURL: config.baseURL,
@@ -285,14 +324,14 @@ struct PostDetailView: View {
             detail = response
             likeCount = response.post.likeCount
             liked = response.viewerLiked ?? false
+            hasLoadedRemote = true
+            communityStore.savePostDetailSnapshot(postId: postId, response: response)
         } catch {
             if isCancellation(error) {
-                loading = false
                 return
             }
             message = error.localizedDescription
         }
-        loading = false
     }
 
     @MainActor
@@ -377,5 +416,47 @@ struct PostDetailView: View {
 
     private func isCancellation(_ error: Error) -> Bool {
         APIClient.isCancellationError(error)
+    }
+
+    @discardableResult
+    private func applyCachedDetailSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.postDetailSnapshot(postId: postId) else {
+            return false
+        }
+        detail = snapshot.response
+        likeCount = snapshot.response.post.likeCount
+        liked = snapshot.response.viewerLiked ?? false
+        hasLoadedRemote = true
+        return Date().timeIntervalSince(snapshot.updatedAt) <= CommunityStore.detailFreshWindow
+    }
+
+    private static func seedDetail(
+        from post: PostSummary,
+        boardSlug: String,
+        boardName: String?
+    ) -> PostDetailResponse {
+        let previewContent = (post.content?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+            ? (post.content ?? "")
+            : "본문 불러오는 중..."
+
+        return PostDetailResponse(
+            ok: true,
+            writable: false,
+            isSamplePost: false,
+            viewerLiked: nil,
+            board: BoardMetaLite(slug: boardSlug, name: boardName ?? "게시판"),
+            post: PostDetail(
+                id: post.id,
+                title: post.title,
+                content: previewContent,
+                authorName: post.authorName,
+                createdAt: post.createdAt,
+                timeLabel: post.timeLabel,
+                viewCount: post.viewCount,
+                likeCount: max(0, post.likeCount)
+            ),
+            adoptedCommentId: nil,
+            comments: []
+        )
     }
 }

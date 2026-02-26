@@ -297,3 +297,571 @@ struct VerificationView: View {
         submitting = false
     }
 }
+
+private let schedulePrimary = Color(red: 20/255, green: 83/255, blue: 45/255)
+
+private struct LocalScheduleItem: Codable, Identifiable, Equatable {
+    let id: String
+    let title: String
+    let category: String
+    let startsAt: Date
+    let endsAt: Date?
+    let location: String?
+    let note: String?
+}
+
+private struct ScheduleEntry: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let category: String
+    let startsAt: Date
+    let endsAt: Date?
+    let location: String?
+    let organizer: String?
+    let linkUrl: String?
+    let note: String?
+    let isOfficial: Bool
+    let isLocal: Bool
+}
+
+private struct ScheduleMonthGroup: Identifiable {
+    let id: String
+    let title: String
+    let anchor: Date
+    let items: [ScheduleEntry]
+}
+
+private struct LocalScheduleDraft {
+    var title: String = ""
+    var category: String = "개인일정"
+    var startsAt: Date = Date()
+    var includeEndDate: Bool = false
+    var endsAt: Date = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+    var location: String = ""
+    var note: String = ""
+}
+
+struct ScheduleView: View {
+    @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
+
+    private let api = APIClient()
+
+    @State private var exam: ExamSlug = .transfer
+    @State private var officialSchedules: [ExamScheduleItem] = []
+    @State private var localSchedules: [LocalScheduleItem] = []
+    @State private var completedIDs: Set<String> = []
+    @State private var loading = false
+    @State private var errorMessage = ""
+    @State private var didBootstrap = false
+    @State private var lastAutoRefreshAt = Date.distantPast
+    @State private var showingLocalScheduleSheet = false
+    @State private var localScheduleDraft = LocalScheduleDraft()
+
+    private var completionKey: String {
+        "schedule_completed_ids_\(exam.rawValue)"
+    }
+
+    private var localScheduleKey: String {
+        "schedule_local_items_\(exam.rawValue)"
+    }
+
+    private var mergedEntries: [ScheduleEntry] {
+        let official = officialSchedules.map { item in
+            ScheduleEntry(
+                id: item.id,
+                title: item.title,
+                category: item.category,
+                startsAt: Self.parseDate(item.startsAt) ?? .distantFuture,
+                endsAt: Self.parseDate(item.endsAt),
+                location: item.location,
+                organizer: item.organizer,
+                linkUrl: item.linkUrl,
+                note: item.note,
+                isOfficial: item.isOfficial,
+                isLocal: false
+            )
+        }
+
+        let local = localSchedules.map { item in
+            ScheduleEntry(
+                id: item.id,
+                title: item.title,
+                category: item.category,
+                startsAt: item.startsAt,
+                endsAt: item.endsAt,
+                location: item.location,
+                organizer: nil,
+                linkUrl: nil,
+                note: item.note,
+                isOfficial: false,
+                isLocal: true
+            )
+        }
+
+        return (official + local).sorted {
+            if $0.startsAt != $1.startsAt { return $0.startsAt < $1.startsAt }
+            return $0.title < $1.title
+        }
+    }
+
+    private var monthGroups: [ScheduleMonthGroup] {
+        let grouped = Dictionary(grouping: mergedEntries) { item in
+            Self.monthHeader.string(from: item.startsAt)
+        }
+
+        let groups = grouped.map { key, items -> ScheduleMonthGroup in
+            let sorted = items.sorted { $0.startsAt < $1.startsAt }
+            return ScheduleMonthGroup(
+                id: key,
+                title: key,
+                anchor: sorted.first?.startsAt ?? .distantFuture,
+                items: sorted
+            )
+        }
+
+        return groups.sorted { $0.anchor < $1.anchor }
+    }
+
+    private var completedCount: Int {
+        mergedEntries.filter { completedIDs.contains($0.id) }.count
+    }
+
+    private var nextUpcoming: ScheduleEntry? {
+        let now = Date()
+        return mergedEntries.first { ($0.endsAt ?? $0.startsAt) >= now }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                headerCard
+
+                if loading && mergedEntries.isEmpty {
+                    ProgressView("일정을 불러오는 중...")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(30)
+                }
+
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                }
+
+                if !loading && mergedEntries.isEmpty {
+                    Text("등록된 일정이 없습니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                }
+
+                ForEach(monthGroups) { group in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(group.title)
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 16)
+
+                        VStack(spacing: 10) {
+                            ForEach(group.items) { item in
+                                scheduleCard(item)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+            }
+            .padding(.vertical, 14)
+        }
+        .background(Color(UIColor.systemGroupedBackground))
+        .navigationTitle("일정")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("내 일정 추가") {
+                    localScheduleDraft = LocalScheduleDraft()
+                    showingLocalScheduleSheet = true
+                }
+                .font(.subheadline.weight(.semibold))
+            }
+        }
+        .sheet(isPresented: $showingLocalScheduleSheet) {
+            localScheduleSheet
+        }
+        .task {
+            guard !didBootstrap else { return }
+            didBootstrap = true
+            loadCompletedIDs()
+            loadLocalSchedules()
+            let fresh = applyCachedSnapshotIfAvailable()
+            if !fresh {
+                await loadSchedules()
+            }
+            pruneCompletedIDs()
+        }
+        .onAppear {
+            refreshIfStale()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshIfStale()
+            }
+        }
+        .refreshable {
+            await loadSchedules(forceRefresh: true)
+        }
+    }
+
+    private var headerCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("편입 일정 관리")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+
+            Text("완료 \(completedCount) / 전체 \(mergedEntries.count)")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.9))
+
+            if let nextUpcoming {
+                Text("다음 일정: \(nextUpcoming.title) (\(ddayText(for: nextUpcoming)))")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [schedulePrimary, schedulePrimary.opacity(0.8)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 16)
+    }
+
+    private func scheduleCard(_ item: ScheduleEntry) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                Button {
+                    toggleCompleted(id: item.id)
+                } label: {
+                    Image(systemName: completedIDs.contains(item.id) ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(completedIDs.contains(item.id) ? schedulePrimary : .gray)
+                }
+                .buttonStyle(.plain)
+
+                Text(item.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .strikethrough(completedIDs.contains(item.id), color: .secondary)
+
+                Spacer()
+
+                Text(ddayText(for: item))
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(schedulePrimary)
+
+                if item.isLocal {
+                    Button(role: .destructive) {
+                        deleteLocalSchedule(id: item.id)
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            HStack(spacing: 8) {
+                Text(item.category)
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray6))
+                    .clipShape(Capsule())
+
+                if item.isOfficial {
+                    Text("공식")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(schedulePrimary)
+                        .clipShape(Capsule())
+                } else if item.isLocal {
+                    Text("내 일정")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray)
+                        .clipShape(Capsule())
+                }
+            }
+
+            Text(dateLabel(item))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            if let location = item.location, !location.isEmpty {
+                Label(location, systemImage: "mappin.and.ellipse")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let organizer = item.organizer, !organizer.isEmpty {
+                Label(organizer, systemImage: "building.2")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let note = item.note, !note.isEmpty {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let link = item.linkUrl, let url = URL(string: link), item.isOfficial {
+                Link(destination: url) {
+                    Label("공식 공지 보기", systemImage: "link")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func loadSchedules(forceRefresh: Bool = false) async {
+        if loading { return }
+        loading = true
+        errorMessage = ""
+
+        let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
+
+        do {
+            let response = try await api.fetchSchedules(
+                baseURL: config.baseURL,
+                exam: exam,
+                cachePolicy: cachePolicy
+            )
+            officialSchedules = response.schedules
+            communityStore.saveScheduleSnapshot(exam: exam, schedules: response.schedules)
+            pruneCompletedIDs()
+        } catch {
+            if APIClient.isCancellationError(error) {
+                loading = false
+                return
+            }
+            errorMessage = error.localizedDescription
+        }
+
+        loading = false
+    }
+
+    @discardableResult
+    private func applyCachedSnapshotIfAvailable() -> Bool {
+        guard let snapshot = communityStore.scheduleSnapshot(exam: exam) else {
+            return false
+        }
+        officialSchedules = snapshot.schedules
+        errorMessage = ""
+        pruneCompletedIDs()
+        let age = Date().timeIntervalSince(snapshot.updatedAt)
+        return age <= CommunityStore.scheduleFreshWindow
+    }
+
+    private func refreshIfStale() {
+        let fresh = applyCachedSnapshotIfAvailable()
+        guard !fresh, !loading else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
+        lastAutoRefreshAt = now
+        Task { await loadSchedules() }
+    }
+
+    private func loadCompletedIDs() {
+        let value = UserDefaults.standard.string(forKey: completionKey) ?? ""
+        completedIDs = Set(
+            value
+                .split(separator: ",")
+                .map(String.init)
+                .filter { !$0.isEmpty }
+        )
+    }
+
+    private func persistCompletedIDs() {
+        let value = completedIDs.sorted().joined(separator: ",")
+        UserDefaults.standard.set(value, forKey: completionKey)
+    }
+
+    private func toggleCompleted(id: String) {
+        if completedIDs.contains(id) {
+            completedIDs.remove(id)
+        } else {
+            completedIDs.insert(id)
+        }
+        persistCompletedIDs()
+    }
+
+    private func loadLocalSchedules() {
+        guard let data = UserDefaults.standard.data(forKey: localScheduleKey),
+              let items = try? JSONDecoder().decode([LocalScheduleItem].self, from: data) else {
+            localSchedules = []
+            return
+        }
+        localSchedules = items.sorted { $0.startsAt < $1.startsAt }
+    }
+
+    private func persistLocalSchedules() {
+        guard let data = try? JSONEncoder().encode(localSchedules) else { return }
+        UserDefaults.standard.set(data, forKey: localScheduleKey)
+    }
+
+    private func saveLocalSchedule() {
+        let title = localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let category = localScheduleDraft.category.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+
+        let item = LocalScheduleItem(
+            id: "local-\(UUID().uuidString)",
+            title: title,
+            category: category.isEmpty ? "개인일정" : category,
+            startsAt: localScheduleDraft.startsAt,
+            endsAt: localScheduleDraft.includeEndDate ? localScheduleDraft.endsAt : nil,
+            location: localScheduleDraft.location.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            note: localScheduleDraft.note.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        )
+
+        localSchedules.append(item)
+        localSchedules.sort { $0.startsAt < $1.startsAt }
+        persistLocalSchedules()
+        pruneCompletedIDs()
+        showingLocalScheduleSheet = false
+    }
+
+    private func deleteLocalSchedule(id: String) {
+        localSchedules.removeAll { $0.id == id }
+        completedIDs.remove(id)
+        persistCompletedIDs()
+        persistLocalSchedules()
+        pruneCompletedIDs()
+    }
+
+    private func pruneCompletedIDs() {
+        let validIDs = Set(mergedEntries.map { $0.id })
+        let filtered = completedIDs.intersection(validIDs)
+        if filtered != completedIDs {
+            completedIDs = filtered
+            persistCompletedIDs()
+        }
+    }
+
+    private var localScheduleSheet: some View {
+        NavigationStack {
+            Form {
+                Section("필수") {
+                    TextField("제목", text: $localScheduleDraft.title)
+                    TextField("카테고리", text: $localScheduleDraft.category)
+                    DatePicker("시작", selection: $localScheduleDraft.startsAt)
+                }
+
+                Section("선택") {
+                    Toggle("종료일 입력", isOn: $localScheduleDraft.includeEndDate)
+                    if localScheduleDraft.includeEndDate {
+                        DatePicker("종료", selection: $localScheduleDraft.endsAt)
+                    }
+                    TextField("장소", text: $localScheduleDraft.location)
+                    TextField("메모", text: $localScheduleDraft.note, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+            }
+            .navigationTitle("내 일정 추가")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") {
+                        showingLocalScheduleSheet = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("저장") {
+                        saveLocalSchedule()
+                    }
+                    .disabled(localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func dateLabel(_ item: ScheduleEntry) -> String {
+        let start = Self.displayDate.string(from: item.startsAt)
+        guard let endsAt = item.endsAt else { return start }
+        return "\(start) ~ \(Self.displayDate.string(from: endsAt))"
+    }
+
+    private func ddayText(for item: ScheduleEntry) -> String {
+        let target = Calendar.current.startOfDay(for: item.startsAt)
+        let today = Calendar.current.startOfDay(for: Date())
+        let diff = Calendar.current.dateComponents([.day], from: today, to: target).day ?? 0
+        if diff == 0 { return "D-Day" }
+        if diff > 0 { return "D-\(diff)" }
+        return "D+\(abs(diff))"
+    }
+
+    private static let monthHeader: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy년 M월"
+        return formatter
+    }()
+
+    private static let displayDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일(E) HH:mm"
+        return formatter
+    }()
+
+    private static func parseDate(_ value: String?) -> Date? {
+        guard let value, !value.isEmpty else { return nil }
+
+        let isoWithFraction = ISO8601DateFormatter()
+        isoWithFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = isoWithFraction.date(from: value) { return date }
+
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime]
+        if let date = iso.date(from: value) { return date }
+
+        let fallback = DateFormatter()
+        fallback.locale = Locale(identifier: "en_US_POSIX")
+        fallback.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        fallback.timeZone = TimeZone(secondsFromGMT: 0)
+        if let date = fallback.date(from: value) { return date }
+
+        return nil
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
+}

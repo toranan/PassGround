@@ -5,6 +5,7 @@ private let webPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 struct BoardPostsView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
+    @EnvironmentObject private var session: SessionStore
     @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
@@ -23,6 +24,7 @@ struct BoardPostsView: View {
     @State private var hasMore = true
     @State private var didBootstrap = false
     @State private var lastAutoRefreshAt = Date.distantPast
+    @State private var prefetchedPostIDs: Set<String> = []
     private let pageSize = 20
 
     private var filteredPosts: [PostSummary] {
@@ -88,13 +90,23 @@ struct BoardPostsView: View {
                         LazyVStack(spacing: 0) {
                             ForEach(filteredPosts) { post in
                                 NavigationLink {
-                                    PostDetailView(exam: exam, boardSlug: board.slug, postId: post.id)
+                                    PostDetailView(
+                                        exam: exam,
+                                        boardSlug: board.slug,
+                                        postId: post.id,
+                                        initialPost: post,
+                                        boardName: board.name
+                                    )
                                 } label: {
                                     BlindCommunityPostCell(post: post)
                                 }
                                 .buttonStyle(.plain)
                                 .onAppear {
                                     guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                                    let rowIndex = posts.firstIndex(where: { $0.id == post.id }) ?? Int.max
+                                    if rowIndex < 6 {
+                                        Task { await prefetchPostDetail(postId: post.id) }
+                                    }
                                     guard let lastID = posts.last?.id, lastID == post.id else { return }
                                     Task { await loadPosts(reset: false) }
                                 }
@@ -274,6 +286,31 @@ struct BoardPostsView: View {
         guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
         lastAutoRefreshAt = now
         Task { await loadPosts(reset: true) }
+    }
+
+    private func prefetchPostDetail(postId: String) async {
+        guard !postId.isEmpty else { return }
+        guard !prefetchedPostIDs.contains(postId) else { return }
+        if communityStore.hasFreshPostDetailSnapshot(postId: postId) {
+            prefetchedPostIDs.insert(postId)
+            return
+        }
+
+        prefetchedPostIDs.insert(postId)
+        do {
+            let response = try await api.fetchPostDetail(
+                baseURL: config.baseURL,
+                exam: exam,
+                board: board.slug,
+                postId: postId,
+                userId: session.user?.id,
+                cachePolicy: .useProtocolCachePolicy
+            )
+            communityStore.savePostDetailSnapshot(postId: postId, response: response)
+        } catch {
+            if isCancellation(error) { return }
+            prefetchedPostIDs.remove(postId)
+        }
     }
 
     private func isCancellation(_ error: Error) -> Bool {
