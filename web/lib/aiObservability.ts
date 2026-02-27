@@ -5,7 +5,7 @@ type Exam = "transfer" | "cpa";
 type ChatObservation = {
   traceId: string;
   exam: Exam;
-  route: "grounded" | "fallback";
+  route: "grounded" | "fallback" | "emotion" | "mixed";
   cacheStatus: "hit" | "miss" | "bypass" | "error";
   status: "ok" | "error";
   questionLength: number;

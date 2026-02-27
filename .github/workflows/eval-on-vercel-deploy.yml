@@ -1,0 +1,45 @@
+name: Eval On Vercel Deploy
+
+on:
+  deployment_status:
+
+jobs:
+  eval-ai-chat:
+    if: |
+      github.event.deployment_status.state == 'success' &&
+      (github.event.deployment.environment == 'production' || github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: web
+
+      - name: Resolve deployment URL
+        run: |
+          DEPLOY_URL="${{ github.event.deployment_status.environment_url }}"
+          if [ -z "$DEPLOY_URL" ]; then
+            DEPLOY_URL="${{ github.event.deployment_status.target_url }}"
+          fi
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "deployment URL not found in deployment_status payload"
+            exit 1
+          fi
+          echo "AI_EVAL_BASE_URL=$DEPLOY_URL" >> "$GITHUB_ENV"
+
+      - name: Run AI eval
+        run: npm run eval:ai
+        working-directory: web
+        env:
+          AI_EVAL_EXAM: transfer
+          AI_EVAL_MIN_PASS_RATE: "0.8"

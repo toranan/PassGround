@@ -184,12 +184,67 @@ export async function createEmbedding(input: string): Promise<number[]> {
   return vector;
 }
 
+function parseResponsesText(payload: ResponsesApiResponse | null): string {
+  const byOutputText = payload?.output_text?.trim();
+  if (byOutputText) return byOutputText;
+
+  const byContents = payload?.output
+    ?.flatMap((item) => item.content ?? [])
+    .filter((content) => content.type === "output_text" || content.type === "text")
+    .map((content) => content.text?.trim() || "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+
+  if (byContents) return byContents;
+  throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
+}
+
+export async function generateText(params: {
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+}): Promise<string> {
+  assertProviderKey();
+  const endpoint = isAzureProvider() ? AZURE_RESPONSES_URL : `${OPENAI_API_URL}/responses`;
+  if (!endpoint) {
+    throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({
+      model: DEFAULT_CHAT_MODEL,
+      input: [
+        {
+          role: "system",
+          content: [{ type: "input_text", text: params.systemPrompt }],
+        },
+        {
+          role: "user",
+          content: [{ type: "input_text", text: params.userPrompt }],
+        },
+      ],
+      temperature: params.temperature ?? 0.3,
+      max_output_tokens: params.maxOutputTokens,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+  }
+
+  return parseResponsesText(payload);
+}
+
 export async function generateGroundedAnswer(params: {
   question: string;
   contexts: Array<{ chunkText: string; similarity: number }>;
   maxContextCount?: number;
 }): Promise<string> {
-  assertProviderKey();
   const maxContextCount = params.maxContextCount ?? 6;
   const selected = params.contexts.slice(0, maxContextCount);
   const contextText = selected
@@ -204,49 +259,11 @@ export async function generateGroundedAnswer(params: {
     "\n출력 규칙: 간결하고 직설적으로 답해라. 불필요한 서론은 생략해라.",
   ].join("\n");
 
-  const endpoint = isAzureProvider() ? AZURE_RESPONSES_URL : `${OPENAI_API_URL}/responses`;
-  if (!endpoint) {
-    throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
-  }
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: buildAuthHeaders(),
-    body: JSON.stringify({
-      model: DEFAULT_CHAT_MODEL,
-      input: [
-        {
-          role: "system",
-          content: [{ type: "input_text", text: systemPrompt }],
-        },
-        {
-          role: "user",
-          content: [{ type: "input_text", text: userPrompt }],
-        },
-      ],
-      temperature: 0.3,
-    }),
+  return generateText({
+    systemPrompt,
+    userPrompt,
+    temperature: 0.3,
   });
-
-  const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
-  }
-
-  const byOutputText = payload?.output_text?.trim();
-  if (byOutputText) return byOutputText;
-
-  const byContents = payload?.output
-    ?.flatMap((item) => item.content ?? [])
-    .filter((content) => content.type === "output_text" || content.type === "text")
-    .map((content) => content.text?.trim() || "")
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-
-  if (byContents) return byContents;
-
-  throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
 }
 
 export function estimateChunkTokens(text: string): number {

@@ -13,7 +13,7 @@
     "question": "모의고사 망쳐서 너무 불안해",
     "checks": {
       "minAnswerChars": 40,
-      "routeOneOf": ["grounded", "fallback"],
+      "routeOneOf": ["emotion", "mixed", "grounded", "fallback"],
       "requireAnyKeywords": ["불안", "멘탈", "계획", "주간", "회복"]
     }
   },
