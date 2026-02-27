@@ -415,7 +415,7 @@ create table if not exists public.instructor_votes (
   instructor_name text not null,
   voter_name text not null,
   created_at timestamptz not null default now(),
-  unique (exam_slug, instructor_name, voter_name)
+  unique (exam_slug, voter_name)
 );
 
 create index if not exists cutoff_scores_exam_year_idx on public.cutoff_scores (exam_slug, year desc);

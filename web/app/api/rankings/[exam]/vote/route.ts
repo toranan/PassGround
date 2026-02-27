@@ -15,6 +15,11 @@ function normalizeText(value: unknown, maxLength: number): string {
   return value.trim().slice(0, maxLength);
 }
 
+function isDuplicateVoteError(message: string | undefined): boolean {
+  const text = (message ?? "").toLowerCase();
+  return text.includes("duplicate key value") || text.includes("unique");
+}
+
 async function getVoteStatus(exam: string, userId: string) {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
@@ -180,6 +185,18 @@ export async function POST(
   });
 
   if (insertError) {
+    if (isDuplicateVoteError(insertError.message)) {
+      const latestStatus = await getVoteStatus(exam, user.id);
+      if (!("error" in latestStatus) && latestStatus.hasVoted) {
+        return NextResponse.json({
+          ok: true,
+          alreadyVoted: true,
+          instructorName: latestStatus.instructorName,
+          votedAt: latestStatus.votedAt,
+        });
+      }
+      return NextResponse.json({ error: "이미 계정당 1회 투표를 완료했어." }, { status: 409 });
+    }
     return NextResponse.json({ error: insertError.message }, { status: 400 });
   }
 

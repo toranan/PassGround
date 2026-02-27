@@ -129,6 +129,7 @@ private struct ChatCoachView: View {
     }
 
     private let api = APIClient()
+    private let oauth = OAuthCoordinator()
     private static let assistantName = "합곰이"
     private static let welcomeMessage = """
     안녕! 나는 너 편입 고민 같이 봐줄 합곰이야
@@ -146,6 +147,7 @@ private struct ChatCoachView: View {
     @State private var renderingDelta = false
     @State private var submittingQuestion = false
     @State private var pendingQuestionSubmission: PendingQuestionSubmission?
+    @State private var socialLoginProvider: String?
     @FocusState private var inputFocused: Bool
     @State private var messages: [ChatMessage] = [
         ChatMessage(
@@ -182,6 +184,10 @@ private struct ChatCoachView: View {
                 }
             }
 
+            if !session.isLoggedIn {
+                coachLoginPanel
+            }
+
             Divider()
             VStack(spacing: 8) {
                 if pendingQuestionSubmission != nil {
@@ -209,7 +215,7 @@ private struct ChatCoachView: View {
 
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            TextField("메시지를 입력해줘", text: $input, axis: .vertical)
+            TextField(session.isLoggedIn ? "메시지를 입력해줘" : "로그인 후 이용 가능해", text: $input, axis: .vertical)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
                 .lineLimit(1...4)
@@ -252,8 +258,54 @@ private struct ChatCoachView: View {
         .padding(.horizontal, 12)
     }
 
+    private var coachLoginPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("AI도우미는 로그인 후 사용할 수 있어. 아래에서 바로 로그인해줘.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 8) {
+                socialLoginButton(provider: "kakao", title: "카카오", icon: "message.fill")
+                    .tint(Color(red: 254/255, green: 229/255, blue: 0/255))
+                    .foregroundStyle(Color.black.opacity(0.85))
+                socialLoginButton(provider: "apple", title: "Apple", icon: "applelogo")
+                    .tint(.black)
+                    .foregroundStyle(.white)
+                socialLoginButton(provider: "google", title: "Google", icon: "globe")
+                    .tint(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                    .foregroundStyle(.black)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+    }
+
+    private func socialLoginButton(provider: String, title: String, icon: String) -> some View {
+        Button {
+            Task { await loginForCoach(provider: provider) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(socialLoginProvider == provider ? "로그인 중..." : title)
+                    .lineLimit(1)
+            }
+            .font(.caption.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
+        .disabled(socialLoginProvider != nil)
+    }
+
     private var canSend: Bool {
-        !sending && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        session.isLoggedIn && !sending && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var hasUserMessage: Bool {
@@ -407,6 +459,30 @@ private struct ChatCoachView: View {
     private func sendMessage() async {
         let question = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !sending else { return }
+        guard session.isLoggedIn else {
+            messages.append(
+                ChatMessage(
+                    role: .assistant,
+                    text: "AI도우미는 로그인 후 사용할 수 있어. 마이페이지에서 먼저 로그인해줘.",
+                    subtitle: ChatCoachView.assistantName
+                )
+            )
+            return
+        }
+
+        await session.refreshIfNeeded(baseURL: config.baseURL)
+        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !accessToken.isEmpty else {
+            messages.append(
+                ChatMessage(
+                    role: .assistant,
+                    text: "세션을 확인하지 못했어. 마이페이지에서 다시 로그인해줘.",
+                    subtitle: ChatCoachView.assistantName
+                )
+            )
+            return
+        }
+
         let requestStartedAt = Date()
 
         input = ""
@@ -430,7 +506,8 @@ private struct ChatCoachView: View {
             let response = try await api.chatStream(
                 baseURL: config.baseURL,
                 exam: exam,
-                question: question
+                question: question,
+                accessToken: accessToken
             ) { event in
                 Task { @MainActor in
                     handleStreamEvent(event, assistantId: assistantId)
@@ -458,7 +535,8 @@ private struct ChatCoachView: View {
                 let fallback = try await api.chat(
                     baseURL: config.baseURL,
                     exam: exam,
-                    question: question
+                    question: question,
+                    accessToken: accessToken
                 )
                 await ensureMinimumLoadingVisible(since: requestStartedAt)
 
@@ -477,19 +555,60 @@ private struct ChatCoachView: View {
                     ? PendingQuestionSubmission(question: question, traceId: fallback.traceId)
                     : nil
             } catch {
+                let isUnauthorized =
+                    streamError.localizedDescription.contains("HTTP 401")
+                    || error.localizedDescription.contains("HTTP 401")
                 updateAssistantMessage(id: assistantId) { message in
-                    message.text = """
-                    요청에 실패했어요. 네트워크 상태를 확인하고 다시 시도해 주세요.
-                    baseURL: \(config.baseURL.absoluteString)
-                    stream: \(streamError.localizedDescription)
-                    fallback: \(error.localizedDescription)
-                    """
+                    if isUnauthorized {
+                        message.text = "로그인이 만료됐어. 마이페이지에서 다시 로그인해줘."
+                    } else {
+                        message.text = "요청에 실패했어. 네트워크 상태를 확인하고 다시 시도해줘."
+                    }
                     message.subtitle = ChatCoachView.assistantName
                 }
             }
         }
 
         sending = false
+    }
+
+    @MainActor
+    private func loginForCoach(provider: String) async {
+        guard socialLoginProvider == nil else { return }
+        socialLoginProvider = provider
+        defer { socialLoginProvider = nil }
+
+        do {
+            let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
+            let authResponse: OAuthExchangeResponse
+            switch result {
+            case .pkcePayload(let response):
+                authResponse = response
+            case .implicitTokens(let access, let refresh):
+                authResponse = try await api.finalizeOAuth(
+                    baseURL: config.baseURL,
+                    accessToken: access,
+                    refreshToken: refresh
+                )
+            }
+
+            session.save(user: authResponse.user, tokens: authResponse.session)
+            messages.append(
+                ChatMessage(
+                    role: .assistant,
+                    text: "로그인 완료! 이제 바로 물어봐줘.",
+                    subtitle: ChatCoachView.assistantName
+                )
+            )
+        } catch {
+            messages.append(
+                ChatMessage(
+                    role: .assistant,
+                    text: "로그인에 실패했어. 잠시 후 다시 시도해줘.",
+                    subtitle: ChatCoachView.assistantName
+                )
+            )
+        }
     }
 
     @MainActor
