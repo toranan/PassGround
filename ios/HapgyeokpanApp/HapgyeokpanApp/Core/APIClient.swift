@@ -47,6 +47,18 @@ final class APIClient {
         )
     }
 
+    func refreshSession(baseURL: URL, refreshToken: String) async throws -> OAuthExchangeResponse {
+        struct Body: Encodable {
+            let refreshToken: String
+        }
+        return try await request(
+            baseURL: baseURL,
+            path: "api/auth/refresh",
+            method: "POST",
+            body: Body(refreshToken: refreshToken)
+        )
+    }
+
     func fetchBoards(
         baseURL: URL,
         exam: ExamSlug,

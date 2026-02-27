@@ -4,6 +4,7 @@ import Foundation
 final class SessionStore: ObservableObject {
     @Published var user: SessionUser?
     @Published var tokens: SessionTokens?
+    @Published private(set) var refreshingSession = false
 
     private enum Keys {
         static let user = "session_user"
@@ -39,6 +40,31 @@ final class SessionStore: ObservableObject {
         tokens = nil
         UserDefaults.standard.removeObject(forKey: Keys.user)
         UserDefaults.standard.removeObject(forKey: Keys.tokens)
+    }
+
+    func refreshIfNeeded(baseURL: URL, force: Bool = false) async {
+        guard !refreshingSession else { return }
+        guard let currentTokens = tokens else { return }
+
+        let refreshToken = currentTokens.refreshToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !refreshToken.isEmpty else { return }
+
+        if !force {
+            let now = Int(Date().timeIntervalSince1970)
+            if let expiresAt = currentTokens.expiresAt, expiresAt > now + 86_400 {
+                return
+            }
+        }
+
+        refreshingSession = true
+        defer { refreshingSession = false }
+
+        do {
+            let payload = try await APIClient().refreshSession(baseURL: baseURL, refreshToken: refreshToken)
+            save(user: payload.user, tokens: payload.session)
+        } catch {
+            // Keep current session; fail-open to avoid aggressive logout on transient network issues.
+        }
     }
 
     private static func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

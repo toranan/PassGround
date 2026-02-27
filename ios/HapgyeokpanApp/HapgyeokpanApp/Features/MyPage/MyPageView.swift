@@ -35,8 +35,6 @@ struct MyPageView: View {
                     accountSection
                 }
 
-                systemSection
-
                 if !message.isEmpty {
                     Text(message)
                         .font(.footnote)
@@ -271,61 +269,6 @@ struct MyPageView: View {
         }
     }
     
-    // MARK: - System Section
-    private var systemSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("시스템 설정")
-                .font(.headline)
-                .padding(.horizontal, DesignSystem.padding)
-                .padding(.bottom, 12)
-            
-            VStack(spacing: 0) {
-                HStack {
-                    Image(systemName: "server.rack")
-                        .frame(width: 24)
-                        .foregroundColor(.gray)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("API 연결 서버")
-                            .font(.subheadline)
-                        TextField("API Base URL", text: $config.baseURLString)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, DesignSystem.padding)
-                .padding(.vertical, 12)
-                
-                if adminState?.isAdmin == true {
-                    Divider().padding(.leading, DesignSystem.padding + 32)
-                    
-                    NavigationLink(destination: AdminView()) {
-                        HStack {
-                            Image(systemName: "lock.shield.fill")
-                                .frame(width: 24)
-                                .foregroundColor(.gray)
-                            Text("관리자 센터")
-                                .font(.subheadline)
-                                .foregroundColor(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.horizontal, DesignSystem.padding)
-                        .padding(.vertical, 14)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .background(DesignSystem.cardBackground)
-            .cornerRadius(DesignSystem.cardCornerRadius)
-            .padding(.horizontal, DesignSystem.padding)
-        }
-    }
-
     // MARK: - Handlers
     private func refreshData() async {
         guard session.isLoggedIn else { return }

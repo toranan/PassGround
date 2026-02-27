@@ -554,7 +554,8 @@ private struct ChatCoachView: View {
     private func submitPendingQuestion() async {
         guard !submittingQuestion else { return }
         guard let pending = pendingQuestionSubmission else { return }
-        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        await session.refreshIfNeeded(baseURL: config.baseURL)
+        var accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !accessToken.isEmpty else {
             messages.append(
                 ChatMessage(
@@ -570,30 +571,55 @@ private struct ChatCoachView: View {
         defer { submittingQuestion = false }
 
         do {
-            let payload = try await api.submitAIQuestion(
-                baseURL: config.baseURL,
-                exam: exam,
-                question: pending.question,
-                traceId: pending.traceId,
-                accessToken: accessToken
-            )
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    text: payload.message ?? "질문 접수 완료! 등록된 이메일로 답변 준비해둘게.",
-                    subtitle: ChatCoachView.assistantName
-                )
-            )
-            pendingQuestionSubmission = nil
+            try await submitQuestionRequest(pending: pending, accessToken: accessToken)
         } catch {
+            let isUnauthorized = error.localizedDescription.contains("HTTP 401")
+            if isUnauthorized {
+                await session.refreshIfNeeded(baseURL: config.baseURL, force: true)
+                accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !accessToken.isEmpty {
+                    do {
+                        try await submitQuestionRequest(pending: pending, accessToken: accessToken)
+                        return
+                    } catch {
+                        // fall through to message below
+                    }
+                }
+            }
+
+            let messageText = isUnauthorized
+                ? "세션이 만료된 것 같아. 마이페이지에서 다시 로그인하고 눌러줘."
+                : "질문 접수에 실패했어. 잠시 후 다시 눌러줘."
             messages.append(
                 ChatMessage(
                     role: .assistant,
-                    text: "질문 접수에 실패했어. 잠시 후 다시 눌러줘.",
+                    text: messageText,
                     subtitle: ChatCoachView.assistantName
                 )
             )
         }
+    }
+
+    @MainActor
+    private func submitQuestionRequest(
+        pending: PendingQuestionSubmission,
+        accessToken: String
+    ) async throws {
+        let payload = try await api.submitAIQuestion(
+            baseURL: config.baseURL,
+            exam: exam,
+            question: pending.question,
+            traceId: pending.traceId,
+            accessToken: accessToken
+        )
+        messages.append(
+            ChatMessage(
+                role: .assistant,
+                text: payload.message ?? "질문 접수 완료! 등록된 이메일로 답변 준비해둘게.",
+                subtitle: ChatCoachView.assistantName
+            )
+        )
+        pendingQuestionSubmission = nil
     }
 }
 
