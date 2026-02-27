@@ -128,6 +128,22 @@ type AdminKnowledgeReindexResponse = {
   error?: string;
 };
 
+type UnansweredQuestionItem = {
+  question: string;
+  normalizedQuestion: string;
+  count: number;
+  lastSeenAt: string;
+};
+
+type AdminUnansweredQuestionsResponse = {
+  ok: boolean;
+  exam: "transfer" | "cpa";
+  totalFallbackLogs: number;
+  uniqueQuestionCount: number;
+  items: UnansweredQuestionItem[];
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
@@ -181,6 +197,9 @@ export default function AdminPage() {
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [knowledgePending, setKnowledgePending] = useState<KnowledgeItem[]>([]);
   const [knowledgeApproved, setKnowledgeApproved] = useState<KnowledgeItem[]>([]);
+  const [loadingUnansweredQuestions, setLoadingUnansweredQuestions] = useState(false);
+  const [unansweredQuestions, setUnansweredQuestions] = useState<UnansweredQuestionItem[]>([]);
+  const [fallbackLogCount, setFallbackLogCount] = useState(0);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -430,15 +449,52 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadUnansweredQuestions = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingUnansweredQuestions(true);
+    try {
+      const res = await fetch(`/api/admin/questions/unanswered?exam=${exam}&scanLimit=1000&topK=50`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminUnansweredQuestionsResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "미해결 질문 목록을 불러오지 못했습니다.");
+        setUnansweredQuestions([]);
+        setFallbackLogCount(0);
+        return;
+      }
+      setUnansweredQuestions(payload.items ?? []);
+      setFallbackLogCount(payload.totalFallbackLogs ?? 0);
+    } catch {
+      setMessage("미해결 질문 목록을 불러오지 못했습니다.");
+      setUnansweredQuestions([]);
+      setFallbackLogCount(0);
+    } finally {
+      setLoadingUnansweredQuestions(false);
+    }
+  }, [exam]);
+
   useEffect(() => {
     void loadAdminMe();
   }, [user?.id]);
 
   useEffect(() => {
     if (adminState?.isAdmin) {
-      void Promise.all([loadRankings(), loadCutoffs(), loadSchedules(), loadNews(), loadKnowledge()]);
+      void Promise.all([
+        loadRankings(),
+        loadCutoffs(),
+        loadSchedules(),
+        loadNews(),
+        loadKnowledge(),
+        loadUnansweredQuestions(),
+      ]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -1498,6 +1554,13 @@ export default function AdminPage() {
                         {loadingKnowledge ? "불러오는 중..." : "지식 새로고침"}
                       </Button>
                       <Button
+                        variant="outline"
+                        onClick={() => void loadUnansweredQuestions()}
+                        disabled={loadingUnansweredQuestions || submitting}
+                      >
+                        {loadingUnansweredQuestions ? "집계 중..." : "미해결 질문 새로고침"}
+                      </Button>
+                      <Button
                         onClick={() => void handleReindexKnowledge()}
                         disabled={reindexingKnowledge || submitting}
                       >
@@ -1547,6 +1610,32 @@ export default function AdminPage() {
                           {submitting ? "처리 중..." : "PDF 업로드 + 초안 생성"}
                         </Button>
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">
+                        미해결 질문 수집 (Fallback) · 최근 로그 {fallbackLogCount}건 기준
+                      </p>
+                      {loadingUnansweredQuestions ? (
+                        <p className="text-sm text-muted-foreground">미해결 질문 집계 중...</p>
+                      ) : unansweredQuestions.length ? (
+                        <div className="space-y-2">
+                          {unansweredQuestions.slice(0, 20).map((item) => (
+                            <div
+                              key={item.normalizedQuestion}
+                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
+                            >
+                              <p className="text-sm leading-6">{item.question}</p>
+                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
+                                <p>횟수: {item.count}</p>
+                                <p>최근: {formatDateLabel(item.lastSeenAt)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">수집된 미해결 질문이 없습니다.</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">

@@ -3,6 +3,7 @@ import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { deleteKnowledgeChunksByItem, upsertKnowledgeChunksForApprovedItem } from "@/lib/ragIndexing";
+import { inferKnowledgeTags, mergeKnowledgeTags } from "@/lib/knowledgeTags";
 
 type Exam = "transfer" | "cpa";
 type KnowledgeStatus = "pending" | "approved";
@@ -149,7 +150,9 @@ export async function POST(request: Request) {
   const rawInput = normalizeText(body.rawInput, 12000);
   const question = normalizeText(body.question, 120) || buildSuggestedQuestion(rawInput);
   const answer = normalizeText(body.answer, 6000) || rawInput;
-  const tags = normalizeTags(body.tags);
+  const manualTags = normalizeTags(body.tags);
+  const inferredTags = inferKnowledgeTags([rawInput, question, answer].filter(Boolean).join("\n"));
+  const tags = mergeKnowledgeTags(manualTags, inferredTags);
 
   if (!rawInput) {
     return NextResponse.json({ error: "날것 입력(rawInput)은 필수입니다." }, { status: 400 });
@@ -194,7 +197,7 @@ export async function PATCH(request: Request) {
   const rawInput = normalizeText(body.rawInput, 12000);
   const question = normalizeText(body.question, 120);
   const answer = normalizeText(body.answer, 6000);
-  const tags = normalizeTags(body.tags);
+  const manualTags = normalizeTags(body.tags);
 
   if (!id) {
     return NextResponse.json({ error: "수정할 지식 id가 필요합니다." }, { status: 400 });
@@ -205,6 +208,9 @@ export async function PATCH(request: Request) {
   if (!answer) {
     return NextResponse.json({ error: "답변(answer)은 필수입니다." }, { status: 400 });
   }
+
+  const inferredTags = inferKnowledgeTags([rawInput, question, answer].filter(Boolean).join("\n"));
+  const tags = mergeKnowledgeTags(manualTags, inferredTags);
 
   const updatePayload: {
     raw_input?: string;

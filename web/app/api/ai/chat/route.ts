@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
@@ -20,6 +21,7 @@ import {
   upsertChatCache,
 } from "@/lib/aiChatCache";
 import { recordAiChatObservation } from "@/lib/aiObservability";
+import { inferKnowledgeTags } from "@/lib/knowledgeTags";
 
 type Exam = "transfer" | "cpa";
 type IntentRoute = "fact" | "emotion" | "mixed";
@@ -31,6 +33,23 @@ type MatchedChunkRow = {
   knowledge_item_id: string;
   chunk_text: string;
   similarity: number;
+};
+
+type CoachingAdviceRow = {
+  id: string;
+  question: string;
+  answer: string;
+  tags: string[] | null;
+  approved_at: string | null;
+  updated_at: string;
+};
+
+type CoachingAdviceSnippet = {
+  id: string;
+  question: string;
+  answer: string;
+  tags: string[];
+  score: number;
 };
 
 type ResponseContext = {
@@ -72,8 +91,11 @@ class ChatHttpError extends Error {
   }
 }
 
-const FACT_FALLBACK_ANSWER =
-  "현재 저장된 지식에서 직접 근거를 찾기 어려워요. 지금은 일반적인 학습/멘탈 관점에서 보면, 너무 결과 한 번에 흔들리지 말고 주간 단위로 보완 계획을 잡는 게 좋아요.";
+const FACT_FALLBACK_ANSWER = [
+  "아직 제가 가지고 있지 않은 정보인 것 같아요.",
+  "섣부른 조언보다는 정확한 확인이 먼저라서,",
+  "'질문하기' 버튼을 눌러주시면 빠른 시일 내에 답변을 준비할게요.",
+].join("\n");
 
 const EMOTION_KEYWORDS = [
   "불안",
@@ -207,6 +229,100 @@ function classifyIntentHeuristics(question: string): IntentRoute | null {
   return null;
 }
 
+function tokenizeQuestion(text: string): string[] {
+  const tokens = text
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s]/g, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2);
+  return [...new Set(tokens)].slice(0, 24);
+}
+
+function compactText(value: string, maxLength: number): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function scoreAdviceRow(params: {
+  row: CoachingAdviceRow;
+  queryTags: string[];
+  queryTokens: string[];
+}): number {
+  const itemTags = Array.isArray(params.row.tags) ? params.row.tags : [];
+  const normalizedItemTags = itemTags.map((tag) => tag.trim()).filter(Boolean);
+  const tagOverlap = params.queryTags.reduce(
+    (count, tag) => count + (normalizedItemTags.includes(tag) ? 1 : 0),
+    0
+  );
+
+  const haystack = [params.row.question, params.row.answer, normalizedItemTags.join(" ")].join(" ").toLowerCase();
+  const tokenHits = params.queryTokens.reduce((count, token) => count + (haystack.includes(token) ? 1 : 0), 0);
+
+  return tagOverlap * 3 + tokenHits;
+}
+
+async function loadCoachingAdviceSnippets(params: {
+  admin: SupabaseClient;
+  exam: Exam;
+  question: string;
+  limit?: number;
+}): Promise<CoachingAdviceSnippet[]> {
+  const limit = params.limit ?? 3;
+  const queryTags = inferKnowledgeTags(params.question, 4);
+  const queryTokens = tokenizeQuestion(params.question);
+
+  const { data, error } = await params.admin
+    .from("ai_knowledge_items")
+    .select("id,question,answer,tags,approved_at,updated_at")
+    .eq("exam_slug", params.exam)
+    .eq("status", "approved")
+    .order("approved_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(200);
+
+  if (error) return [];
+
+  const rows = (data as CoachingAdviceRow[] | null) ?? [];
+  if (!rows.length) return [];
+
+  const scored = rows
+    .map((row) => ({
+      row,
+      score: scoreAdviceRow({
+        row,
+        queryTags,
+        queryTokens,
+      }),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const left = Date.parse(a.row.approved_at || a.row.updated_at || "");
+      const right = Date.parse(b.row.approved_at || b.row.updated_at || "");
+      return right - left;
+    });
+
+  const meaningful = scored.filter((item) => item.score > 0);
+  const selected = (meaningful.length ? meaningful : scored.slice(0, 1)).slice(0, Math.max(1, limit));
+
+  return selected.map(({ row, score }) => ({
+    id: row.id,
+    question: compactText(row.question || "", 140),
+    answer: compactText(row.answer || "", 260),
+    tags: Array.isArray(row.tags) ? row.tags.filter(Boolean).slice(0, 4) : [],
+    score,
+  }));
+}
+
+function buildAdviceReferenceText(adviceSnippets: CoachingAdviceSnippet[]): string {
+  if (!adviceSnippets.length) return "없음";
+  return adviceSnippets
+    .map((item, index) => {
+      const tags = item.tags.length ? item.tags.join(", ") : "일반코칭";
+      return `${index + 1}. [${tags}] ${item.answer}`;
+    })
+    .join("\n");
+}
+
 async function classifyIntent(question: string): Promise<IntentRoute> {
   const heuristic = classifyIntentHeuristics(question);
   if (heuristic) return heuristic;
@@ -232,27 +348,37 @@ async function classifyIntent(question: string): Promise<IntentRoute> {
   }
 }
 
-function buildEmotionPrompts(question: string) {
+function buildEmotionPrompts(question: string, adviceSnippets: CoachingAdviceSnippet[]) {
+  const adviceReference = buildAdviceReferenceText(adviceSnippets);
+
   return {
     systemPrompt: [
       "너는 편입 수험생 전담 코치다.",
       "말투는 따뜻하지만 단호하게 유지하고, 과장이나 근거 없는 단정은 금지한다.",
       "답변은 4~6문장으로 짧게, 마지막에는 오늘 바로 할 수 있는 1~2개 행동을 제시한다.",
+      "제공된 조언 레퍼런스가 있으면 그 철학을 우선 반영하되, 학생 문맥에 맞게 자연스럽게 재작성한다.",
     ].join("\n"),
-    userPrompt: `학생 말: ${question}`,
+    userPrompt: [`학생 말: ${question}`, "", `조언 레퍼런스:\n${adviceReference}`].join("\n"),
   };
 }
 
-async function generateEmotionAnswer(question: string): Promise<string> {
-  const prompts = buildEmotionPrompts(question);
+async function generateEmotionAnswer(
+  question: string,
+  adviceSnippets: CoachingAdviceSnippet[] = []
+): Promise<string> {
+  const prompts = buildEmotionPrompts(question, adviceSnippets);
   return generateText({
     ...prompts,
     temperature: 0.5,
   });
 }
 
-async function generateEmotionAnswerStream(question: string, onDelta: (delta: string) => void): Promise<string> {
-  const prompts = buildEmotionPrompts(question);
+async function generateEmotionAnswerStream(
+  question: string,
+  adviceSnippets: CoachingAdviceSnippet[] = [],
+  onDelta: (delta: string) => void
+): Promise<string> {
+  const prompts = buildEmotionPrompts(question, adviceSnippets);
   return streamText({
     ...prompts,
     temperature: 0.5,
@@ -311,6 +437,18 @@ async function runChatWorkflow(params: {
   const isGeneralChat = isGeneralConversationQuestion(question);
   const useCache = shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
+  let advicePromise: Promise<CoachingAdviceSnippet[]> | null = null;
+
+  const getAdviceSnippets = async (): Promise<CoachingAdviceSnippet[]> => {
+    if (!advicePromise) {
+      advicePromise = loadCoachingAdviceSnippets({
+        admin,
+        exam,
+        question,
+      }).catch(() => []);
+    }
+    return advicePromise;
+  };
 
   const recordObservation = async (obs: {
     route: FinalRoute;
@@ -349,17 +487,18 @@ async function runChatWorkflow(params: {
   };
 
   if (intent === "emotion") {
-    stream?.onMeta({ intent, route: "emotion", cache: cacheStatus });
+    const adviceSnippets = await getAdviceSnippets();
+    stream?.onMeta({ intent, route: "emotion", cache: cacheStatus, adviceCount: adviceSnippets.length });
 
     const generationStarted = Date.now();
     let answer = "";
     if (stream) {
-      answer = await generateEmotionAnswerStream(question, (delta) => {
+      answer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
         if (!delta) return;
         stream.onDelta(delta);
       });
     } else {
-      answer = await generateEmotionAnswer(question);
+      answer = await generateEmotionAnswer(question, adviceSnippets);
     }
     generationMs = Date.now() - generationStarted;
 
@@ -526,10 +665,12 @@ async function runChatWorkflow(params: {
   const generationStarted = Date.now();
   let route: FinalRoute = hasEnoughContext ? "grounded" : "fallback";
   let answer = "";
+  let adviceSnippets: CoachingAdviceSnippet[] = [];
 
   if (intent === "mixed") {
+    adviceSnippets = await getAdviceSnippets();
     route = "mixed";
-    stream?.onMeta({ intent, route, cache: cacheStatus });
+    stream?.onMeta({ intent, route, cache: cacheStatus, adviceCount: adviceSnippets.length });
 
     let factAnswer = "";
     if (stream) {
@@ -549,7 +690,7 @@ async function runChatWorkflow(params: {
       }
 
       stream.onDelta("\n\n코칭:\n");
-      const emotionAnswer = await generateEmotionAnswerStream(question, (delta) => {
+      const emotionAnswer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
         if (!delta) return;
         stream.onDelta(delta);
       });
@@ -562,21 +703,28 @@ async function runChatWorkflow(params: {
           })
         : FACT_FALLBACK_ANSWER;
 
-      const emotionAnswer = await generateEmotionAnswer(question);
+      const emotionAnswer = await generateEmotionAnswer(question, adviceSnippets);
       answer = composeMixedAnswer(factAnswer, emotionAnswer);
     }
   } else {
     if (useGeneralCoachingFallback) {
+      adviceSnippets = await getAdviceSnippets();
       route = "emotion";
-      stream?.onMeta({ intent, route, cache: cacheStatus, reason: "general_chat_fallback" });
+      stream?.onMeta({
+        intent,
+        route,
+        cache: cacheStatus,
+        reason: "general_chat_fallback",
+        adviceCount: adviceSnippets.length,
+      });
 
       if (stream) {
-        answer = await generateEmotionAnswerStream(question, (delta) => {
+        answer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
           if (!delta) return;
           stream.onDelta(delta);
         });
       } else {
-        answer = await generateEmotionAnswer(question);
+        answer = await generateEmotionAnswer(question, adviceSnippets);
       }
     } else {
       route = hasEnoughContext ? "grounded" : "fallback";
