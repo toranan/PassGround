@@ -17,6 +17,7 @@
 - Added SSE streaming mode for `/api/ai/chat` (`stream: true`) with incremental delta tokens.
 - Added iOS chatbot tab (`AI 코치`) with `/api/ai/chat` integration and chat UX.
 - Added iOS chat fallback path: if SSE stream fails, retry once with non-stream `/api/ai/chat`.
+- Updated chat router: when intent is `fact` but no matched context and user input looks like general conversation, switch to coaching-style answer instead of static fact fallback text.
 
 ### Why it matters
 - Reduced repeated embedding/search/generation for repeated fact questions.

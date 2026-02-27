@@ -131,6 +131,23 @@ const FACT_KEYWORDS = [
   "공부",
 ];
 
+const GENERAL_CHAT_KEYWORDS = [
+  "안녕",
+  "하이",
+  "hello",
+  "hi",
+  "반가",
+  "잘지내",
+  "요즘 어때",
+  "고마워",
+  "감사",
+  "힘내",
+  "ㅋㅋ",
+  "ㅎㅎ",
+  "대화",
+  "잡담",
+];
+
 function resolveExam(value: string): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
   return null;
@@ -153,6 +170,18 @@ function validateExam(exam: Exam | null) {
 
 function countKeywordHits(text: string, keywords: string[]): number {
   return keywords.reduce((sum, keyword) => sum + (text.includes(keyword) ? 1 : 0), 0);
+}
+
+function isGeneralConversationQuestion(question: string): boolean {
+  const text = question.toLowerCase().trim();
+  if (!text) return false;
+
+  const factHits = countKeywordHits(text, FACT_KEYWORDS);
+  const generalHits = countKeywordHits(text, GENERAL_CHAT_KEYWORDS);
+
+  if (generalHits >= 1 && factHits === 0) return true;
+  if (factHits === 0 && text.length <= 24 && !text.includes("?")) return true;
+  return false;
 }
 
 function normalizeIntentLabel(raw: string): IntentRoute | null {
@@ -491,6 +520,8 @@ async function runChatWorkflow(params: {
   }));
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
+  const useGeneralCoachingFallback =
+    intent === "fact" && !hasEnoughContext && isGeneralConversationQuestion(question);
 
   const generationStarted = Date.now();
   let route: FinalRoute = hasEnoughContext ? "grounded" : "fallback";
@@ -535,32 +566,46 @@ async function runChatWorkflow(params: {
       answer = composeMixedAnswer(factAnswer, emotionAnswer);
     }
   } else {
-    route = hasEnoughContext ? "grounded" : "fallback";
-    stream?.onMeta({ intent, route, cache: cacheStatus });
+    if (useGeneralCoachingFallback) {
+      route = "emotion";
+      stream?.onMeta({ intent, route, cache: cacheStatus, reason: "general_chat_fallback" });
 
-    if (stream) {
-      if (hasEnoughContext) {
-        answer = await generateGroundedAnswerStream({
-          question,
-          contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
-          onDelta: (delta) => {
-            if (!delta) return;
-            stream.onDelta(delta);
-          },
+      if (stream) {
+        answer = await generateEmotionAnswerStream(question, (delta) => {
+          if (!delta) return;
+          stream.onDelta(delta);
         });
       } else {
-        answer = FACT_FALLBACK_ANSWER;
-        for (const chunk of splitForStream(answer)) {
-          stream.onDelta(chunk);
-        }
+        answer = await generateEmotionAnswer(question);
       }
     } else {
-      answer = hasEnoughContext
-        ? await generateGroundedAnswer({
+      route = hasEnoughContext ? "grounded" : "fallback";
+      stream?.onMeta({ intent, route, cache: cacheStatus });
+
+      if (stream) {
+        if (hasEnoughContext) {
+          answer = await generateGroundedAnswerStream({
             question,
             contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
-          })
-        : FACT_FALLBACK_ANSWER;
+            onDelta: (delta) => {
+              if (!delta) return;
+              stream.onDelta(delta);
+            },
+          });
+        } else {
+          answer = FACT_FALLBACK_ANSWER;
+          for (const chunk of splitForStream(answer)) {
+            stream.onDelta(chunk);
+          }
+        }
+      } else {
+        answer = hasEnoughContext
+          ? await generateGroundedAnswer({
+              question,
+              contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
+            })
+          : FACT_FALLBACK_ANSWER;
+      }
     }
   }
 
