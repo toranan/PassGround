@@ -46,6 +46,12 @@ export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
     description: "합격 확률과 전략을 중심으로 소통하는 편입 특화 커뮤니티",
     boards: [
       {
+        id: "transfer-news",
+        name: "최신뉴스",
+        slug: "news",
+        description: "운영팀이 업로드하는 최신 공지/입시 뉴스",
+      },
+      {
         id: "transfer-free",
         name: "자유게시판",
         slug: "free",
@@ -77,6 +83,12 @@ export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
     examSlug: "cpa",
     description: "검증된 합격자/현직 인증 답변과 과목별 고밀도 정보",
     boards: [
+      {
+        id: "cpa-news",
+        name: "최신뉴스",
+        slug: "news",
+        description: "운영팀이 업로드하는 최신 공지/시험 뉴스",
+      },
       {
         id: "cpa-free",
         name: "자유게시판",

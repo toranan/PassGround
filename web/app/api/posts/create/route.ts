@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
+import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -32,6 +33,17 @@ export async function POST(request: Request) {
       { error: "현재 CPA는 읽기 전용입니다. 게시글 작성은 편입에서 이용해 주세요." },
       { status: 403 }
     );
+  }
+  if (boardSlug === "news") {
+    const token = getBearerToken(request);
+    const user = await getUserByAccessToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "최신뉴스 작성은 관리자 로그인 후 가능합니다." }, { status: 401 });
+    }
+    const allowed = await isAdminUser(user.id, user.email);
+    if (!allowed) {
+      return NextResponse.json({ error: "최신뉴스 작성 권한이 없습니다." }, { status: 403 });
+    }
   }
   if (!title) {
     return NextResponse.json({ error: "제목을 입력해 주세요." }, { status: 400 });

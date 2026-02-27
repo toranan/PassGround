@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval:ai": "node ./scripts/run-ai-chat-evals.mjs"
   },
   "dependencies": {
     "@radix-ui/react-navigation-menu": "^1.2.14",

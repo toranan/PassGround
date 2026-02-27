@@ -345,15 +345,6 @@ struct BlindCommunityPostCell: View {
                     Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
                         .font(.caption)
                         .foregroundColor(.gray)
-                    
-                    Text("·")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    Text("언팔로우")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
                 }
                 
                 Spacer()

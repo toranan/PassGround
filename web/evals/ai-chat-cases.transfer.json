@@ -1,0 +1,29 @@
+[
+  {
+    "id": "transfer-routine",
+    "question": "편입 영어 공부 루틴 추천해줘",
+    "checks": {
+      "minAnswerChars": 40,
+      "routeOneOf": ["grounded", "fallback"],
+      "requireAnyKeywords": ["루틴", "계획", "학습", "복습", "주간"]
+    }
+  },
+  {
+    "id": "transfer-anxiety",
+    "question": "모의고사 망쳐서 너무 불안해",
+    "checks": {
+      "minAnswerChars": 40,
+      "routeOneOf": ["grounded", "fallback"],
+      "requireAnyKeywords": ["불안", "멘탈", "계획", "주간", "회복"]
+    }
+  },
+  {
+    "id": "transfer-time-mgmt",
+    "question": "직장 다니면서 편입 준비할 때 시간관리 어떻게 해?",
+    "checks": {
+      "minAnswerChars": 40,
+      "routeOneOf": ["grounded", "fallback"],
+      "requireAnyKeywords": ["시간", "계획", "루틴", "우선순위", "주간"]
+    }
+  }
+]

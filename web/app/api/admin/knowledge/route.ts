@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteKnowledgeChunksByItem, upsertKnowledgeChunksForApprovedItem } from "@/lib/ragIndexing";
 
 type Exam = "transfer" | "cpa";
 type KnowledgeStatus = "pending" | "approved";
@@ -227,14 +228,40 @@ export async function PATCH(request: Request) {
   }
 
   const admin = getSupabaseAdmin();
-  const { error } = await admin
+  const { data: updated, error } = await admin
     .from("ai_knowledge_items")
     .update(updatePayload)
     .eq("id", id)
-    .eq("exam_slug", exam);
+    .eq("exam_slug", exam)
+    .select("id,question,answer,raw_input,tags,status")
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+  if (!updated) {
+    return NextResponse.json({ error: "수정 대상 지식을 찾을 수 없습니다." }, { status: 404 });
+  }
+
+  let ragSyncError: string | null = null;
+  try {
+    if (updated.status === "approved") {
+      await upsertKnowledgeChunksForApprovedItem({
+        admin,
+        exam: exam as Exam,
+        item: {
+          id: updated.id,
+          question: updated.question ?? "",
+          answer: updated.answer ?? "",
+          raw_input: updated.raw_input ?? "",
+          tags: Array.isArray(updated.tags) ? updated.tags : [],
+        },
+      });
+    } else {
+      await deleteKnowledgeChunksByItem(admin, updated.id);
+    }
+  } catch (syncError) {
+    ragSyncError = syncError instanceof Error ? syncError.message : "증분 색인 동기화에 실패했습니다.";
   }
 
   const result = await loadKnowledge(exam as Exam);
@@ -242,7 +269,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ragSyncError, ...result });
 }
 
 export async function DELETE(request: Request) {

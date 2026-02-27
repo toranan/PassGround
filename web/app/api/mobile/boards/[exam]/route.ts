@@ -63,7 +63,8 @@ export async function GET(
     return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
-  const boardSlugs = group.boards.map((board) => board.slug);
+  const visibleBoards = group.boards.filter((board) => board.slug !== "news");
+  const boardSlugs = visibleBoards.map((board) => board.slug);
   const previewsByBoard = new Map<string, Array<{ id: string; title: string; authorName: string; timeLabel: string }>>();
 
   try {
@@ -108,7 +109,7 @@ export async function GET(
     // Use fallback preview.
   }
 
-  const boards = group.boards.map((board) => {
+  const boards = visibleBoards.map((board) => {
     const preview = previewsByBoard.get(board.slug) ?? [];
     return {
       id: board.id,

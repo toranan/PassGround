@@ -26,9 +26,6 @@ struct BlindPostCell: View {
                 
                 Spacer()
                 
-                Text("언팔로우")
-                    .font(.caption)
-                    .foregroundColor(.gray)
             }
             
             // Body

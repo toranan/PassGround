@@ -84,7 +84,43 @@ struct HomeFeedResponse: Codable {
     let exam: ExamInfo
     let realtimePosts: [HomeFeedPost]
     let latestPosts: [HomeFeedPost]
+    let latestNewsPosts: [HomeFeedPost]
     let source: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case exam
+        case realtimePosts
+        case latestPosts
+        case latestNewsPosts
+        case source
+    }
+
+    init(
+        ok: Bool,
+        exam: ExamInfo,
+        realtimePosts: [HomeFeedPost],
+        latestPosts: [HomeFeedPost],
+        latestNewsPosts: [HomeFeedPost],
+        source: String?
+    ) {
+        self.ok = ok
+        self.exam = exam
+        self.realtimePosts = realtimePosts
+        self.latestPosts = latestPosts
+        self.latestNewsPosts = latestNewsPosts
+        self.source = source
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        ok = try container.decode(Bool.self, forKey: .ok)
+        exam = try container.decode(ExamInfo.self, forKey: .exam)
+        realtimePosts = try container.decode([HomeFeedPost].self, forKey: .realtimePosts)
+        latestPosts = try container.decode([HomeFeedPost].self, forKey: .latestPosts)
+        latestNewsPosts = try container.decodeIfPresent([HomeFeedPost].self, forKey: .latestNewsPosts) ?? []
+        source = try container.decodeIfPresent(String.self, forKey: .source)
+    }
 }
 
 struct HomeFeedPost: Codable, Identifiable {

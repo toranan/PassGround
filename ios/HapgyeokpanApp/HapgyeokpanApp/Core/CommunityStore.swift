@@ -25,7 +25,35 @@ final class CommunityStore: ObservableObject {
     struct HomeSnapshot: Codable {
         let realtimePosts: [HomeFeedPost]
         let latestPosts: [HomeFeedPost]
+        let latestNewsPosts: [HomeFeedPost]
         let updatedAt: Date
+
+        enum CodingKeys: String, CodingKey {
+            case realtimePosts
+            case latestPosts
+            case latestNewsPosts
+            case updatedAt
+        }
+
+        init(
+            realtimePosts: [HomeFeedPost],
+            latestPosts: [HomeFeedPost],
+            latestNewsPosts: [HomeFeedPost],
+            updatedAt: Date
+        ) {
+            self.realtimePosts = realtimePosts
+            self.latestPosts = latestPosts
+            self.latestNewsPosts = latestNewsPosts
+            self.updatedAt = updatedAt
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            realtimePosts = try container.decode([HomeFeedPost].self, forKey: .realtimePosts)
+            latestPosts = try container.decode([HomeFeedPost].self, forKey: .latestPosts)
+            latestNewsPosts = try container.decodeIfPresent([HomeFeedPost].self, forKey: .latestNewsPosts) ?? []
+            updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        }
     }
 
     struct RankingSnapshot: Codable {
@@ -133,11 +161,13 @@ final class CommunityStore: ObservableObject {
     func saveHomeSnapshot(
         exam: ExamSlug,
         realtimePosts: [HomeFeedPost],
-        latestPosts: [HomeFeedPost]
+        latestPosts: [HomeFeedPost],
+        latestNewsPosts: [HomeFeedPost]
     ) {
         homeSnapshots[exam.rawValue] = HomeSnapshot(
             realtimePosts: realtimePosts,
             latestPosts: latestPosts,
+            latestNewsPosts: latestNewsPosts,
             updatedAt: Date()
         )
         persist()
@@ -194,13 +224,16 @@ final class CommunityStore: ObservableObject {
         for (snapshotKey, snapshot) in homeSnapshots {
             let didChangeSnapshot =
                 snapshot.realtimePosts.contains(where: { $0.post.id == postId }) ||
-                snapshot.latestPosts.contains(where: { $0.post.id == postId })
+                snapshot.latestPosts.contains(where: { $0.post.id == postId }) ||
+                snapshot.latestNewsPosts.contains(where: { $0.post.id == postId })
             if !didChangeSnapshot { continue }
             let updatedRealtime = snapshot.realtimePosts.map { update(item: $0, postId: postId, likeCount: safeLikeCount, commentDelta: 0) }
             let updatedLatest = snapshot.latestPosts.map { update(item: $0, postId: postId, likeCount: safeLikeCount, commentDelta: 0) }
+            let updatedLatestNews = snapshot.latestNewsPosts.map { update(item: $0, postId: postId, likeCount: safeLikeCount, commentDelta: 0) }
             homeSnapshots[snapshotKey] = HomeSnapshot(
                 realtimePosts: updatedRealtime,
                 latestPosts: updatedLatest,
+                latestNewsPosts: updatedLatestNews,
                 updatedAt: Date()
             )
             changed = true
@@ -263,13 +296,16 @@ final class CommunityStore: ObservableObject {
         for (snapshotKey, snapshot) in homeSnapshots {
             let didChangeSnapshot =
                 snapshot.realtimePosts.contains(where: { $0.post.id == postId }) ||
-                snapshot.latestPosts.contains(where: { $0.post.id == postId })
+                snapshot.latestPosts.contains(where: { $0.post.id == postId }) ||
+                snapshot.latestNewsPosts.contains(where: { $0.post.id == postId })
             if !didChangeSnapshot { continue }
             let updatedRealtime = snapshot.realtimePosts.map { update(item: $0, postId: postId, likeCount: nil, commentDelta: delta) }
             let updatedLatest = snapshot.latestPosts.map { update(item: $0, postId: postId, likeCount: nil, commentDelta: delta) }
+            let updatedLatestNews = snapshot.latestNewsPosts.map { update(item: $0, postId: postId, likeCount: nil, commentDelta: delta) }
             homeSnapshots[snapshotKey] = HomeSnapshot(
                 realtimePosts: updatedRealtime,
                 latestPosts: updatedLatest,
+                latestNewsPosts: updatedLatestNews,
                 updatedAt: Date()
             )
             changed = true

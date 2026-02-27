@@ -11,6 +11,7 @@ struct TransferHomeView: View {
     private let api = APIClient()
 
     @State private var exam: ExamSlug = .transfer
+    @State private var latestNewsPosts: [HomeFeedPost] = []
     @State private var realtimePosts: [HomeFeedPost] = []
     @State private var latestPosts: [HomeFeedPost] = []
 
@@ -42,7 +43,21 @@ struct TransferHomeView: View {
                 }
 
                 // 피드 목록
-                postsSection(title: "🔥 실시간 인기글", items: realtimePosts, emptyText: "실시간 인기글이 없습니다.")
+                postsSection(
+                    title: "📰 최신뉴스",
+                    items: latestNewsPosts,
+                    emptyText: "최신뉴스가 없습니다.",
+                    destinationTitle: "최신뉴스"
+                )
+
+                Divider().background(Color(.systemGray5)).frame(height: 8)
+
+                postsSection(
+                    title: "🔥 실시간 인기글",
+                    items: realtimePosts,
+                    emptyText: "실시간 인기글이 없습니다.",
+                    destinationTitle: "실시간 인기글"
+                )
 
                 Divider().background(Color(.systemGray5)).frame(height: 8)
 
@@ -106,13 +121,45 @@ struct TransferHomeView: View {
         }
     }
 
-    private func postsSection(title: String, items: [HomeFeedPost], emptyText: String) -> some View {
+    private func postsSection(
+        title: String,
+        items: [HomeFeedPost],
+        emptyText: String,
+        destinationTitle: String? = nil
+    ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.headline.weight(.bold))
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-                .padding(.bottom, 12)
+            if let destinationTitle {
+                NavigationLink {
+                    HomeFeedListView(
+                        title: destinationTitle,
+                        exam: exam,
+                        items: items
+                    )
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(title)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text("전체보기")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+                    .padding(.bottom, 12)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text(title)
+                    .font(.headline.weight(.bold))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+                    .padding(.bottom, 12)
+            }
 
             if items.isEmpty {
                 Text(emptyText)
@@ -181,11 +228,13 @@ struct TransferHomeView: View {
                     exam: exam,
                     cachePolicy: cachePolicy
                 )
+                latestNewsPosts = response.latestNewsPosts
                 realtimePosts = response.realtimePosts
                 latestPosts = response.latestPosts
             } catch {
                 guard shouldFallbackToLegacyHomeAPI(error) else { throw error }
                 let legacy = try await loadLegacyHomeFeed(cachePolicy: cachePolicy)
+                latestNewsPosts = legacy.latestNewsPosts
                 realtimePosts = legacy.realtimePosts
                 latestPosts = legacy.latestPosts
             }
@@ -193,7 +242,8 @@ struct TransferHomeView: View {
             communityStore.saveHomeSnapshot(
                 exam: exam,
                 realtimePosts: realtimePosts,
-                latestPosts: latestPosts
+                latestPosts: latestPosts,
+                latestNewsPosts: latestNewsPosts
             )
         } catch {
             if isCancellation(error) {
@@ -208,14 +258,14 @@ struct TransferHomeView: View {
 
     private func loadLegacyHomeFeed(
         cachePolicy: URLRequest.CachePolicy
-    ) async throws -> (realtimePosts: [HomeFeedPost], latestPosts: [HomeFeedPost]) {
+    ) async throws -> (latestNewsPosts: [HomeFeedPost], realtimePosts: [HomeFeedPost], latestPosts: [HomeFeedPost]) {
         let boardsResponse = try await api.fetchBoards(
             baseURL: config.baseURL,
             exam: exam,
             cachePolicy: cachePolicy
         )
         var boards = boardsResponse.boards.isEmpty ? fallbackBoards(for: exam) : Array(boardsResponse.boards.prefix(8))
-        boards = boards.filter { $0.slug != "free" }
+        boards = boards.filter { $0.slug != "free" && $0.slug != "news" }
 
         let baseURL = config.baseURL
         let examValue = exam
@@ -260,7 +310,30 @@ struct TransferHomeView: View {
         let latest = deduped.sorted {
             Self.parseDate($0.post.createdAt) > Self.parseDate($1.post.createdAt)
         }
-        return (realtimePosts: realtime, latestPosts: latest)
+
+        let latestNewsPosts: [HomeFeedPost]
+        do {
+            let newsResponse = try await api.fetchPosts(
+                baseURL: config.baseURL,
+                exam: exam,
+                board: "news",
+                limit: 20,
+                cursor: nil,
+                cachePolicy: cachePolicy
+            )
+            latestNewsPosts = newsResponse.posts.map { post in
+                HomeFeedPost(
+                    id: "news-\(post.id)",
+                    boardSlug: "news",
+                    boardName: "최신뉴스",
+                    post: post
+                )
+            }
+        } catch {
+            latestNewsPosts = []
+        }
+
+        return (latestNewsPosts: latestNewsPosts, realtimePosts: realtime, latestPosts: latest)
     }
 
     @discardableResult
@@ -268,6 +341,7 @@ struct TransferHomeView: View {
         guard let snapshot = communityStore.homeSnapshot(exam: exam) else {
             return false
         }
+        latestNewsPosts = snapshot.latestNewsPosts
         realtimePosts = snapshot.realtimePosts
         latestPosts = snapshot.latestPosts
         errorMessage = ""
@@ -364,5 +438,53 @@ struct TransferHomeView: View {
 
     private func isCancellation(_ error: Error) -> Bool {
         APIClient.isCancellationError(error)
+    }
+}
+
+private struct HomeFeedListView: View {
+    let title: String
+    let exam: ExamSlug
+    let items: [HomeFeedPost]
+
+    var body: some View {
+        List {
+            if items.isEmpty {
+                Text("표시할 게시글이 없습니다.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(items) { item in
+                    NavigationLink {
+                        PostDetailView(
+                            exam: exam,
+                            boardSlug: item.boardSlug,
+                            postId: item.post.id,
+                            initialPost: item.post,
+                            boardName: item.boardName
+                        )
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(item.post.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+
+                            HStack(spacing: 8) {
+                                Text(item.boardName)
+                                Text(item.post.timeLabel)
+                                Label("\(item.post.commentCount)", systemImage: "text.bubble")
+                                Label("\(item.post.likeCount)", systemImage: "hand.thumbsup")
+                                Label("\(item.post.viewCount)", systemImage: "eye")
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

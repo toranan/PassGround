@@ -110,18 +110,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "지원하지 않는 시험 카테고리입니다." }, { status: 400 });
   }
 
-  const boardSlugs = examInfo.boards
+  const newsBoardSlug = "news";
+  const communityBoardSlugs = examInfo.boards
     .map((board) => board.slug)
-    .filter((slug) => slug !== "free")
+    .filter((slug) => slug !== "free" && slug !== newsBoardSlug)
     .slice(0, 8);
+  const allBoardSlugs = Array.from(new Set([...communityBoardSlugs, newsBoardSlug]));
 
-  if (boardSlugs.length === 0) {
+  if (allBoardSlugs.length === 0) {
     return withCache(
       NextResponse.json({
         ok: true,
         exam: { slug: examInfo.examSlug, name: examInfo.examName, description: examInfo.description },
         realtimePosts: [],
         latestPosts: [],
+        latestNewsPosts: [],
         source: "no-board",
       })
     );
@@ -134,7 +137,7 @@ export async function GET(request: Request) {
     .from("boards")
     .select("id,slug,name,exams!inner(slug)")
     .eq("exams.slug", exam)
-    .in("slug", boardSlugs);
+    .in("slug", allBoardSlugs);
 
   const boardMetaById = new Map<string, { slug: string; name: string }>();
   (boardRows as BoardRow[] | null | undefined)?.forEach((row) => {
@@ -149,6 +152,7 @@ export async function GET(request: Request) {
         exam: { slug: examInfo.examSlug, name: examInfo.examName, description: examInfo.description },
         realtimePosts: [],
         latestPosts: [],
+        latestNewsPosts: [],
         source: "board-empty",
       })
     );
@@ -189,6 +193,7 @@ export async function GET(request: Request) {
         exam: { slug: examInfo.examSlug, name: examInfo.examName, description: examInfo.description },
         realtimePosts: [],
         latestPosts: [],
+        latestNewsPosts: [],
         source: "post-empty",
       })
     );
@@ -265,7 +270,10 @@ export async function GET(request: Request) {
     })
     .filter((item): item is HomeItem => item !== null);
 
-  const realtimePosts = [...items]
+  const communityItems = items.filter((item) => item.boardSlug !== newsBoardSlug);
+  const newsItems = items.filter((item) => item.boardSlug === newsBoardSlug);
+
+  const realtimePosts = [...communityItems]
     .sort((a, b) => {
       if (a.hotScore !== b.hotScore) return b.hotScore - a.hotScore;
       return b.createdAtTs - a.createdAtTs;
@@ -273,7 +281,12 @@ export async function GET(request: Request) {
     .slice(0, 20)
     .map(({ id, boardSlug, boardName, post }) => ({ id, boardSlug, boardName, post }));
 
-  const latestPosts = [...items]
+  const latestPosts = [...communityItems]
+    .sort((a, b) => b.createdAtTs - a.createdAtTs)
+    .slice(0, 20)
+    .map(({ id, boardSlug, boardName, post }) => ({ id, boardSlug, boardName, post }));
+
+  const latestNewsPosts = [...newsItems]
     .sort((a, b) => b.createdAtTs - a.createdAtTs)
     .slice(0, 20)
     .map(({ id, boardSlug, boardName, post }) => ({ id, boardSlug, boardName, post }));
@@ -284,6 +297,7 @@ export async function GET(request: Request) {
       exam: { slug: examInfo.examSlug, name: examInfo.examName, description: examInfo.description },
       realtimePosts,
       latestPosts,
+      latestNewsPosts,
       source: "db",
     })
   );

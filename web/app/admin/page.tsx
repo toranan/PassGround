@@ -119,6 +119,15 @@ type AdminKnowledgeResponse = {
   error?: string;
 };
 
+type AdminKnowledgeReindexResponse = {
+  ok: boolean;
+  exam: "transfer" | "cpa";
+  approvedCount: number;
+  chunkCount: number;
+  message?: string;
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
@@ -206,6 +215,10 @@ export default function AdminPage() {
     content: "",
   });
   const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
+  const [knowledgePdfFile, setKnowledgePdfFile] = useState<File | null>(null);
+  const [knowledgePdfNote, setKnowledgePdfNote] = useState("");
+  const [knowledgePdfTags, setKnowledgePdfTags] = useState("");
+  const [reindexingKnowledge, setReindexingKnowledge] = useState(false);
 
   const sortedRankings = useMemo(() => {
     return [...rankings].sort((a, b) => a.rank - b.rank || a.subject.localeCompare(b.subject));
@@ -797,6 +810,80 @@ export default function AdminPage() {
       setMessage("AI 지식 초안 생성 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUploadKnowledgePdf = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    if (!knowledgePdfFile) {
+      setMessage("업로드할 PDF 파일을 선택해 주세요.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const formData = new FormData();
+      formData.set("exam", exam);
+      formData.set("file", knowledgePdfFile);
+      if (knowledgePdfNote.trim()) formData.set("note", knowledgePdfNote.trim());
+      if (knowledgePdfTags.trim()) formData.set("tags", knowledgePdfTags.trim());
+
+      const res = await fetch("/api/admin/knowledge/pdf", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      const payload = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "PDF 업로드 후 초안 생성에 실패했습니다.");
+        return;
+      }
+
+      setKnowledgePdfFile(null);
+      setKnowledgePdfNote("");
+      setKnowledgePdfTags("");
+      await loadKnowledge();
+      setMessage("PDF 업로드 완료. 검수 대기에 초안이 생성되었습니다.");
+    } catch {
+      setMessage("PDF 업로드 처리 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReindexKnowledge = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setReindexingKnowledge(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge/reindex", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ exam }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeReindexResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "RAG 재색인에 실패했습니다.");
+        return;
+      }
+
+      setMessage(
+        payload.message ||
+          `재색인 완료: 승인 지식 ${payload.approvedCount}개, 생성 청크 ${payload.chunkCount}개`
+      );
+    } catch {
+      setMessage("RAG 재색인 중 오류가 발생했습니다.");
+    } finally {
+      setReindexingKnowledge(false);
     }
   };
 
@@ -1402,6 +1489,22 @@ export default function AdminPage() {
                     <CardTitle className="text-lg">AI 지식 검수 (날것 입력 → 컨펌 후 반영)</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => void loadKnowledge()}
+                        disabled={loadingKnowledge || submitting}
+                      >
+                        {loadingKnowledge ? "불러오는 중..." : "지식 새로고침"}
+                      </Button>
+                      <Button
+                        onClick={() => void handleReindexKnowledge()}
+                        disabled={reindexingKnowledge || submitting}
+                      >
+                        {reindexingKnowledge ? "재색인 중..." : "RAG 재색인 실행"}
+                      </Button>
+                    </div>
+
                     <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
                       <p className="text-xs text-muted-foreground">
                         입력한 날것은 바로 반영되지 않고 `pending`으로 저장됩니다. 아래에서 내용을 확인 후 승인하세요.
@@ -1415,6 +1518,33 @@ export default function AdminPage() {
                       <div>
                         <Button onClick={handleCreateKnowledgeDraft} disabled={submitting}>
                           {submitting ? "처리 중..." : "초안 생성 (Pending)"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        PDF 파일을 업로드하면 `pending` 초안이 자동 생성됩니다. 검수 후 승인 반영하세요.
+                      </p>
+                      <input
+                        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={(event) => setKnowledgePdfFile(event.target.files?.[0] ?? null)}
+                      />
+                      <Input
+                        placeholder="PDF 메모(선택)"
+                        value={knowledgePdfNote}
+                        onChange={(e) => setKnowledgePdfNote(e.target.value)}
+                      />
+                      <Input
+                        placeholder="태그(선택, 쉼표 구분)"
+                        value={knowledgePdfTags}
+                        onChange={(e) => setKnowledgePdfTags(e.target.value)}
+                      />
+                      <div>
+                        <Button onClick={handleUploadKnowledgePdf} disabled={submitting}>
+                          {submitting ? "처리 중..." : "PDF 업로드 + 초안 생성"}
                         </Button>
                       </div>
                     </div>

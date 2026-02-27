@@ -50,6 +50,18 @@ function isAzureProvider(): boolean {
   return Boolean(AZURE_RESPONSES_URL);
 }
 
+export function getAiProviderName(): "azure-openai" | "openai" {
+  return isAzureProvider() ? "azure-openai" : "openai";
+}
+
+export function getEmbeddingModelName(): string {
+  return DEFAULT_EMBEDDING_MODEL;
+}
+
+export function getChatModelName(): string {
+  return DEFAULT_CHAT_MODEL;
+}
+
 function assertProviderKey() {
   if (isAzureProvider()) {
     if (!getAzureKey()) {

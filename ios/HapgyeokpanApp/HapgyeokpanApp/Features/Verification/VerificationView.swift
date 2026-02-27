@@ -299,6 +299,9 @@ struct VerificationView: View {
 }
 
 private let schedulePrimary = Color(red: 20/255, green: 83/255, blue: 45/255)
+private let scheduleLocalAccent = Color(red: 37/255, green: 99/255, blue: 235/255)
+private let scheduleSheetStart = Color(red: 24/255, green: 105/255, blue: 62/255)
+private let scheduleSheetEnd = Color(red: 58/255, green: 156/255, blue: 98/255)
 
 private struct LocalScheduleItem: Codable, Identifiable, Equatable {
     let id: String
@@ -331,13 +334,16 @@ private struct ScheduleMonthGroup: Identifiable {
     let items: [ScheduleEntry]
 }
 
+private enum ScheduleBucket: String, CaseIterable, Identifiable {
+    case calendar = "달력"
+    case official = "공식 일정"
+
+    var id: String { rawValue }
+}
+
 private struct LocalScheduleDraft {
     var title: String = ""
-    var category: String = "개인일정"
-    var startsAt: Date = Date()
-    var includeEndDate: Bool = false
-    var endsAt: Date = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    var location: String = ""
+    var time: Date = Date()
     var note: String = ""
 }
 
@@ -358,6 +364,8 @@ struct ScheduleView: View {
     @State private var lastAutoRefreshAt = Date.distantPast
     @State private var showingLocalScheduleSheet = false
     @State private var localScheduleDraft = LocalScheduleDraft()
+    @State private var selectedBucket: ScheduleBucket = .calendar
+    @State private var selectedDate = Date()
 
     private var completionKey: String {
         "schedule_completed_ids_\(exam.rawValue)"
@@ -406,8 +414,12 @@ struct ScheduleView: View {
         }
     }
 
-    private var monthGroups: [ScheduleMonthGroup] {
-        let grouped = Dictionary(grouping: mergedEntries) { item in
+    private var officialEntries: [ScheduleEntry] {
+        mergedEntries.filter { $0.isOfficial }
+    }
+
+    private var officialMonthGroups: [ScheduleMonthGroup] {
+        let grouped = Dictionary(grouping: officialEntries) { item in
             Self.monthHeader.string(from: item.startsAt)
         }
 
@@ -424,21 +436,32 @@ struct ScheduleView: View {
         return groups.sorted { $0.anchor < $1.anchor }
     }
 
+    private var calendarDayEntries: [ScheduleEntry] {
+        mergedEntries.filter {
+            Calendar.current.isDate($0.startsAt, inSameDayAs: selectedDate)
+        }
+    }
+
+    private var headerEntries: [ScheduleEntry] {
+        selectedBucket == .official ? officialEntries : mergedEntries
+    }
+
     private var completedCount: Int {
-        mergedEntries.filter { completedIDs.contains($0.id) }.count
+        headerEntries.filter { completedIDs.contains($0.id) }.count
     }
 
     private var nextUpcoming: ScheduleEntry? {
         let now = Date()
-        return mergedEntries.first { ($0.endsAt ?? $0.startsAt) >= now }
+        return headerEntries.first { ($0.endsAt ?? $0.startsAt) >= now }
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 headerCard
+                bucketPicker
 
-                if loading && mergedEntries.isEmpty {
+                if loading && headerEntries.isEmpty {
                     ProgressView("일정을 불러오는 중...")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(30)
@@ -452,28 +475,18 @@ struct ScheduleView: View {
                         .padding(.horizontal, 16)
                 }
 
-                if !loading && mergedEntries.isEmpty {
-                    Text("등록된 일정이 없습니다.")
+                if !loading && headerEntries.isEmpty {
+                    Text(selectedBucket == .official ? "등록된 공식 일정이 없습니다." : "등록된 일정이 없습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
                 }
 
-                ForEach(monthGroups) { group in
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(group.title)
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .padding(.horizontal, 16)
-
-                        VStack(spacing: 10) {
-                            ForEach(group.items) { item in
-                                scheduleCard(item)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                    }
+                if selectedBucket == .calendar {
+                    calendarSection
+                } else {
+                    officialSection
                 }
             }
             .padding(.vertical, 14)
@@ -481,15 +494,6 @@ struct ScheduleView: View {
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("일정")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("내 일정 추가") {
-                    localScheduleDraft = LocalScheduleDraft()
-                    showingLocalScheduleSheet = true
-                }
-                .font(.subheadline.weight(.semibold))
-            }
-        }
         .sheet(isPresented: $showingLocalScheduleSheet) {
             localScheduleSheet
         }
@@ -524,7 +528,7 @@ struct ScheduleView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
 
-            Text("완료 \(completedCount) / 전체 \(mergedEntries.count)")
+            Text("완료 \(completedCount) / 전체 \(headerEntries.count)")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.9))
 
@@ -545,6 +549,103 @@ struct ScheduleView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal, 16)
+    }
+
+    private var bucketPicker: some View {
+        Picker("일정 종류", selection: $selectedBucket) {
+            ForEach(ScheduleBucket.allCases) { bucket in
+                Text(bucket.rawValue).tag(bucket)
+            }
+        }
+        .pickerStyle(.segmented)
+        .tint(schedulePrimary)
+        .padding(.horizontal, 16)
+    }
+
+    private var calendarSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DatePicker(
+                "날짜 선택",
+                selection: $selectedDate,
+                displayedComponents: [.date]
+            )
+            .datePickerStyle(.graphical)
+            .padding(12)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(schedulePrimary.opacity(0.14), lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("\(Self.dayHeader.string(from: selectedDate)) 일정")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                    Spacer()
+                    Button {
+                        beginAddLocalScheduleForSelectedDate()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("일정추가")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(schedulePrimary)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(schedulePrimary.opacity(0.14), lineWidth: 1)
+                )
+                .padding(.horizontal, 16)
+
+                if calendarDayEntries.isEmpty {
+                    Text("선택한 날짜의 일정이 없습니다.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(calendarDayEntries) { item in
+                            scheduleCard(item)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            }
+        }
+    }
+
+    private var officialSection: some View {
+        VStack(spacing: 12) {
+            ForEach(officialMonthGroups) { group in
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(group.title)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 16)
+
+                    VStack(spacing: 10) {
+                        ForEach(group.items) { item in
+                            scheduleCard(item)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            }
+        }
     }
 
     private func scheduleCard(_ item: ScheduleEntry) -> some View {
@@ -607,7 +708,7 @@ struct ScheduleView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.gray)
+                        .background(scheduleLocalAccent)
                         .clipShape(Capsule())
                 }
             }
@@ -644,8 +745,12 @@ struct ScheduleView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(Color.white)
+        .background(item.isOfficial ? schedulePrimary.opacity(0.05) : scheduleLocalAccent.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(item.isOfficial ? schedulePrimary.opacity(0.2) : scheduleLocalAccent.opacity(0.2), lineWidth: 1)
+        )
     }
 
     private func loadSchedules(forceRefresh: Bool = false) async {
@@ -736,16 +841,28 @@ struct ScheduleView: View {
 
     private func saveLocalSchedule() {
         let title = localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let category = localScheduleDraft.category.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
+
+        let calendar = Calendar.current
+        let day = calendar.dateComponents([.year, .month, .day], from: selectedDate)
+        let time = calendar.dateComponents([.hour, .minute], from: localScheduleDraft.time)
+        let startsAt = calendar.date(
+            from: DateComponents(
+                year: day.year,
+                month: day.month,
+                day: day.day,
+                hour: time.hour ?? 9,
+                minute: time.minute ?? 0
+            )
+        ) ?? selectedDate
 
         let item = LocalScheduleItem(
             id: "local-\(UUID().uuidString)",
             title: title,
-            category: category.isEmpty ? "개인일정" : category,
-            startsAt: localScheduleDraft.startsAt,
-            endsAt: localScheduleDraft.includeEndDate ? localScheduleDraft.endsAt : nil,
-            location: localScheduleDraft.location.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            category: "내 일정",
+            startsAt: startsAt,
+            endsAt: nil,
+            location: nil,
             note: localScheduleDraft.note.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         )
 
@@ -754,6 +871,20 @@ struct ScheduleView: View {
         persistLocalSchedules()
         pruneCompletedIDs()
         showingLocalScheduleSheet = false
+    }
+
+    private func beginAddLocalScheduleForSelectedDate() {
+        var draft = LocalScheduleDraft()
+        let calendar = Calendar.current
+        let nowTime = calendar.dateComponents([.hour, .minute], from: Date())
+        draft.time = calendar.date(
+            from: DateComponents(
+                hour: nowTime.hour ?? 9,
+                minute: nowTime.minute ?? 0
+            )
+        ) ?? Date()
+        localScheduleDraft = draft
+        showingLocalScheduleSheet = true
     }
 
     private func deleteLocalSchedule(id: String) {
@@ -775,36 +906,123 @@ struct ScheduleView: View {
 
     private var localScheduleSheet: some View {
         NavigationStack {
-            Form {
-                Section("필수") {
-                    TextField("제목", text: $localScheduleDraft.title)
-                    TextField("카테고리", text: $localScheduleDraft.category)
-                    DatePicker("시작", selection: $localScheduleDraft.startsAt)
-                }
-
-                Section("선택") {
-                    Toggle("종료일 입력", isOn: $localScheduleDraft.includeEndDate)
-                    if localScheduleDraft.includeEndDate {
-                        DatePicker("종료", selection: $localScheduleDraft.endsAt)
+            ScrollView {
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("선택 날짜")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.92))
+                        Text(Self.dayHeader.string(from: selectedDate))
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
                     }
-                    TextField("장소", text: $localScheduleDraft.location)
-                    TextField("메모", text: $localScheduleDraft.note, axis: .vertical)
-                        .lineLimit(2...4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
+                    .background(
+                        LinearGradient(
+                            colors: [scheduleSheetStart, scheduleSheetEnd],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("일정 제목")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        TextField("예: 편입영어 단어 복습", text: $localScheduleDraft.title)
+                            .textFieldStyle(.plain)
+                            .font(.body.weight(.semibold))
+
+                        Divider()
+
+                        HStack {
+                            Text("시간")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            DatePicker(
+                                "",
+                                selection: $localScheduleDraft.time,
+                                displayedComponents: [.hourAndMinute]
+                            )
+                            .labelsHidden()
+                            .datePickerStyle(.compact)
+                        }
+
+                        Divider()
+
+                        Text("상세")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        TextField("상세", text: $localScheduleDraft.note, axis: .vertical)
+                            .lineLimit(2...4)
+                            .textFieldStyle(.plain)
+                    }
+                    .padding(14)
+                    .background(Color.white.opacity(0.94))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(scheduleSheetEnd.opacity(0.2), lineWidth: 1)
+                    )
+
+                    Button {
+                        saveLocalSchedule()
+                    } label: {
+                        Text("일정 추가")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                Group {
+                                    if localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        Color.gray.opacity(0.5)
+                                    } else {
+                                        LinearGradient(
+                                            colors: [scheduleSheetStart, scheduleSheetEnd],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    }
+                                }
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(
+                                color: localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? .clear
+                                : scheduleSheetStart.opacity(0.28),
+                                radius: 10,
+                                x: 0,
+                                y: 6
+                            )
+                    }
+                    .disabled(localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
-            .navigationTitle("내 일정 추가")
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 245/255, green: 250/255, blue: 247/255), Color.white],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .navigationTitle("일정추가")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("취소") {
                         showingLocalScheduleSheet = false
                     }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") {
-                        saveLocalSchedule()
-                    }
-                    .disabled(localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
@@ -836,6 +1054,13 @@ struct ScheduleView: View {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "M월 d일(E) HH:mm"
+        return formatter
+    }()
+
+    private static let dayHeader: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일(E)"
         return formatter
     }()
 
