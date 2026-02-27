@@ -86,6 +86,39 @@ type AdminScheduleResponse = {
   error?: string;
 };
 
+type NewsItem = {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+};
+
+type AdminNewsResponse = {
+  ok: boolean;
+  news: NewsItem[];
+  error?: string;
+};
+
+type KnowledgeItem = {
+  id: string;
+  examSlug: string;
+  rawInput: string;
+  question: string;
+  answer: string;
+  tags: string[];
+  status: "pending" | "approved";
+  createdAt: string;
+  updatedAt: string;
+  approvedAt: string | null;
+};
+
+type AdminKnowledgeResponse = {
+  ok: boolean;
+  pending: KnowledgeItem[];
+  approved: KnowledgeItem[];
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
@@ -109,6 +142,15 @@ function formatDateLabel(value: string | null): string {
   });
 }
 
+function parseTagsInput(value: string): string[] {
+  const dedup = new Set<string>();
+  for (const token of value.split(/[,\n]/g)) {
+    const normalized = token.trim();
+    if (normalized) dedup.add(normalized);
+  }
+  return [...dedup];
+}
+
 export default function AdminPage() {
   const user = useSyncExternalStore(
     subscribeAuthChange,
@@ -125,6 +167,11 @@ export default function AdminPage() {
   const [cutoffs, setCutoffs] = useState<CutoffItem[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+  const [knowledgePending, setKnowledgePending] = useState<KnowledgeItem[]>([]);
+  const [knowledgeApproved, setKnowledgeApproved] = useState<KnowledgeItem[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -154,6 +201,11 @@ export default function AdminPage() {
     linkUrl: "",
     note: "",
   });
+  const [newsForm, setNewsForm] = useState({
+    title: "",
+    content: "",
+  });
+  const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
 
   const sortedRankings = useMemo(() => {
     return [...rankings].sort((a, b) => a.rank - b.rank || a.subject.localeCompare(b.subject));
@@ -175,6 +227,14 @@ export default function AdminPage() {
       return a.title.localeCompare(b.title);
     });
   }, [schedules]);
+  const sortedNews = useMemo(() => {
+    return [...news].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [news]);
+  const sortedKnowledgeApproved = useMemo(() => {
+    return [...knowledgeApproved].sort(
+      (a, b) => new Date(b.approvedAt || b.updatedAt).getTime() - new Date(a.approvedAt || a.updatedAt).getTime()
+    );
+  }, [knowledgeApproved]);
 
   const loadAdminMe = async () => {
     const token = getAccessToken();
@@ -300,15 +360,72 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadNews = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingNews(true);
+    try {
+      const res = await fetch(`/api/admin/news?exam=${exam}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminNewsResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "최신뉴스 목록을 불러오지 못했습니다.");
+        setNews([]);
+        return;
+      }
+      setNews(payload.news ?? []);
+    } catch {
+      setMessage("최신뉴스 목록을 불러오지 못했습니다.");
+      setNews([]);
+    } finally {
+      setLoadingNews(false);
+    }
+  }, [exam]);
+
+  const loadKnowledge = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingKnowledge(true);
+    try {
+      const res = await fetch(`/api/admin/knowledge?exam=${exam}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "AI 지식 목록을 불러오지 못했습니다.");
+        setKnowledgePending([]);
+        setKnowledgeApproved([]);
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+    } catch {
+      setMessage("AI 지식 목록을 불러오지 못했습니다.");
+      setKnowledgePending([]);
+      setKnowledgeApproved([]);
+    } finally {
+      setLoadingKnowledge(false);
+    }
+  }, [exam]);
+
   useEffect(() => {
     void loadAdminMe();
   }, [user?.id]);
 
   useEffect(() => {
     if (adminState?.isAdmin) {
-      void Promise.all([loadRankings(), loadCutoffs(), loadSchedules()]);
+      void Promise.all([loadRankings(), loadCutoffs(), loadSchedules(), loadNews(), loadKnowledge()]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -571,6 +688,238 @@ export default function AdminPage() {
       setMessage("일정이 삭제되었습니다.");
     } catch {
       setMessage("일정 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveNews = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    if (!newsForm.title.trim() || !newsForm.content.trim()) {
+      setMessage("최신뉴스 제목과 내용은 필수입니다.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/news", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          title: newsForm.title,
+          content: newsForm.content,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "최신뉴스 저장에 실패했습니다.");
+        return;
+      }
+      setNews(payload.news ?? []);
+      setNewsForm({ title: "", content: "" });
+      setMessage("최신뉴스가 저장되었습니다.");
+    } catch {
+      setMessage("최신뉴스 저장 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteNews = async (id: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/news", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, exam }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "최신뉴스 삭제에 실패했습니다.");
+        return;
+      }
+      setNews(payload.news ?? []);
+      setMessage("최신뉴스가 삭제되었습니다.");
+    } catch {
+      setMessage("최신뉴스 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateKnowledgeDraft = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    if (!knowledgeRawInput.trim()) {
+      setMessage("날것 입력 내용을 먼저 적어주세요.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          rawInput: knowledgeRawInput,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "AI 지식 초안 생성에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setKnowledgeRawInput("");
+      setMessage("AI 지식 초안을 만들었습니다. 내용 확인 후 승인 반영해 주세요.");
+    } catch {
+      setMessage("AI 지식 초안 생성 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditPendingKnowledge = (
+    id: string,
+    field: "rawInput" | "question" | "answer" | "tags",
+    value: string
+  ) => {
+    setKnowledgePending((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        if (field === "tags") {
+          return { ...item, tags: parseTagsInput(value) };
+        }
+        return { ...item, [field]: value };
+      })
+    );
+  };
+
+  const handleSavePendingKnowledge = async (item: KnowledgeItem) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          id: item.id,
+          status: "pending",
+          rawInput: item.rawInput,
+          question: item.question,
+          answer: item.answer,
+          tags: item.tags,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "초안 저장에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setMessage("초안을 저장했습니다.");
+    } catch {
+      setMessage("초안 저장 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleApproveKnowledge = async (item: KnowledgeItem) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          id: item.id,
+          status: "approved",
+          rawInput: item.rawInput,
+          question: item.question,
+          answer: item.answer,
+          tags: item.tags,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "승인 반영에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setMessage("승인 반영 완료. 이제 AI 답변 지식으로 사용할 수 있습니다.");
+    } catch {
+      setMessage("승인 반영 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteKnowledge = async (id: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          id,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "AI 지식 삭제에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setMessage("AI 지식을 삭제했습니다.");
+    } catch {
+      setMessage("AI 지식 삭제 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -984,6 +1333,200 @@ export default function AdminPage() {
                         등록된 일정 데이터가 없습니다.
                       </p>
                     )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">최신뉴스 관리 (홈 상단 노출)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 gap-2">
+                      <Input
+                        placeholder="뉴스 제목"
+                        value={newsForm.title}
+                        onChange={(e) =>
+                          setNewsForm((prev) => ({ ...prev, title: e.target.value }))
+                        }
+                      />
+                      <textarea
+                        className="min-h-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="뉴스 내용"
+                        value={newsForm.content}
+                        onChange={(e) =>
+                          setNewsForm((prev) => ({ ...prev, content: e.target.value }))
+                        }
+                      />
+                      <div>
+                        <Button onClick={handleSaveNews} disabled={submitting}>
+                          {submitting ? "저장 중..." : "최신뉴스 업로드"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {loadingNews ? (
+                      <p className="text-sm text-muted-foreground">최신뉴스 목록 불러오는 중...</p>
+                    ) : sortedNews.length ? (
+                      <div className="space-y-2">
+                        {sortedNews.map((item) => (
+                          <div
+                            key={item.id}
+                            className="rounded-lg border border-border px-3 py-3 flex items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold">{item.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                              <p className="text-xs text-primary mt-1">{formatDateLabel(item.createdAt)}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void handleDeleteNews(item.id)}
+                              disabled={submitting}
+                            >
+                              삭제
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        등록된 최신뉴스가 없습니다.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">AI 지식 검수 (날것 입력 → 컨펌 후 반영)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        입력한 날것은 바로 반영되지 않고 `pending`으로 저장됩니다. 아래에서 내용을 확인 후 승인하세요.
+                      </p>
+                      <textarea
+                        className="min-h-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="날것 조언 입력 (예: 모의고사는 지표일 뿐이고 멘탈 흔들리지 말자...)"
+                        value={knowledgeRawInput}
+                        onChange={(e) => setKnowledgeRawInput(e.target.value)}
+                      />
+                      <div>
+                        <Button onClick={handleCreateKnowledgeDraft} disabled={submitting}>
+                          {submitting ? "처리 중..." : "초안 생성 (Pending)"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">검수 대기</p>
+                      {loadingKnowledge ? (
+                        <p className="text-sm text-muted-foreground">AI 지식 불러오는 중...</p>
+                      ) : knowledgePending.length ? (
+                        knowledgePending.map((item) => (
+                          <div key={item.id} className="rounded-lg border border-border p-3 space-y-2">
+                            <div className="text-xs text-muted-foreground">
+                              생성일: {formatDateLabel(item.createdAt)}
+                            </div>
+                            <textarea
+                              className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              placeholder="원문(날것)"
+                              value={item.rawInput}
+                              onChange={(e) =>
+                                handleEditPendingKnowledge(item.id, "rawInput", e.target.value)
+                              }
+                            />
+                            <Input
+                              placeholder="질문(사용자 질문 형태)"
+                              value={item.question}
+                              onChange={(e) =>
+                                handleEditPendingKnowledge(item.id, "question", e.target.value)
+                              }
+                            />
+                            <textarea
+                              className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              placeholder="답변(실제 AI가 참고할 내용)"
+                              value={item.answer}
+                              onChange={(e) =>
+                                handleEditPendingKnowledge(item.id, "answer", e.target.value)
+                              }
+                            />
+                            <Input
+                              placeholder="태그 (쉼표로 구분)"
+                              value={item.tags.join(", ")}
+                              onChange={(e) =>
+                                handleEditPendingKnowledge(item.id, "tags", e.target.value)
+                              }
+                            />
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={submitting}
+                                onClick={() => void handleSavePendingKnowledge(item)}
+                              >
+                                초안 저장
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={submitting}
+                                onClick={() => void handleApproveKnowledge(item)}
+                              >
+                                승인 반영
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={submitting}
+                                onClick={() => void handleDeleteKnowledge(item.id)}
+                              >
+                                삭제
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">검수 대기 중인 지식이 없습니다.</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">승인 완료</p>
+                      {sortedKnowledgeApproved.length ? (
+                        <div className="space-y-2">
+                          {sortedKnowledgeApproved.slice(0, 30).map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-lg border border-border px-3 py-3 flex items-start justify-between gap-3"
+                            >
+                              <div>
+                                <p className="text-sm font-semibold">{item.question || "(질문 미입력)"}</p>
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.answer}</p>
+                                <p className="text-xs text-primary mt-1">
+                                  승인일: {formatDateLabel(item.approvedAt || item.updatedAt)}
+                                </p>
+                                {item.tags.length ? (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    태그: {item.tags.join(", ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={submitting}
+                                onClick={() => void handleDeleteKnowledge(item.id)}
+                              >
+                                삭제
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">승인된 AI 지식이 아직 없습니다.</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </>
