@@ -207,6 +207,21 @@ function parseResponsesText(payload: ResponsesApiResponse | null): string {
   throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
 }
 
+function modelLikelyRejectsTemperature(model: string): boolean {
+  const normalized = model.toLowerCase();
+  return (
+    normalized.includes("gpt-5") ||
+    normalized.startsWith("o1") ||
+    normalized.startsWith("o3") ||
+    normalized.startsWith("o4")
+  );
+}
+
+function isUnsupportedTemperatureError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes("unsupported parameter") && normalized.includes("temperature");
+}
+
 export async function generateText(params: {
   systemPrompt: string;
   userPrompt: string;
@@ -219,10 +234,8 @@ export async function generateText(params: {
     throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
   }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: buildAuthHeaders(),
-    body: JSON.stringify({
+  const sendRequest = async (includeTemperature: boolean) => {
+    const body: Record<string, unknown> = {
       model: DEFAULT_CHAT_MODEL,
       input: [
         {
@@ -234,12 +247,32 @@ export async function generateText(params: {
           content: [{ type: "input_text", text: params.userPrompt }],
         },
       ],
-      temperature: params.temperature ?? 0.3,
       max_output_tokens: params.maxOutputTokens,
-    }),
-  });
+    };
+    if (includeTemperature) {
+      body.temperature = params.temperature ?? 0.3;
+    }
+    return fetch(endpoint, {
+      method: "POST",
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+  };
 
-  const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+  let includeTemperature = !modelLikelyRejectsTemperature(DEFAULT_CHAT_MODEL);
+  let response = await sendRequest(includeTemperature);
+  let payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+
+  if (
+    !response.ok &&
+    includeTemperature &&
+    isUnsupportedTemperatureError(payload?.error?.message || "")
+  ) {
+    includeTemperature = false;
+    response = await sendRequest(includeTemperature);
+    payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+  }
+
   if (!response.ok) {
     throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
   }
@@ -343,21 +376,41 @@ export async function streamText(params: {
     throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
   }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: buildAuthHeaders(),
-    body: JSON.stringify({
+  const sendRequest = async (includeTemperature: boolean) => {
+    const body: Record<string, unknown> = {
       model: DEFAULT_CHAT_MODEL,
       input: buildChatInput(params.systemPrompt, params.userPrompt),
-      temperature: params.temperature ?? 0.3,
       max_output_tokens: params.maxOutputTokens,
       stream: true,
-    }),
-  });
+    };
+    if (includeTemperature) {
+      body.temperature = params.temperature ?? 0.3;
+    }
+    return fetch(endpoint, {
+      method: "POST",
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+  };
+
+  let includeTemperature = !modelLikelyRejectsTemperature(DEFAULT_CHAT_MODEL);
+  let response = await sendRequest(includeTemperature);
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+    let payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+    if (
+      includeTemperature &&
+      isUnsupportedTemperatureError(payload?.error?.message || "")
+    ) {
+      includeTemperature = false;
+      response = await sendRequest(includeTemperature);
+      if (!response.ok) {
+        payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+        throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+      }
+    } else {
+      throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+    }
   }
   if (!response.body) {
     throw new Error("스트리밍 응답 본문이 비어 있습니다.");
