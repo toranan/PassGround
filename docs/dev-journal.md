@@ -16,6 +16,7 @@
 - Added GitHub Actions workflow to auto-run eval when Vercel production deploy succeeds.
 - Added SSE streaming mode for `/api/ai/chat` (`stream: true`) with incremental delta tokens.
 - Added iOS chatbot tab (`AI 코치`) with `/api/ai/chat` integration and chat UX.
+- Added iOS chat fallback path: if SSE stream fails, retry once with non-stream `/api/ai/chat`.
 
 ### Why it matters
 - Reduced repeated embedding/search/generation for repeated fact questions.

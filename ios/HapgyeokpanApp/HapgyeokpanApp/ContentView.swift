@@ -306,9 +306,28 @@ private struct ChatCoachView: View {
                 message.subtitle = makeSubtitle(from: response)
             }
         } catch {
-            updateAssistantMessage(id: assistantId) { message in
-                message.text = "요청에 실패했어요. 네트워크 상태를 확인하고 다시 시도해 주세요.\n\(error.localizedDescription)"
-                message.subtitle = "오류"
+            let streamError = error
+            do {
+                let fallback = try await api.chat(
+                    baseURL: config.baseURL,
+                    exam: exam,
+                    question: question
+                )
+                updateAssistantMessage(id: assistantId) { message in
+                    if message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        message.text = fallback.answer
+                    }
+                    message.subtitle = "\(makeSubtitle(from: fallback)) · fallback"
+                }
+            } catch {
+                updateAssistantMessage(id: assistantId) { message in
+                    message.text = """
+                    요청에 실패했어요. 네트워크 상태를 확인하고 다시 시도해 주세요.
+                    stream: \(streamError.localizedDescription)
+                    fallback: \(error.localizedDescription)
+                    """
+                    message.subtitle = "오류"
+                }
             }
         }
 
