@@ -308,7 +308,8 @@ async function runChatWorkflow(params: {
     typeof body.minSimilarity === "number" ? Math.max(0, Math.min(1, body.minSimilarity)) : 0.7;
   const matchCount = typeof body.matchCount === "number" ? Math.max(1, Math.min(12, Math.floor(body.matchCount))) : 6;
   const intent = await classifyIntent(question);
-  const useCache = shouldUseChatCache(body.disableCache) && intent === "fact";
+  const isGeneralChat = isGeneralConversationQuestion(question);
+  const useCache = shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
 
   const recordObservation = async (obs: {
@@ -520,8 +521,7 @@ async function runChatWorkflow(params: {
   }));
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
-  const useGeneralCoachingFallback =
-    intent === "fact" && !hasEnoughContext && isGeneralConversationQuestion(question);
+  const useGeneralCoachingFallback = intent === "fact" && !hasEnoughContext && isGeneralChat;
 
   const generationStarted = Date.now();
   let route: FinalRoute = hasEnoughContext ? "grounded" : "fallback";
