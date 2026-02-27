@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { inferKnowledgeTags, mergeKnowledgeTags } from "@/lib/knowledgeTags";
 
 type Exam = "transfer" | "cpa";
 
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
   const note = normalizeText(formData.get("note"), 6000);
   const question = normalizeText(formData.get("question"), 120);
   const answer = normalizeText(formData.get("answer"), 6000);
-  const tags = normalizeTags(formData.get("tags"));
+  const manualTags = normalizeTags(formData.get("tags"));
 
   const admin = getSupabaseAdmin();
   const timestamp = Date.now();
@@ -120,6 +121,8 @@ export async function POST(request: Request) {
 
   const finalQuestion = question || `${file.name} 핵심 내용 알려줘?`.slice(0, 120);
   const finalAnswer = answer || note || `PDF 원문(${file.name}) 기반 초안입니다. 관리자 검수 후 승인 반영하세요.`;
+  const inferredTags = inferKnowledgeTags([rawInput, finalQuestion, finalAnswer].join("\n"));
+  const tags = mergeKnowledgeTags(manualTags, inferredTags);
 
   const { data: inserted, error: insertError } = await admin
     .from("ai_knowledge_items")

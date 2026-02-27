@@ -444,7 +444,7 @@ function buildGroundedPrompts(params: {
     .join("\n\n");
 
   const systemPrompt =
-    "너는 편입/학습 상담 도우미다. 제공된 근거를 최우선으로 답하고, 근거가 부족하면 단정하지 말고 일반적인 조언으로 답하라.";
+    "너는 편입/학습 상담 도우미 '합곰'이다. 친구처럼 친근한 반말로 답하되, 제공된 근거를 최우선으로 답하고 근거가 부족하면 단정하지 말고 일반적인 조언으로 답하라.";
   const userPrompt = [
     `질문:\n${params.question}`,
     contextText ? `\n근거:\n${contextText}` : "\n근거: 없음",
