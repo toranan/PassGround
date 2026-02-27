@@ -425,3 +425,64 @@ struct AdminCutoffItem: Codable, Identifiable {
     let inputBasis: String
     let track: String
 }
+
+struct AIChatResponse: Codable {
+    let ok: Bool
+    let exam: String
+    let intent: String?
+    let route: String
+    let answer: String
+    let contexts: [AIChatContext]
+    let cache: String?
+    let traceId: String?
+    let metrics: AIChatMetrics?
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case exam
+        case intent
+        case route
+        case answer
+        case contexts
+        case cache
+        case traceId
+        case metrics
+    }
+}
+
+struct AIChatContext: Codable, Identifiable {
+    let id: String
+    let knowledgeItemId: String
+    let similarity: Double
+    let preview: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case knowledgeItemId
+        case similarity
+        case preview
+    }
+}
+
+struct AIChatMetrics: Codable {
+    let totalMs: Int
+    let cacheMs: Int
+    let embeddingMs: Int
+    let retrievalMs: Int
+    let generationMs: Int
+
+    enum CodingKeys: String, CodingKey {
+        case totalMs
+        case cacheMs
+        case embeddingMs
+        case retrievalMs
+        case generationMs
+    }
+}
+
+enum AIChatStreamEvent {
+    case ready(traceId: String?)
+    case meta(intent: String?, route: String?, cache: String?)
+    case delta(String)
+    case done(AIChatResponse)
+}

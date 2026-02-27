@@ -137,6 +137,129 @@ final class APIClient {
         try await request(baseURL: baseURL, path: "api/daily/\(exam.rawValue)")
     }
 
+    func chat(
+        baseURL: URL,
+        exam: ExamSlug,
+        question: String,
+        disableCache: Bool = false
+    ) async throws -> AIChatResponse {
+        struct Body: Encodable {
+            let exam: String
+            let question: String
+            let disableCache: Bool
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/ai/chat",
+            method: "POST",
+            body: Body(exam: exam.rawValue, question: question, disableCache: disableCache)
+        )
+    }
+
+    func chatStream(
+        baseURL: URL,
+        exam: ExamSlug,
+        question: String,
+        disableCache: Bool = false,
+        onEvent: @escaping (AIChatStreamEvent) -> Void
+    ) async throws -> AIChatResponse {
+        struct Body: Encodable {
+            let exam: String
+            let question: String
+            let disableCache: Bool
+            let stream: Bool
+        }
+
+        guard let url = URL(string: "api/ai/chat", relativeTo: baseURL) else {
+            throw APIClientError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 90
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONEncoder().encode(
+            Body(exam: exam.rawValue, question: question, disableCache: disableCache, stream: true)
+        )
+
+        Self.logRequest(method: "POST", url: url)
+
+        let (bytes, response): (URLSession.AsyncBytes, URLResponse)
+        do {
+            (bytes, response) = try await session.bytes(for: request)
+        } catch {
+            if Self.isCancellation(error) {
+                Self.logger.debug("REQUEST_CANCELLED url=\(url.absoluteString, privacy: .public)")
+            } else {
+                Self.logTransportError(error, url: url)
+                Self.raiseDebugIssue("Network transport failure: \(error.localizedDescription)\n\(url.absoluteString)")
+            }
+            throw error
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            Self.raiseDebugIssue("Invalid response object for \(url.absoluteString)")
+            throw APIClientError.invalidResponse
+        }
+
+        Self.logResponse(statusCode: httpResponse.statusCode, url: url, bytes: 0)
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw APIClientError.server(message: "스트리밍 요청에 실패했습니다. (HTTP \(httpResponse.statusCode))")
+        }
+
+        var currentEvent = ""
+        var dataLines: [String] = []
+        var donePayload: AIChatResponse?
+
+        let flushEvent = {
+            let rawData = dataLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            dataLines.removeAll(keepingCapacity: true)
+            let eventName = currentEvent
+            currentEvent = ""
+            return (eventName, rawData)
+        }
+
+        for try await line in bytes.lines {
+            if line.hasPrefix("event:") {
+                currentEvent = String(line.dropFirst(6)).trimmingCharacters(in: .whitespacesAndNewlines)
+                continue
+            }
+            if line.hasPrefix("data:") {
+                var value = String(line.dropFirst(5))
+                if value.hasPrefix(" ") {
+                    value.removeFirst()
+                }
+                dataLines.append(value)
+                continue
+            }
+            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let (eventName, rawData) = flushEvent()
+                if rawData.isEmpty || rawData == "[DONE]" { continue }
+                if let payload = try handleSSEEvent(eventName: eventName, rawData: rawData, onEvent: onEvent) {
+                    donePayload = payload
+                }
+            }
+        }
+
+        if !dataLines.isEmpty {
+            let (eventName, rawData) = flushEvent()
+            if !rawData.isEmpty && rawData != "[DONE]" {
+                if let payload = try handleSSEEvent(eventName: eventName, rawData: rawData, onEvent: onEvent) {
+                    donePayload = payload
+                }
+            }
+        }
+
+        guard let donePayload else {
+            throw APIClientError.emptyResponse
+        }
+        return donePayload
+    }
+
     func fetchSchedules(
         baseURL: URL,
         exam: ExamSlug,
@@ -589,6 +712,63 @@ final class APIClient {
             throw APIClientError.decoding
         }
         return payload
+    }
+
+    private func handleSSEEvent(
+        eventName: String,
+        rawData: String,
+        onEvent: @escaping (AIChatStreamEvent) -> Void
+    ) throws -> AIChatResponse? {
+        struct ReadyPayload: Decodable { let traceId: String? }
+        struct MetaPayload: Decodable {
+            let intent: String?
+            let route: String?
+            let cache: String?
+        }
+        struct DeltaPayload: Decodable { let text: String }
+        struct ErrorPayload: Decodable {
+            let error: String?
+            let status: Int?
+            let traceId: String?
+        }
+
+        guard let data = rawData.data(using: .utf8) else { return nil }
+
+        switch eventName {
+        case "ready":
+            if let payload = try? decoder.decode(ReadyPayload.self, from: data) {
+                onEvent(.ready(traceId: payload.traceId))
+            }
+        case "meta":
+            if let payload = try? decoder.decode(MetaPayload.self, from: data) {
+                onEvent(.meta(intent: payload.intent, route: payload.route, cache: payload.cache))
+            }
+        case "delta":
+            if let payload = try? decoder.decode(DeltaPayload.self, from: data),
+               !payload.text.isEmpty {
+                onEvent(.delta(payload.text))
+            }
+        case "done":
+            let payload = try decoder.decode(AIChatResponse.self, from: data)
+            onEvent(.done(payload))
+            return payload
+        case "error":
+            if let payload = try? decoder.decode(ErrorPayload.self, from: data) {
+                var message = payload.error ?? "스트리밍 처리 중 오류가 발생했습니다."
+                if let status = payload.status {
+                    message += " (HTTP \(status))"
+                }
+                if let traceId = payload.traceId, !traceId.isEmpty {
+                    message += "\ntraceId: \(traceId)"
+                }
+                throw APIClientError.server(message: message)
+            }
+            throw APIClientError.server(message: "스트리밍 처리 중 오류가 발생했습니다.")
+        default:
+            break
+        }
+
+        return nil
     }
 
     private func parseError(from data: Data, statusCode: Int? = nil, url: URL? = nil) -> APIClientError {

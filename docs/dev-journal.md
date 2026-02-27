@@ -14,6 +14,8 @@
 - Added multi-agent chat orchestration (`intent router + fact agent + emotion agent + mixed composer`).
 - Restricted CAG usage to fact route only to avoid caching emotional replies.
 - Added GitHub Actions workflow to auto-run eval when Vercel production deploy succeeds.
+- Added SSE streaming mode for `/api/ai/chat` (`stream: true`) with incremental delta tokens.
+- Added iOS chatbot tab (`AI 코치`) with `/api/ai/chat` integration and chat UX.
 
 ### Why it matters
 - Reduced repeated embedding/search/generation for repeated fact questions.

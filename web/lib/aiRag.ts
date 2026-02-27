@@ -24,6 +24,13 @@ type ResponsesApiResponse = {
   error?: { message?: string };
 };
 
+type StreamEvent = {
+  type?: string;
+  delta?: string;
+  text?: string;
+  error?: { message?: string };
+};
+
 export type RagKnowledgeItem = {
   id: string;
   question: string;
@@ -240,11 +247,143 @@ export async function generateText(params: {
   return parseResponsesText(payload);
 }
 
-export async function generateGroundedAnswer(params: {
+function buildChatInput(systemPrompt: string, userPrompt: string) {
+  return [
+    {
+      role: "system",
+      content: [{ type: "input_text", text: systemPrompt }],
+    },
+    {
+      role: "user",
+      content: [{ type: "input_text", text: userPrompt }],
+    },
+  ];
+}
+
+function extractStreamDelta(event: StreamEvent): string {
+  if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
+    return event.delta;
+  }
+  if (event.type === "response.output_text.done" && typeof event.text === "string") {
+    return event.text;
+  }
+  return "";
+}
+
+async function parseSseStream(
+  body: ReadableStream<Uint8Array>,
+  onDelta: (delta: string) => void
+): Promise<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  let sawDelta = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    while (true) {
+      const boundary = buffer.indexOf("\n\n");
+      if (boundary < 0) break;
+
+      const rawEvent = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+
+      const data = rawEvent
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+
+      if (!data || data === "[DONE]") continue;
+
+      let parsed: StreamEvent | null = null;
+      try {
+        parsed = JSON.parse(data) as StreamEvent;
+      } catch {
+        continue;
+      }
+      if (!parsed) continue;
+
+      if (parsed.type === "error") {
+        throw new Error(parsed.error?.message || "스트리밍 응답 생성에 실패했습니다.");
+      }
+
+      const delta = extractStreamDelta(parsed);
+      if (!delta) continue;
+
+      if (parsed.type === "response.output_text.delta") {
+        sawDelta = true;
+      } else if (parsed.type === "response.output_text.done" && sawDelta) {
+        // Ignore duplicated final text when delta events already streamed.
+        continue;
+      }
+
+      onDelta(delta);
+      text += delta;
+    }
+  }
+
+  return text;
+}
+
+export async function streamText(params: {
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  onDelta: (delta: string) => void;
+}): Promise<string> {
+  assertProviderKey();
+  const endpoint = isAzureProvider() ? AZURE_RESPONSES_URL : `${OPENAI_API_URL}/responses`;
+  if (!endpoint) {
+    throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({
+      model: DEFAULT_CHAT_MODEL,
+      input: buildChatInput(params.systemPrompt, params.userPrompt),
+      temperature: params.temperature ?? 0.3,
+      max_output_tokens: params.maxOutputTokens,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+  }
+  if (!response.body) {
+    throw new Error("스트리밍 응답 본문이 비어 있습니다.");
+  }
+
+  const streamed = await parseSseStream(response.body, params.onDelta);
+  if (streamed) return streamed;
+
+  // Fallback: if provider does not emit stream deltas, use non-stream call.
+  const fallbackText = await generateText({
+    systemPrompt: params.systemPrompt,
+    userPrompt: params.userPrompt,
+    temperature: params.temperature,
+    maxOutputTokens: params.maxOutputTokens,
+  });
+  if (fallbackText) {
+    params.onDelta(fallbackText);
+  }
+  return fallbackText;
+}
+
+function buildGroundedPrompts(params: {
   question: string;
   contexts: Array<{ chunkText: string; similarity: number }>;
   maxContextCount?: number;
-}): Promise<string> {
+}) {
   const maxContextCount = params.maxContextCount ?? 6;
   const selected = params.contexts.slice(0, maxContextCount);
   const contextText = selected
@@ -259,10 +398,35 @@ export async function generateGroundedAnswer(params: {
     "\n출력 규칙: 간결하고 직설적으로 답해라. 불필요한 서론은 생략해라.",
   ].join("\n");
 
+  return { systemPrompt, userPrompt };
+}
+
+export async function generateGroundedAnswer(params: {
+  question: string;
+  contexts: Array<{ chunkText: string; similarity: number }>;
+  maxContextCount?: number;
+}): Promise<string> {
+  const { systemPrompt, userPrompt } = buildGroundedPrompts(params);
+
   return generateText({
     systemPrompt,
     userPrompt,
     temperature: 0.3,
+  });
+}
+
+export async function generateGroundedAnswerStream(params: {
+  question: string;
+  contexts: Array<{ chunkText: string; similarity: number }>;
+  maxContextCount?: number;
+  onDelta: (delta: string) => void;
+}): Promise<string> {
+  const { systemPrompt, userPrompt } = buildGroundedPrompts(params);
+  return streamText({
+    systemPrompt,
+    userPrompt,
+    temperature: 0.3,
+    onDelta: params.onDelta,
   });
 }
 
