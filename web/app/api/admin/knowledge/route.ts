@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { generateText } from "@/lib/aiRag";
 import { deleteKnowledgeChunksByItem, upsertKnowledgeChunksForApprovedItem } from "@/lib/ragIndexing";
 import { inferKnowledgeTags, mergeKnowledgeTags } from "@/lib/knowledgeTags";
 
@@ -56,6 +57,57 @@ function buildSuggestedQuestion(rawInput: string): string {
   const candidate = firstLine.replace(/\s+/g, " ").slice(0, 120);
   if (candidate.endsWith("?")) return candidate;
   return `${candidate}?`.slice(0, 120);
+}
+
+function parseRefinedDraft(raw: string): { question: string; answer: string } | null {
+  const text = raw.replace(/\r\n/g, "\n").trim();
+  if (!text) return null;
+
+  const questionMatch = text.match(/(?:^|\n)\s*QUESTION\s*:\s*(.+)/i);
+  const answerMatch = text.match(/(?:^|\n)\s*ANSWER\s*:\s*([\s\S]+)/i);
+
+  let question = (questionMatch?.[1] || "").trim();
+  let answer = (answerMatch?.[1] || "").trim();
+
+  if (!question || !answer) {
+    try {
+      const json = JSON.parse(text) as { question?: string; answer?: string };
+      question = (json.question || "").trim();
+      answer = (json.answer || "").trim();
+    } catch {
+      return null;
+    }
+  }
+
+  if (!question || !answer) return null;
+  return {
+    question: question.slice(0, 120),
+    answer: answer.slice(0, 6000),
+  };
+}
+
+async function refineDraftFromRawInput(rawInput: string): Promise<{ question: string; answer: string } | null> {
+  const source = rawInput.replace(/\s+/g, " ").trim().slice(0, 3200);
+  if (!source) return null;
+
+  try {
+    const refined = await generateText({
+      systemPrompt: [
+        "너는 편입/수험 코칭 지식을 정제하는 편집기다.",
+        "입력된 메모를 관리자 검수용 초안으로 깔끔하게 다듬어라.",
+        "원문의 핵심 의미, 수치, 비율(예: 10%)은 절대 바꾸지 마라.",
+        "출력 형식을 반드시 지켜라.",
+        "QUESTION: 사용자 질문형 한 줄",
+        "ANSWER: 3~6문장, 자연스러운 한국어",
+      ].join("\n"),
+      userPrompt: `원문 메모:\n${source}`,
+      temperature: 0,
+      maxOutputTokens: 420,
+    });
+    return parseRefinedDraft(refined);
+  } catch {
+    return null;
+  }
 }
 
 function validateExam(exam: Exam | null) {
@@ -148,8 +200,13 @@ export async function POST(request: Request) {
   if (examError) return examError;
 
   const rawInput = normalizeText(body.rawInput, 12000);
-  const question = normalizeText(body.question, 120) || buildSuggestedQuestion(rawInput);
-  const answer = normalizeText(body.answer, 6000) || rawInput;
+  const providedQuestion = normalizeText(body.question, 120);
+  const providedAnswer = normalizeText(body.answer, 6000);
+  const refinedDraft =
+    !providedQuestion || !providedAnswer ? await refineDraftFromRawInput(rawInput) : null;
+  const question =
+    providedQuestion || refinedDraft?.question || buildSuggestedQuestion(rawInput);
+  const answer = providedAnswer || refinedDraft?.answer || rawInput;
   const manualTags = normalizeTags(body.tags);
   const inferredTags = inferKnowledgeTags([rawInput, question, answer].filter(Boolean).join("\n"));
   const tags = mergeKnowledgeTags(manualTags, inferredTags);

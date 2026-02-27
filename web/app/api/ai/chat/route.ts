@@ -65,6 +65,7 @@ type ChatSuccessPayload = {
   intent: IntentRoute;
   route: FinalRoute;
   answer: string;
+  needsQuestionSubmission: boolean;
   contexts: ResponseContext[];
   cache: CacheStatus;
   traceId: string;
@@ -240,7 +241,21 @@ function tokenizeQuestion(text: string): string[] {
 }
 
 function compactText(value: string, maxLength: number): string {
-  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+
+  const sliced = normalized.slice(0, maxLength);
+  const punctuationIndex = Math.max(sliced.lastIndexOf("."), sliced.lastIndexOf("!"), sliced.lastIndexOf("?"));
+  if (punctuationIndex >= Math.floor(maxLength * 0.55)) {
+    return sliced.slice(0, punctuationIndex + 1).trim();
+  }
+
+  const spaceIndex = sliced.lastIndexOf(" ");
+  if (spaceIndex >= Math.floor(maxLength * 0.7)) {
+    return sliced.slice(0, spaceIndex).trim();
+  }
+
+  return sliced.trim();
 }
 
 function scoreAdviceRow(params: {
@@ -307,7 +322,7 @@ async function loadCoachingAdviceSnippets(params: {
   return selected.map(({ row, score }) => ({
     id: row.id,
     question: compactText(row.question || "", 140),
-    answer: compactText(row.answer || "", 260),
+    answer: compactText(row.answer || "", 520),
     tags: Array.isArray(row.tags) ? row.tags.filter(Boolean).slice(0, 4) : [],
     score,
   }));
@@ -532,6 +547,7 @@ async function runChatWorkflow(params: {
       intent,
       route: "emotion",
       answer,
+      needsQuestionSubmission: false,
       contexts: [],
       cache: cacheStatus,
       traceId,
@@ -604,6 +620,7 @@ async function runChatWorkflow(params: {
           intent,
           route: cached.route,
           answer: cached.answer,
+          needsQuestionSubmission: cached.route === "fallback",
           contexts: cached.contexts,
           cache: cacheStatus,
           traceId,
@@ -811,6 +828,7 @@ async function runChatWorkflow(params: {
     intent,
     route,
     answer,
+    needsQuestionSubmission: route === "fallback",
     contexts: responseContexts,
     cache: cacheStatus,
     traceId,

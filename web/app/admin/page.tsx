@@ -144,6 +144,26 @@ type AdminUnansweredQuestionsResponse = {
   error?: string;
 };
 
+type SubmittedQuestionItem = {
+  id: string;
+  examSlug: "transfer" | "cpa";
+  question: string;
+  userId: string | null;
+  userEmail: string;
+  source: string;
+  status: string;
+  traceId: string;
+  createdAt: string;
+};
+
+type AdminSubmittedQuestionsResponse = {
+  ok: boolean;
+  exam: "transfer" | "cpa";
+  totalCount: number;
+  items: SubmittedQuestionItem[];
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
@@ -200,6 +220,8 @@ export default function AdminPage() {
   const [loadingUnansweredQuestions, setLoadingUnansweredQuestions] = useState(false);
   const [unansweredQuestions, setUnansweredQuestions] = useState<UnansweredQuestionItem[]>([]);
   const [fallbackLogCount, setFallbackLogCount] = useState(0);
+  const [loadingSubmittedQuestions, setLoadingSubmittedQuestions] = useState(false);
+  const [submittedQuestions, setSubmittedQuestions] = useState<SubmittedQuestionItem[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -479,6 +501,33 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadSubmittedQuestions = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingSubmittedQuestions(true);
+    try {
+      const res = await fetch(`/api/admin/questions/submissions?exam=${exam}&limit=100`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminSubmittedQuestionsResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "질문하기 접수 목록을 불러오지 못했습니다.");
+        setSubmittedQuestions([]);
+        return;
+      }
+      setSubmittedQuestions(payload.items ?? []);
+    } catch {
+      setMessage("질문하기 접수 목록을 불러오지 못했습니다.");
+      setSubmittedQuestions([]);
+    } finally {
+      setLoadingSubmittedQuestions(false);
+    }
+  }, [exam]);
+
   useEffect(() => {
     void loadAdminMe();
   }, [user?.id]);
@@ -492,9 +541,10 @@ export default function AdminPage() {
         loadNews(),
         loadKnowledge(),
         loadUnansweredQuestions(),
+        loadSubmittedQuestions(),
       ]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions, loadSubmittedQuestions]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -1561,6 +1611,13 @@ export default function AdminPage() {
                         {loadingUnansweredQuestions ? "집계 중..." : "미해결 질문 새로고침"}
                       </Button>
                       <Button
+                        variant="outline"
+                        onClick={() => void loadSubmittedQuestions()}
+                        disabled={loadingSubmittedQuestions || submitting}
+                      >
+                        {loadingSubmittedQuestions ? "불러오는 중..." : "질문하기 접수 새로고침"}
+                      </Button>
+                      <Button
                         onClick={() => void handleReindexKnowledge()}
                         disabled={reindexingKnowledge || submitting}
                       >
@@ -1635,6 +1692,37 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">수집된 미해결 질문이 없습니다.</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">
+                        질문하기 접수 목록 · 최근 {submittedQuestions.length}건
+                      </p>
+                      {loadingSubmittedQuestions ? (
+                        <p className="text-sm text-muted-foreground">질문하기 접수 목록 불러오는 중...</p>
+                      ) : submittedQuestions.length ? (
+                        <div className="space-y-2">
+                          {submittedQuestions.slice(0, 30).map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
+                            >
+                              <div className="space-y-1">
+                                <p className="text-sm leading-6">{item.question}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  이메일: {item.userEmail || "-"}
+                                </p>
+                              </div>
+                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
+                                <p>{formatDateLabel(item.createdAt)}</p>
+                                {item.traceId ? <p>trace: {item.traceId.slice(0, 8)}</p> : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">접수된 질문이 없습니다.</p>
                       )}
                     </div>
 

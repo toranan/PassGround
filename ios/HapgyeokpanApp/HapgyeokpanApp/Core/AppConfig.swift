@@ -35,6 +35,16 @@ final class AppConfig: ObservableObject {
             normalized = "https://\(raw)"
         }
 
-        return URL(string: normalized) ?? URL(string: Self.defaultBaseURLString)!
+        guard var components = URLComponents(string: normalized) else {
+            return URL(string: Self.defaultBaseURLString)!
+        }
+
+        // Users sometimes type ".../api". APIClient already appends "api/...".
+        // Normalize to origin to avoid duplicated "/api/api/...".
+        if components.path == "/api" || components.path == "/api/" {
+            components.path = ""
+        }
+
+        return components.url ?? URL(string: Self.defaultBaseURLString)!
     }
 }

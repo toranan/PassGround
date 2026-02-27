@@ -432,6 +432,7 @@ struct AIChatResponse: Codable {
     let intent: String?
     let route: String
     let answer: String
+    let needsQuestionSubmission: Bool?
     let contexts: [AIChatContext]
     let cache: String?
     let traceId: String?
@@ -443,11 +444,17 @@ struct AIChatResponse: Codable {
         case intent
         case route
         case answer
+        case needsQuestionSubmission
         case contexts
         case cache
         case traceId
         case metrics
     }
+}
+
+struct AIQuestionSubmitResponse: Codable {
+    let ok: Bool
+    let message: String?
 }
 
 struct AIChatContext: Codable, Identifiable {

@@ -157,6 +157,28 @@ final class APIClient {
         )
     }
 
+    func submitAIQuestion(
+        baseURL: URL,
+        exam: ExamSlug,
+        question: String,
+        traceId: String?,
+        accessToken: String
+    ) async throws -> AIQuestionSubmitResponse {
+        struct Body: Encodable {
+            let exam: String
+            let question: String
+            let traceId: String?
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/ai/questions/submit",
+            method: "POST",
+            body: Body(exam: exam.rawValue, question: question, traceId: traceId),
+            accessToken: accessToken
+        )
+    }
+
     func chatStream(
         baseURL: URL,
         exam: ExamSlug,
@@ -241,8 +263,13 @@ final class APIClient {
                 if rawData.isEmpty || rawData == "[DONE]" { continue }
                 if let payload = try handleSSEEvent(eventName: eventName, rawData: rawData, onEvent: onEvent) {
                     donePayload = payload
+                    break
                 }
             }
+        }
+
+        if let donePayload {
+            return donePayload
         }
 
         if !dataLines.isEmpty {

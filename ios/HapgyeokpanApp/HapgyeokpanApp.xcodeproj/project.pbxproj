@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		089286E2ECE4D1BAC9C094B1 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8D0AC55233008BA694E011 /* Models.swift */; };
+		11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */; };
 		0B389776DBB49CEB3A617D1B /* PostComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31313D0DF316F91ECFBE2254 /* PostComposerView.swift */; };
 		0CD059FECFCCB9A9B09FF2B3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43C152F62AC9968D801AD617 /* Foundation.framework */; };
 		2B0AA3267531B8E31EED972E /* MyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */; };
@@ -31,6 +32,7 @@
 /* Begin PBXFileReference section */
 		08130C8B82395094D9E53592 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "hapgom-avatar.png"; sourceTree = "<group>"; };
 		1DA708A973876B310F7ACE63 /* PostDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		31012DDE772E5E483D5884E6 /* HapgyeokpanApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapgyeokpanApp.swift; sourceTree = "<group>"; };
 		31313D0DF316F91ECFBE2254 /* PostComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PostComposerView.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				08130C8B82395094D9E53592 /* Info.plist */,
+				22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
