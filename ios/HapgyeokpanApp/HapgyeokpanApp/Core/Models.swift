@@ -20,6 +20,28 @@ struct SessionUser: Codable {
     let email: String
     let username: String
     let nickname: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case email
+        case username
+        case nickname
+    }
+
+    init(id: String, email: String, username: String, nickname: String) {
+        self.id = id
+        self.email = email
+        self.username = username
+        self.nickname = nickname
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        username = try container.decode(String.self, forKey: .username)
+        nickname = try container.decode(String.self, forKey: .nickname)
+        email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+    }
 }
 
 struct SessionTokens: Codable {
@@ -450,6 +472,11 @@ struct AIChatResponse: Codable {
         case traceId
         case metrics
     }
+}
+
+struct AIChatHistoryMessage: Codable {
+    let role: String
+    let text: String
 }
 
 struct AIQuestionSubmitResponse: Codable {

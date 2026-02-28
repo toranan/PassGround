@@ -79,6 +79,19 @@ struct MyPageView: View {
                 .foregroundColor(Color.black.opacity(0.85))
                 .cornerRadius(12)
             }
+
+            Button(action: { Task { await login(provider: "apple") } }) {
+                HStack {
+                    Image(systemName: "applelogo")
+                    Text("Apple로 로그인")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.black)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+            }
             
             Button(action: { Task { await login(provider: "google") } }) {
                 HStack {
@@ -275,16 +288,18 @@ struct MyPageView: View {
 
         loading = true
         do {
-            pointsData = try await api.fetchPoints(
+            async let pointsTask = api.fetchPoints(
                 baseURL: config.baseURL,
                 userId: session.user?.id,
                 nickname: session.displayName
             )
-
-            adminState = try? await api.fetchAdminMe(
+            async let adminTask = api.fetchAdminMe(
                 baseURL: config.baseURL,
                 accessToken: session.accessToken
             )
+
+            pointsData = try await pointsTask
+            adminState = try? await adminTask
         } catch {
             message = error.localizedDescription
         }
@@ -313,7 +328,9 @@ struct MyPageView: View {
             session.save(user: authResponse.user, tokens: authResponse.session)
             nicknameInput = authResponse.user.nickname
             message = "로그인 완료"
-            await refreshData()
+            loading = false
+            Task { await refreshData() }
+            return
         } catch {
             message = error.localizedDescription
         }
@@ -330,9 +347,7 @@ struct MyPageView: View {
                 userId: user.id,
                 nickname: nicknameInput
             )
-            if let tokens = session.tokens {
-                session.save(user: updatedUser, tokens: tokens)
-            }
+            session.completeNicknameSetup(updatedUser: updatedUser)
             message = "닉네임 저장 완료"
             await refreshData()
         } catch {

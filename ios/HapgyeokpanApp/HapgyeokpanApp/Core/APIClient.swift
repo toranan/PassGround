@@ -153,19 +153,24 @@ final class APIClient {
         baseURL: URL,
         exam: ExamSlug,
         question: String,
-        disableCache: Bool = false
+        messages: [AIChatHistoryMessage] = [],
+        disableCache: Bool = false,
+        accessToken: String? = nil
     ) async throws -> AIChatResponse {
         struct Body: Encodable {
             let exam: String
             let question: String
+            let messages: [AIChatHistoryMessage]?
             let disableCache: Bool
         }
 
+        let history = messages.isEmpty ? nil : messages
         return try await request(
             baseURL: baseURL,
             path: "api/ai/chat",
             method: "POST",
-            body: Body(exam: exam.rawValue, question: question, disableCache: disableCache)
+            body: Body(exam: exam.rawValue, question: question, messages: history, disableCache: disableCache),
+            accessToken: accessToken
         )
     }
 
@@ -195,12 +200,15 @@ final class APIClient {
         baseURL: URL,
         exam: ExamSlug,
         question: String,
+        messages: [AIChatHistoryMessage] = [],
         disableCache: Bool = false,
+        accessToken: String? = nil,
         onEvent: @escaping (AIChatStreamEvent) -> Void
     ) async throws -> AIChatResponse {
         struct Body: Encodable {
             let exam: String
             let question: String
+            let messages: [AIChatHistoryMessage]?
             let disableCache: Bool
             let stream: Bool
         }
@@ -215,8 +223,18 @@ final class APIClient {
         request.timeoutInterval = 90
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        if let accessToken, !accessToken.isEmpty {
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        }
+        let history = messages.isEmpty ? nil : messages
         request.httpBody = try JSONEncoder().encode(
-            Body(exam: exam.rawValue, question: question, disableCache: disableCache, stream: true)
+            Body(
+                exam: exam.rawValue,
+                question: question,
+                messages: history,
+                disableCache: disableCache,
+                stream: true
+            )
         )
 
         Self.logRequest(method: "POST", url: url)
@@ -302,12 +320,17 @@ final class APIClient {
     func fetchSchedules(
         baseURL: URL,
         exam: ExamSlug,
-        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
+        cacheBust: String? = nil
     ) async throws -> ScheduleResponse {
-        try await request(
+        var queryItems = [URLQueryItem(name: "exam", value: exam.rawValue)]
+        if let cacheBust, !cacheBust.isEmpty {
+            queryItems.append(URLQueryItem(name: "_cb", value: cacheBust))
+        }
+        return try await request(
             baseURL: baseURL,
             path: "api/schedules",
-            query: [URLQueryItem(name: "exam", value: exam.rawValue)],
+            query: queryItems,
             cachePolicy: cachePolicy
         )
     }
@@ -381,17 +404,18 @@ final class APIClient {
         ) as GenericOKResponse
     }
 
-    func toggleLike(baseURL: URL, postId: String, userId: String) async throws -> LikeResponse {
+    func toggleLike(baseURL: URL, postId: String, userId: String, desiredLiked: Bool? = nil) async throws -> LikeResponse {
         struct Body: Encodable {
             let postId: String
             let userId: String
+            let desiredLiked: Bool?
         }
 
         return try await request(
             baseURL: baseURL,
             path: "api/posts/like",
             method: "POST",
-            body: Body(postId: postId, userId: userId)
+            body: Body(postId: postId, userId: userId, desiredLiked: desiredLiked)
         )
     }
 
@@ -793,13 +817,11 @@ final class APIClient {
             return payload
         case "error":
             if let payload = try? decoder.decode(ErrorPayload.self, from: data) {
-                var message = payload.error ?? "스트리밍 처리 중 오류가 발생했습니다."
-                if let status = payload.status {
-                    message += " (HTTP \(status))"
-                }
-                if let traceId = payload.traceId, !traceId.isEmpty {
-                    message += "\ntraceId: \(traceId)"
-                }
+                let message = decorate(
+                    message: payload.error ?? "스트리밍 처리 중 오류가 발생했습니다.",
+                    statusCode: payload.status,
+                    url: nil
+                )
                 throw APIClientError.server(message: message)
             }
             throw APIClientError.server(message: "스트리밍 처리 중 오류가 발생했습니다.")
@@ -856,14 +878,63 @@ final class APIClient {
     }
 
     private func decorate(message: String, statusCode: Int?, url: URL?) -> String {
-        var parts: [String] = [message]
-        if let statusCode {
-            parts.append("(HTTP \(statusCode))")
+        _ = statusCode
+        _ = url
+        return normalizeUserMessage(message, statusCode: statusCode)
+    }
+
+    private func normalizeUserMessage(_ message: String, statusCode: Int?) -> String {
+        if statusCode == 401 {
+            return "로그인이 만료됐어. 다시 로그인해줘."
         }
-        if let url {
-            parts.append("\n\(url.absoluteString)")
+        if statusCode == 403 {
+            return "권한이 없어. 관리자에게 문의해줘."
         }
-        return parts.joined(separator: " ")
+        if let statusCode, statusCode >= 500 {
+            return "서버가 잠시 불안정해. 잠시 후 다시 시도해줘."
+        }
+
+        var normalized = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let firstLine = normalized.split(separator: "\n").first {
+            normalized = String(firstLine)
+        }
+
+        let lower = normalized.lowercased()
+        if lower.contains("unacceptable audience in id_token") {
+            return "카카오 로그인 설정이 아직 맞지 않아. 잠시 후 다시 시도해줘."
+        }
+        if lower.contains("unsupported parameter: 'temperature'") {
+            return "서버 설정이 맞지 않아 요청을 처리하지 못했어. 잠시 후 다시 시도해줘."
+        }
+        if lower.contains("network")
+            || lower.contains("timed out")
+            || lower.contains("could not connect")
+            || lower.contains("offline") {
+            return "네트워크가 불안정해. 연결 상태를 확인하고 다시 시도해줘."
+        }
+        if lower.contains("id_token")
+            || lower.contains("jwt")
+            || lower.contains("token") {
+            return "로그인 검증에 실패했어. 다시 로그인해줘."
+        }
+        if lower.contains("이미 사용 중인 닉네임")
+            || lower.contains("nickname is already")
+            || lower.contains("already used nickname")
+            || lower.contains("duplicate key value") {
+            return "이미 사용 중인 닉네임이야. 다른 닉네임으로 해줘."
+        }
+
+        let strippedURL = normalized.replacingOccurrences(
+            of: #"https?://\S+"#,
+            with: "",
+            options: .regularExpression
+        )
+        let cleaned = strippedURL
+            .replacingOccurrences(of: "HTTP_ERROR", with: "")
+            .replacingOccurrences(of: "TRANSPORT_ERROR", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return cleaned.isEmpty ? "요청 처리에 실패했어. 잠시 후 다시 시도해줘." : cleaned
     }
 
     private static func logRequest(method: String, url: URL) {
