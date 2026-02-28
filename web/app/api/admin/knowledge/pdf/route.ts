@@ -63,6 +63,33 @@ async function ensureAdmin(request: Request) {
   return { ok: true as const, user };
 }
 
+async function ensureAttachmentsBucket(admin: ReturnType<typeof getSupabaseAdmin>): Promise<string | null> {
+  const { data: bucket, error: bucketError } = await admin.storage.getBucket("attachments");
+
+  if (bucketError) {
+    const message = bucketError.message || "";
+    const isNotFound = /not found|does not exist/i.test(message);
+    if (!isNotFound) {
+      return message || "attachments 버킷 조회에 실패했습니다.";
+    }
+
+    const { error: createError } = await admin.storage.createBucket("attachments", { public: true });
+    if (createError && !/already exists/i.test(createError.message || "")) {
+      return createError.message || "attachments 버킷 생성에 실패했습니다.";
+    }
+    return null;
+  }
+
+  if (bucket && bucket.public === false) {
+    const { error: updateError } = await admin.storage.updateBucket("attachments", { public: true });
+    if (updateError) {
+      return updateError.message || "attachments 버킷 공개 설정에 실패했습니다.";
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   const auth = await ensureAdmin(request);
   if (!auth.ok) return auth.response;
@@ -94,6 +121,11 @@ export async function POST(request: Request) {
   const manualTags = normalizeTags(formData.get("tags"));
 
   const admin = getSupabaseAdmin();
+  const bucketError = await ensureAttachmentsBucket(admin);
+  if (bucketError) {
+    return NextResponse.json({ error: `스토리지 버킷 설정 오류: ${bucketError}` }, { status: 500 });
+  }
+
   const timestamp = Date.now();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const filepath = `knowledge/${exam}/${timestamp}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;

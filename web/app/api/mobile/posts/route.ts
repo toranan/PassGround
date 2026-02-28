@@ -3,6 +3,7 @@ import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { stripNewsResources } from "@/lib/newsResources";
 
 type PostRow = {
   id: string;
@@ -228,7 +229,7 @@ export async function GET(request: Request) {
   const posts = pageRows.map((post) => ({
     id: post.id,
     title: post.title,
-    content: post.content?.substring(0, 100) || "",
+    content: (board === "news" ? stripNewsResources(post.content ?? "") : (post.content ?? "")).substring(0, 100),
     authorName: (post.author_name ?? "익명").trim() || "익명",
     commentCount: commentCountMap.get(post.id) ?? 0,
     likeCount: likeCountMap.get(post.id) ?? 0,

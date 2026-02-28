@@ -91,6 +91,7 @@ type NewsItem = {
   title: string;
   content: string;
   linkUrl?: string | null;
+  attachments?: UploadedAsset[];
   createdAt: string;
 };
 
@@ -855,11 +856,6 @@ export default function AdminPage() {
       return;
     }
 
-    let finalContent = content;
-    if (newsAttachment?.url) {
-      finalContent += `${finalContent ? "\n" : ""}📎 [${newsAttachment.filename}](${newsAttachment.url})`;
-    }
-
     setSubmitting(true);
     setMessage("");
     try {
@@ -872,8 +868,11 @@ export default function AdminPage() {
         body: JSON.stringify({
           exam,
           title,
-          content: finalContent,
+          content,
           linkUrl,
+          attachments: newsAttachment
+            ? [{ url: newsAttachment.url, filename: newsAttachment.filename }]
+            : [],
         }),
       });
       const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
@@ -1686,7 +1685,9 @@ export default function AdminPage() {
                           >
                             <div>
                               <p className="text-sm font-semibold">{item.title}</p>
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {item.content || "본문 없이 링크/첨부만 등록된 뉴스"}
+                              </p>
                               {item.linkUrl ? (
                                 <a
                                   href={item.linkUrl}
@@ -1696,6 +1697,21 @@ export default function AdminPage() {
                                 >
                                   관련 링크 열기
                                 </a>
+                              ) : null}
+                              {item.attachments?.length ? (
+                                <div className="mt-1 space-y-1">
+                                  {item.attachments.map((attachment) => (
+                                    <a
+                                      key={`${item.id}-${attachment.url}`}
+                                      href={attachment.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-primary inline-flex underline underline-offset-2"
+                                    >
+                                      첨부: {attachment.filename}
+                                    </a>
+                                  ))}
+                                </div>
                               ) : null}
                               <p className="text-xs text-primary mt-1">{formatDateLabel(item.createdAt)}</p>
                             </div>

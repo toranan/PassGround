@@ -3,6 +3,7 @@ import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { buildNewsContent, normalizeHttpUrl, parseNewsContent, type NewsAttachment } from "@/lib/newsResources";
 
 type Exam = "transfer" | "cpa";
 
@@ -20,28 +21,7 @@ function resolveExam(value: string): Exam | null {
 
 function normalizeText(value: unknown, maxLength: number): string {
   if (typeof value !== "string") return "";
-  return value.trim().slice(0, maxLength);
-}
-
-function normalizeOptionalUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const raw = value.trim();
-  if (!raw) return null;
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-function extractFirstLink(content: string): string | null {
-  const markdownMatch = content.match(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/i);
-  if (markdownMatch?.[1]) return markdownMatch[1];
-  const rawMatch = content.match(/https?:\/\/[^\s)]+/i);
-  if (rawMatch?.[0]) return rawMatch[0];
-  return null;
+  return value.replace(/\r\n?/g, "\n").trim().slice(0, maxLength);
 }
 
 function validateExam(exam: Exam | null) {
@@ -133,13 +113,17 @@ async function loadNews(boardId: string) {
   }
 
   return {
-    news: (data as NewsRow[] | null | undefined)?.map((item) => ({
-      id: item.id,
-      title: item.title,
-      content: item.content,
-      linkUrl: extractFirstLink(item.content),
-      createdAt: item.created_at,
-    })) ?? [],
+    news: (data as NewsRow[] | null | undefined)?.map((item) => {
+      const parsedContent = parseNewsContent(item.content);
+      return {
+        id: item.id,
+        title: item.title,
+        content: parsedContent.body,
+        linkUrl: parsedContent.linkUrl,
+        attachments: parsedContent.attachments,
+        createdAt: item.created_at,
+      };
+    }) ?? [],
   };
 }
 
@@ -176,8 +160,24 @@ export async function POST(request: Request) {
 
   const title = normalizeText(body.title, 120);
   const rawContent = normalizeText(body.content, 6000);
-  const linkUrl = normalizeOptionalUrl(body.linkUrl);
+  const linkUrl = normalizeHttpUrl(body.linkUrl);
   const authorName = normalizeText(body.authorName, 40) || "합격판 운영팀";
+  const requestedAttachments: NewsAttachment[] = Array.isArray(body.attachments)
+    ? body.attachments
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const candidate = item as { url?: unknown; filename?: unknown };
+        const url = normalizeHttpUrl(candidate.url);
+        if (!url) return null;
+        const filename = normalizeText(candidate.filename, 200);
+        return {
+          url,
+          filename: filename || "첨부파일",
+        };
+      })
+      .filter((value): value is NewsAttachment => value !== null)
+      .slice(0, 10)
+    : [];
 
   if (!title) {
     return NextResponse.json({ error: "뉴스 제목은 필수입니다." }, { status: 400 });
@@ -186,13 +186,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "linkUrl 형식이 올바르지 않습니다." }, { status: 400 });
   }
 
-  const linkMarkdown = linkUrl ? `🔗 [관련 링크](${linkUrl})` : "";
-  const contentHasSameLink = Boolean(linkUrl && rawContent.includes(linkUrl));
-  const content = linkMarkdown && !contentHasSameLink
-    ? rawContent
-      ? `${rawContent}\n\n${linkMarkdown}`
-      : linkMarkdown
-    : rawContent;
+  const content = buildNewsContent({
+    body: rawContent,
+    linkUrl,
+    attachments: requestedAttachments,
+  });
 
   if (!content) {
     return NextResponse.json({ error: "뉴스 내용 또는 링크는 필수입니다." }, { status: 400 });

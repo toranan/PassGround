@@ -3,6 +3,7 @@ import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSupabaseServer } from "@/lib/supabaseServer";
+import { stripNewsResources } from "@/lib/newsResources";
 
 type PostRow = {
   id: string;
@@ -255,7 +256,11 @@ export async function GET(request: Request) {
         post: {
           id: post.id,
           title: post.title,
-          content: post.content?.substring(0, 100) || "",
+          content: (() => {
+            const raw = post.content ?? "";
+            const normalized = boardMeta.slug === newsBoardSlug ? stripNewsResources(raw) : raw;
+            return normalized.substring(0, 100);
+          })(),
           authorName: (post.author_name ?? "익명").trim() || "익명",
           commentCount,
           likeCount,
