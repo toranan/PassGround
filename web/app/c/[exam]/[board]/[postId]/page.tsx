@@ -26,6 +26,163 @@ type CommentRow = {
   verification_level?: string | null;
 };
 
+type RichToken = {
+  kind: "text" | "link";
+  value: string;
+  href?: string;
+};
+
+type PostResource = {
+  label: string;
+  href: string;
+  kind: "link" | "file";
+};
+
+const LINK_TOKEN_REGEX = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/gi;
+const RESOURCE_MARKDOWN_LINE_REGEX = /^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/i;
+const RESOURCE_URL_LINE_REGEX = /^(?:[🔗📎]\s*)?(https?:\/\/\S+)\s*$/i;
+const FILE_EXTENSIONS = new Set([
+  "pdf", "zip", "hwp", "hwpx", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+  "jpg", "jpeg", "png", "gif", "webp", "heic", "txt", "csv",
+]);
+
+function trimUrlSuffix(url: string): { clean: string; suffix: string } {
+  let clean = url;
+  let suffix = "";
+  while (/[),.!?]$/.test(clean)) {
+    suffix = clean.slice(-1) + suffix;
+    clean = clean.slice(0, -1);
+  }
+  return { clean, suffix };
+}
+
+function parseRichLine(line: string): RichToken[] {
+  const tokens: RichToken[] = [];
+  let lastIndex = 0;
+  for (const match of line.matchAll(LINK_TOKEN_REGEX)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      tokens.push({ kind: "text", value: line.slice(lastIndex, index) });
+    }
+
+    const markdownLabel = match[1];
+    const markdownHref = match[2];
+    const rawUrl = match[3];
+
+    if (markdownLabel && markdownHref) {
+      tokens.push({ kind: "link", value: markdownLabel, href: markdownHref });
+    } else if (rawUrl) {
+      const { clean, suffix } = trimUrlSuffix(rawUrl);
+      tokens.push({ kind: "link", value: clean, href: clean });
+      if (suffix) {
+        tokens.push({ kind: "text", value: suffix });
+      }
+    }
+
+    lastIndex = index + match[0].length;
+  }
+
+  if (lastIndex < line.length) {
+    tokens.push({ kind: "text", value: line.slice(lastIndex) });
+  }
+  return tokens;
+}
+
+function isLikelyFileResource(line: string, label: string, href: string): boolean {
+  if (line.includes("📎")) return true;
+  try {
+    const url = new URL(href);
+    const ext = url.pathname.split(".").pop()?.toLowerCase() ?? "";
+    if (FILE_EXTENSIONS.has(ext)) return true;
+    if (url.pathname.toLowerCase().includes("/attachments/")) return true;
+  } catch {
+    return false;
+  }
+  const labelExt = label.split(".").pop()?.toLowerCase() ?? "";
+  return FILE_EXTENSIONS.has(labelExt);
+}
+
+function parsePostBodyAndResources(content: string): {
+  bodyLines: string[];
+  links: PostResource[];
+  files: PostResource[];
+} {
+  const bodyLines: string[] = [];
+  const links: PostResource[] = [];
+  const files: PostResource[] = [];
+  const seen = new Set<string>();
+
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      bodyLines.push(line);
+      continue;
+    }
+
+    const markdownMatch = trimmed.match(RESOURCE_MARKDOWN_LINE_REGEX);
+    if (markdownMatch) {
+      const label = markdownMatch[1]?.trim() || "링크 열기";
+      const href = markdownMatch[2]?.trim();
+      if (href) {
+        const kind: PostResource["kind"] = isLikelyFileResource(trimmed, label, href) ? "file" : "link";
+        const dedupKey = `${kind}#${href}`;
+        if (!seen.has(dedupKey)) {
+          seen.add(dedupKey);
+          (kind === "file" ? files : links).push({ label, href, kind });
+        }
+        continue;
+      }
+    }
+
+    const rawUrlMatch = trimmed.match(RESOURCE_URL_LINE_REGEX);
+    if (rawUrlMatch?.[1]) {
+      const href = rawUrlMatch[1].trim();
+      const fallbackLabel = href.split("/").pop() || "링크 열기";
+      const kind: PostResource["kind"] = isLikelyFileResource(trimmed, fallbackLabel, href) ? "file" : "link";
+      const dedupKey = `${kind}#${href}`;
+      if (!seen.has(dedupKey)) {
+        seen.add(dedupKey);
+        (kind === "file" ? files : links).push({
+          label: fallbackLabel,
+          href,
+          kind,
+        });
+      }
+      continue;
+    }
+
+    bodyLines.push(line);
+  }
+
+  return { bodyLines, links, files };
+}
+
+function renderPostContent(lines: string[]) {
+  return lines.map((line, lineIndex) => {
+    const tokens = parseRichLine(line);
+    return (
+      <p key={`line-${lineIndex}`} className="whitespace-pre-wrap">
+        {tokens.map((token, tokenIndex) => {
+          if (token.kind === "link" && token.href) {
+            return (
+              <a
+                key={`token-${lineIndex}-${tokenIndex}`}
+                href={token.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline underline-offset-2 break-all"
+              >
+                {token.value}
+              </a>
+            );
+          }
+          return <span key={`token-${lineIndex}-${tokenIndex}`}>{token.value}</span>;
+        })}
+      </p>
+    );
+  });
+}
+
 function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -186,6 +343,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
   const comments = commentsData;
   const viewCount = postData.view_count ?? 0;
+  const parsedContent = parsePostBodyAndResources(postData.content);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -225,7 +383,51 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
               </div>
             </div>
 
-            <div className="text-base leading-7 text-gray-800 whitespace-pre-wrap">{postData.content}</div>
+            <div className="text-base leading-7 text-gray-800 space-y-1">
+              {renderPostContent(parsedContent.bodyLines)}
+            </div>
+
+            {(parsedContent.links.length > 0 || parsedContent.files.length > 0) && (
+              <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                {parsedContent.links.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">관련 링크</p>
+                    <div className="space-y-2">
+                      {parsedContent.links.map((item) => (
+                        <a
+                          key={`link-${item.href}`}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-primary underline underline-offset-2 break-all"
+                        >
+                          {item.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {parsedContent.files.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">첨부 파일</p>
+                    <div className="space-y-2">
+                      {parsedContent.files.map((item) => (
+                        <a
+                          key={`file-${item.href}`}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-primary underline underline-offset-2 break-all"
+                        >
+                          {item.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </article>
 

@@ -23,6 +23,27 @@ function normalizeText(value: unknown, maxLength: number): string {
   return value.trim().slice(0, maxLength);
 }
 
+function normalizeOptionalUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function extractFirstLink(content: string): string | null {
+  const markdownMatch = content.match(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/i);
+  if (markdownMatch?.[1]) return markdownMatch[1];
+  const rawMatch = content.match(/https?:\/\/[^\s)]+/i);
+  if (rawMatch?.[0]) return rawMatch[0];
+  return null;
+}
+
 function validateExam(exam: Exam | null) {
   if (!exam) {
     return NextResponse.json({ error: "지원하지 않는 시험 카테고리입니다." }, { status: 400 });
@@ -116,6 +137,7 @@ async function loadNews(boardId: string) {
       id: item.id,
       title: item.title,
       content: item.content,
+      linkUrl: extractFirstLink(item.content),
       createdAt: item.created_at,
     })) ?? [],
   };
@@ -153,14 +175,27 @@ export async function POST(request: Request) {
   if (examError) return examError;
 
   const title = normalizeText(body.title, 120);
-  const content = normalizeText(body.content, 6000);
+  const rawContent = normalizeText(body.content, 6000);
+  const linkUrl = normalizeOptionalUrl(body.linkUrl);
   const authorName = normalizeText(body.authorName, 40) || "합격판 운영팀";
 
   if (!title) {
     return NextResponse.json({ error: "뉴스 제목은 필수입니다." }, { status: 400 });
   }
+  if (typeof body.linkUrl === "string" && body.linkUrl.trim() && !linkUrl) {
+    return NextResponse.json({ error: "linkUrl 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  const linkMarkdown = linkUrl ? `🔗 [관련 링크](${linkUrl})` : "";
+  const contentHasSameLink = Boolean(linkUrl && rawContent.includes(linkUrl));
+  const content = linkMarkdown && !contentHasSameLink
+    ? rawContent
+      ? `${rawContent}\n\n${linkMarkdown}`
+      : linkMarkdown
+    : rawContent;
+
   if (!content) {
-    return NextResponse.json({ error: "뉴스 내용은 필수입니다." }, { status: 400 });
+    return NextResponse.json({ error: "뉴스 내용 또는 링크는 필수입니다." }, { status: 400 });
   }
 
   const board = await ensureNewsBoard(exam as Exam);

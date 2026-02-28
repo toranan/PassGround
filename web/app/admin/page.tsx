@@ -90,6 +90,7 @@ type NewsItem = {
   id: string;
   title: string;
   content: string;
+  linkUrl?: string | null;
   createdAt: string;
 };
 
@@ -97,6 +98,11 @@ type AdminNewsResponse = {
   ok: boolean;
   news: NewsItem[];
   error?: string;
+};
+
+type UploadedAsset = {
+  url: string;
+  filename: string;
 };
 
 type KnowledgeItem = {
@@ -196,6 +202,19 @@ function parseTagsInput(value: string): string[] {
   return [...dedup];
 }
 
+function normalizeHttpUrl(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+
 export default function AdminPage() {
   const user = useSyncExternalStore(
     subscribeAuthChange,
@@ -254,7 +273,10 @@ export default function AdminPage() {
   const [newsForm, setNewsForm] = useState({
     title: "",
     content: "",
+    linkUrl: "",
   });
+  const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
+  const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
   const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
   const [knowledgePdfFile, setKnowledgePdfFile] = useState<File | null>(null);
   const [knowledgePdfNote, setKnowledgePdfNote] = useState("");
@@ -816,9 +838,26 @@ export default function AdminPage() {
     const token = getAccessToken();
     if (!token) return;
 
-    if (!newsForm.title.trim() || !newsForm.content.trim()) {
-      setMessage("최신뉴스 제목과 내용은 필수입니다.");
+    const title = newsForm.title.trim();
+    const content = newsForm.content.trim();
+    const linkUrl = normalizeHttpUrl(newsForm.linkUrl);
+
+    if (!title) {
+      setMessage("최신뉴스 제목은 필수입니다.");
       return;
+    }
+    if (newsForm.linkUrl.trim() && !linkUrl) {
+      setMessage("링크 URL 형식을 확인해줘. (http/https)");
+      return;
+    }
+    if (!content && !linkUrl && !newsAttachment?.url) {
+      setMessage("내용/링크/첨부 중 하나는 입력해줘.");
+      return;
+    }
+
+    let finalContent = content;
+    if (newsAttachment?.url) {
+      finalContent += `${finalContent ? "\n" : ""}📎 [${newsAttachment.filename}](${newsAttachment.url})`;
     }
 
     setSubmitting(true);
@@ -832,8 +871,9 @@ export default function AdminPage() {
         },
         body: JSON.stringify({
           exam,
-          title: newsForm.title,
-          content: newsForm.content,
+          title,
+          content: finalContent,
+          linkUrl,
         }),
       });
       const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
@@ -842,12 +882,48 @@ export default function AdminPage() {
         return;
       }
       setNews(payload.news ?? []);
-      setNewsForm({ title: "", content: "" });
+      setNewsForm({ title: "", content: "", linkUrl: "" });
+      setNewsAttachment(null);
       setMessage("최신뉴스가 저장되었습니다.");
     } catch {
       setMessage("최신뉴스 저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUploadNewsAttachment = async (file: File | null) => {
+    if (!file) return;
+
+    setUploadingNewsAttachment(true);
+    setMessage("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("usage", "post");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { ok?: boolean; url?: string; filename?: string; error?: string }
+        | null;
+
+      if (!res.ok || !payload?.ok || !payload.url) {
+        setMessage(payload?.error ?? "첨부 파일 업로드에 실패했습니다.");
+        return;
+      }
+
+      setNewsAttachment({
+        url: payload.url,
+        filename: payload.filename || file.name,
+      });
+      setMessage("첨부 파일 업로드가 완료되었습니다.");
+    } catch {
+      setMessage("첨부 파일 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setUploadingNewsAttachment(false);
     }
   };
 
@@ -1406,7 +1482,7 @@ export default function AdminPage() {
 
                 <Card className="border-none shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-lg">공식 일정 관리</CardTitle>
+                    <CardTitle className="text-lg">주요 일정 관리</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -1468,7 +1544,7 @@ export default function AdminPage() {
                       />
                       <div className="md:col-span-4">
                         <Button onClick={handleSaveSchedule} disabled={submitting}>
-                          {submitting ? "저장 중..." : "공식 일정 저장"}
+                          {submitting ? "저장 중..." : "주요 일정 저장"}
                         </Button>
                       </div>
                     </div>
@@ -1550,6 +1626,48 @@ export default function AdminPage() {
                           setNewsForm((prev) => ({ ...prev, content: e.target.value }))
                         }
                       />
+                      <Input
+                        placeholder="관련 링크 (선택)"
+                        value={newsForm.linkUrl}
+                        onChange={(e) =>
+                          setNewsForm((prev) => ({ ...prev, linkUrl: e.target.value }))
+                        }
+                      />
+                      <div className="space-y-2">
+                        <div className="text-xs text-muted-foreground">첨부 파일 (선택)</div>
+                        <input
+                          type="file"
+                          onChange={(e) => {
+                            const file = e.currentTarget.files?.[0] ?? null;
+                            void handleUploadNewsAttachment(file);
+                            e.currentTarget.value = "";
+                          }}
+                          disabled={submitting || uploadingNewsAttachment}
+                        />
+                        {uploadingNewsAttachment ? (
+                          <p className="text-xs text-muted-foreground">첨부 파일 업로드 중...</p>
+                        ) : null}
+                        {newsAttachment ? (
+                          <div className="flex items-center gap-2 text-xs">
+                            <a
+                              href={newsAttachment.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline underline-offset-2"
+                            >
+                              {newsAttachment.filename}
+                            </a>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setNewsAttachment(null)}
+                              disabled={submitting}
+                            >
+                              제거
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
                       <div>
                         <Button onClick={handleSaveNews} disabled={submitting}>
                           {submitting ? "저장 중..." : "최신뉴스 업로드"}
@@ -1569,6 +1687,16 @@ export default function AdminPage() {
                             <div>
                               <p className="text-sm font-semibold">{item.title}</p>
                               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                              {item.linkUrl ? (
+                                <a
+                                  href={item.linkUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary mt-1 inline-flex underline underline-offset-2"
+                                >
+                                  관련 링크 열기
+                                </a>
+                              ) : null}
                               <p className="text-xs text-primary mt-1">{formatDateLabel(item.createdAt)}</p>
                             </div>
                             <Button
