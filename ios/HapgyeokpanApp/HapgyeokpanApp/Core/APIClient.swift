@@ -47,6 +47,26 @@ final class APIClient {
         )
     }
 
+    func finalizeAppleNative(
+        baseURL: URL,
+        idToken: String,
+        rawNonce: String,
+        authorizationCode: String?
+    ) async throws -> OAuthExchangeResponse {
+        struct Body: Encodable {
+            let idToken: String
+            let nonce: String
+            let authorizationCode: String?
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/auth/apple/native",
+            method: "POST",
+            body: Body(idToken: idToken, nonce: rawNonce, authorizationCode: authorizationCode)
+        )
+    }
+
     func refreshSession(baseURL: URL, refreshToken: String) async throws -> OAuthExchangeResponse {
         struct Body: Encodable {
             let refreshToken: String
@@ -388,19 +408,37 @@ final class APIClient {
         ) as GenericOKResponse
     }
 
-    func createComment(baseURL: URL, postId: String, parentId: String?, authorName: String, content: String) async throws {
+    func createComment(
+        baseURL: URL,
+        postId: String,
+        parentId: String?,
+        authorName: String,
+        content: String,
+        userId: String?,
+        accessToken: String?
+    ) async throws {
         struct Body: Encodable {
             let postId: String
             let parentId: String?
             let authorName: String
             let content: String
+            let userId: String?
+            let accessToken: String?
         }
 
         _ = try await request(
             baseURL: baseURL,
             path: "api/comments/create",
             method: "POST",
-            body: Body(postId: postId, parentId: parentId, authorName: authorName, content: content)
+            body: Body(
+                postId: postId,
+                parentId: parentId,
+                authorName: authorName,
+                content: content,
+                userId: userId,
+                accessToken: accessToken
+            ),
+            accessToken: accessToken
         ) as GenericOKResponse
     }
 
@@ -466,6 +504,37 @@ final class APIClient {
         )
 
         return response.user
+    }
+
+    func fetchNotifications(
+        baseURL: URL,
+        userId: String,
+        accessToken: String,
+        limit: Int = 30
+    ) async throws -> NotificationListResponse {
+        try await request(
+            baseURL: baseURL,
+            path: "api/mobile/notifications",
+            query: [
+                URLQueryItem(name: "userId", value: userId),
+                URLQueryItem(name: "limit", value: String(limit))
+            ],
+            accessToken: accessToken
+        )
+    }
+
+    func markAllNotificationsRead(baseURL: URL, accessToken: String) async throws -> NotificationReadResponse {
+        struct Body: Encodable {
+            let readAll: Bool
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/mobile/notifications/read",
+            method: "POST",
+            body: Body(readAll: true),
+            accessToken: accessToken
+        )
     }
 
     func upload(baseURL: URL, data: Data, filename: String, mimeType: String, usage: String?) async throws -> String {

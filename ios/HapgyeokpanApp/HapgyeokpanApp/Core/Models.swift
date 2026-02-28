@@ -262,6 +262,32 @@ struct VoteStatusResponse: Codable {
     let votedAt: String?
 }
 
+struct NotificationListResponse: Codable {
+    let ok: Bool
+    let unreadCount: Int
+    let items: [CommunityNotificationItem]
+}
+
+struct CommunityNotificationItem: Codable, Identifiable {
+    let id: String
+    let type: String
+    let title: String
+    let body: String
+    let postId: String?
+    let commentId: String?
+    let examSlug: String?
+    let boardSlug: String?
+    let actorName: String?
+    let isRead: Bool
+    let createdAt: String?
+    let timeLabel: String
+}
+
+struct NotificationReadResponse: Codable {
+    let ok: Bool
+    let unreadCount: Int
+}
+
 struct PointResponse: Codable {
     let ok: Bool
     let ownerName: String

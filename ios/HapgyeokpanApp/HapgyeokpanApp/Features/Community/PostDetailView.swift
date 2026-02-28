@@ -6,14 +6,16 @@ private struct CommentNode: Identifiable {
     var children: [CommentNode]
 }
 
-private let webPrimaryColor = Color(red: 79/255, green: 70/255, blue: 229/255)
+private let commentAccentColor = Color(red: 47/255, green: 158/255, blue: 108/255)
 
 struct PostDetailView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var communityStore: CommunityStore
+    @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
+    private let likeDebounceNanoseconds: UInt64 = 280_000_000
 
     let exam: ExamSlug
     let boardSlug: String
@@ -29,10 +31,15 @@ struct PostDetailView: View {
 
     @State private var likeCount = 0
     @State private var liked = false
-    @State private var likeUpdating = false
+    @State private var operationRevision = 0
+    @State private var lastLikeMutationRevision = 0
+    @State private var likeSyncInFlight = false
+    @State private var likeSyncDebounceTask: Task<Void, Never>?
 
     @State private var commentText = ""
     @State private var replyTargetID: String?
+    @State private var commentAnonymous = true
+    @FocusState private var commentInputFocused: Bool
 
     init(
         exam: ExamSlug,
@@ -57,41 +64,63 @@ struct PostDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                if loading && detail == nil {
-                    ProgressView("로딩 중...")
-                        .padding(.top, 40)
-                }
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 8) {
+                    if loading && detail == nil {
+                        ProgressView("로딩 중...")
+                            .padding(.top, 40)
+                    }
 
-                if !message.isEmpty {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(message.contains("완료") ? .green : .red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                }
+                    if !message.isEmpty {
+                        Text(message)
+                            .font(.footnote)
+                            .foregroundStyle(message.contains("완료") ? .green : .red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                    }
 
-                if let detail {
-                    postSection(detail)
-                    actionSection(detail)
-                    commentsSection(detail)
-                    if !detail.isSamplePost && detail.writable {
-                        composerSection
+                    if let detail {
+                        postSection(detail)
+                        actionSection(detail)
+                        commentsSection(detail)
                     }
                 }
+                .padding(.bottom, 16)
             }
-            .padding(.bottom, 16)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                commentInputFocused = false
+            }
+            .scrollDismissesKeyboard(.immediately)
         }
         .background(Color(.systemGray6))
         .navigationTitle("게시글")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if let detail, !detail.isSamplePost && detail.writable {
+                VStack(spacing: 0) {
+                    Divider()
+                    composerSection
+                }
+                .background(Color(.systemBackground))
+            }
+        }
         .task {
             guard !didBootstrap else { return }
             didBootstrap = true
             _ = applyCachedDetailSnapshotIfAvailable()
+            scheduleLikeSyncFlush(immediate: true)
             await load()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                scheduleLikeSyncFlush(immediate: true)
+            }
+        }
+        .onDisappear {
+            scheduleLikeSyncFlush(immediate: true)
         }
         .refreshable { await load(forceRefresh: true) }
     }
@@ -115,11 +144,20 @@ struct PostDetailView: View {
 
             Divider()
 
-            Text(detail.post.content)
-                .font(.body)
-                .foregroundStyle(.primary)
-                .lineSpacing(2)
-                .textSelection(.enabled)
+            if let markdownContent = try? AttributedString(markdown: detail.post.content) {
+                Text(markdownContent)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(2)
+                    .textSelection(.enabled)
+                    .tint(commentAccentColor)
+            } else {
+                Text(detail.post.content)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(2)
+                    .textSelection(.enabled)
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -133,15 +171,12 @@ struct PostDetailView: View {
                 Task { await toggleLike() }
             } label: {
                 Label("\(likeCount)", systemImage: liked ? "heart.fill" : "heart")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(liked ? commentAccentColor : .secondary)
             }
             .buttonStyle(.plain)
-            .disabled(likeUpdating)
-
             Label("\(detail.comments.count)", systemImage: "message")
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
-
             Spacer()
         }
         .font(.subheadline)
@@ -153,22 +188,16 @@ struct PostDetailView: View {
     @ViewBuilder
     private func commentsSection(_ detail: PostDetailResponse) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("댓글 \(detail.comments.count)개")
-                .font(.headline)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
             if detail.comments.isEmpty {
                 Text(hasLoadedRemote ? "아직 댓글이 없습니다." : "댓글 불러오는 중...")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 14)
+                    .padding(.vertical, 14)
             } else {
                 VStack(spacing: 0) {
                     ForEach(commentTree(from: detail.comments)) { node in
                         commentRow(node: node, depth: 0)
-                        Divider()
                     }
                 }
             }
@@ -178,92 +207,156 @@ struct PostDetailView: View {
     }
 
     private var composerSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(replyTargetID == nil ? "댓글 작성" : "답글 작성")
-                .font(.headline)
+        HStack(spacing: 10) {
+            Button {
+                commentAnonymous.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: commentAnonymous ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("익명")
+                        .font(.caption.weight(.bold))
+                }
+                .foregroundStyle(commentAnonymous ? commentAccentColor : .secondary)
+            }
+            .buttonStyle(.plain)
 
-            if let replyTargetID {
-                Text("답글 대상: \(replyTargetID)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("답글 취소") {
-                    self.replyTargetID = nil
+            TextField(
+                replyTargetID == nil ? "댓글을 입력하세요." : "답글을 입력하세요.",
+                text: $commentText,
+                axis: .vertical
+            )
+            .font(.subheadline)
+            .lineLimit(1...3)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled(true)
+            .focused($commentInputFocused)
+
+            if replyTargetID != nil {
+                Button("취소") {
+                    replyTargetID = nil
                 }
                 .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
-            TextEditor(text: $commentText)
-                .frame(minHeight: 84)
-                .padding(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                )
-
-            Button("등록") {
+            Button {
                 Task { await submitComment() }
+            } label: {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(commentAccentColor)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(webPrimaryColor)
+            .buttonStyle(.plain)
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(Color.white)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
     }
 
     private func commentRow(node: CommentNode, depth: Int) -> AnyView {
-        AnyView(
-            VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text(node.item.authorName)
-                    .font(.subheadline.weight(.semibold))
-                if node.item.verificationLevel != "none" {
-                    Text(node.item.verificationLevel)
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.15), in: Capsule())
-                }
-                if detail?.adoptedCommentId == node.item.id {
-                    Text("채택")
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.yellow.opacity(0.2), in: Capsule())
-                }
-                Spacer()
-                Text(node.item.timeLabel)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Text(node.item.content)
-                .font(.body)
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 12) {
-                if detail?.isSamplePost == false && detail?.writable == true {
-                    Button("답글") {
-                        replyTargetID = node.item.id
+        let isReply = depth > 0
+        let isAuthor = node.item.authorName == detail?.post.authorName
+        return AnyView(
+            VStack(spacing: 0) {
+                HStack(alignment: .top, spacing: 8) {
+                    if isReply {
+                        Image(systemName: "arrow.turn.down.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color(.systemGray3))
+                            .padding(.top, 14)
+                            .padding(.leading, 10)
                     }
-                    .font(.caption)
-                }
-                if canAdopt(comment: node.item) {
-                    Button("채택") {
-                        Task { await adopt(commentID: node.item.id) }
-                    }
-                    .font(.caption)
-                }
-            }
-            .foregroundStyle(.secondary)
 
-            ForEach(node.children) { child in
-                commentRow(node: child, depth: depth + 1)
-                    .padding(.leading, 12)
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "person.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .padding(5)
+                            .frame(width: 28, height: 28)
+                            .background(Color(.systemGray4))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(.white)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text(node.item.authorName)
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(isAuthor ? commentAccentColor : .primary)
+
+                                if node.item.verificationLevel != "none" {
+                                    Text(node.item.verificationLevel)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.orange.opacity(0.14), in: Capsule())
+                                }
+
+                                if detail?.adoptedCommentId == node.item.id {
+                                    Text("채택")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.yellow.opacity(0.2), in: Capsule())
+                                }
+
+                                Spacer()
+
+                                HStack(spacing: 8) {
+                                    if detail?.isSamplePost == false && detail?.writable == true {
+                                        Button("답글") {
+                                            replyTargetID = node.item.id
+                                        }
+                                    }
+                                    if canAdopt(comment: node.item) {
+                                        Button("채택") {
+                                            Task { await adopt(commentID: node.item.id) }
+                                        }
+                                    }
+                                }
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Color(.systemGray2))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(isReply ? Color.white : Color(.systemGray6), in: RoundedRectangle(cornerRadius: 6))
+                            }
+
+                            Text(node.item.content)
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+                                .lineSpacing(2)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text(node.item.timeLabel)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.all, isReply ? 12 : 14)
+                    .background(isReply ? Color(.systemGray6).opacity(0.8) : Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: isReply ? 10 : 0))
+                    .padding(.trailing, 12)
+                    .padding(.vertical, isReply ? 6 : 0)
+                }
+
+                if !isReply {
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundStyle(Color(.systemGray6))
+                }
+
+                ForEach(node.children) { child in
+                    commentRow(node: child, depth: depth + 1)
+                }
             }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(depth > 0 ? Color.gray.opacity(0.04) : Color.clear)
         )
     }
 
@@ -301,6 +394,9 @@ struct PostDetailView: View {
     }
 
     private func load(forceRefresh: Bool = false) async {
+        operationRevision += 1
+        let loadRevision = operationRevision
+
         let needsBlockingLoading = (detail == nil)
         if needsBlockingLoading {
             loading = true
@@ -321,11 +417,25 @@ struct PostDetailView: View {
                 userId: session.user?.id,
                 cachePolicy: cachePolicy
             )
-            detail = response
-            likeCount = response.post.likeCount
-            liked = response.viewerLiked ?? false
+            let responseWithOverrides = communityStore.mergeLikeOverrides(
+                response: response,
+                viewerUserID: session.user?.id
+            )
+
+            let shouldKeepLocalLike = loadRevision < lastLikeMutationRevision
+            let resolvedLiked = shouldKeepLocalLike ? liked : (responseWithOverrides.viewerLiked ?? false)
+            let resolvedLikeCount = shouldKeepLocalLike ? likeCount : responseWithOverrides.post.likeCount
+            let resolvedResponse = withLikeState(responseWithOverrides, likeCount: resolvedLikeCount, liked: resolvedLiked)
+
+            detail = resolvedResponse
+            likeCount = resolvedLikeCount
+            liked = resolvedLiked
             hasLoadedRemote = true
-            communityStore.savePostDetailSnapshot(postId: postId, response: response)
+            communityStore.savePostDetailSnapshot(
+                postId: postId,
+                response: resolvedResponse,
+                viewerUserID: session.user?.id
+            )
         } catch {
             if isCancellation(error) {
                 return
@@ -340,37 +450,101 @@ struct PostDetailView: View {
             message = "로그인 후 이용해 주세요."
             return
         }
-        if likeUpdating { return }
 
-        let previousLiked = liked
-        let previousCount = likeCount
+        operationRevision += 1
+        lastLikeMutationRevision = operationRevision
 
-        // Optimistic update: reflect immediately, rollback on failure.
-        let optimisticLiked = !previousLiked
+        // Optimistic update: reflect immediately. Server sync is queued in background.
+        let optimisticLiked = !liked
         liked = optimisticLiked
-        likeCount = max(0, previousCount + (optimisticLiked ? 1 : -1))
-        communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
-        likeUpdating = true
-        defer { likeUpdating = false }
+        likeCount = max(0, likeCount + (optimisticLiked ? 1 : -1))
+        communityStore.updateLikeCount(
+            postId: postId,
+            likeCount: likeCount,
+            viewerLiked: optimisticLiked,
+            viewerUserID: userID
+        )
+        communityStore.enqueueLikeSync(
+            postId: postId,
+            desiredLiked: optimisticLiked,
+            viewerUserID: userID
+        )
+        scheduleLikeSyncFlush(immediate: false)
+    }
 
-        do {
-            let response = try await api.toggleLike(baseURL: config.baseURL, postId: postId, userId: userID)
-            liked = response.liked
-            if let serverLikeCount = response.likeCount {
-                likeCount = max(0, serverLikeCount)
-                communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
-            } else if liked != optimisticLiked {
-                // Reconcile in case server result differs from optimistic state.
-                likeCount = max(0, previousCount + (liked ? 1 : -1))
-                communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
+    private func scheduleLikeSyncFlush(immediate: Bool) {
+        likeSyncDebounceTask?.cancel()
+        let delay = immediate ? UInt64(0) : likeDebounceNanoseconds
+        likeSyncDebounceTask = Task {
+            if delay > 0 {
+                try? await Task.sleep(nanoseconds: delay)
             }
-        } catch {
-            liked = previousLiked
-            likeCount = previousCount
-            communityStore.updateLikeCount(postId: postId, likeCount: likeCount)
-            if isCancellation(error) { return }
-            message = error.localizedDescription
+            await flushLikeSyncQueue()
         }
+    }
+
+    @MainActor
+    private func flushLikeSyncQueue() async {
+        guard let userID = session.user?.id else { return }
+        guard !likeSyncInFlight else { return }
+        likeSyncInFlight = true
+        defer { likeSyncInFlight = false }
+
+        while let pending = communityStore.nextReadyLikeSync(viewerUserID: userID) {
+            do {
+                let response = try await api.toggleLike(
+                    baseURL: config.baseURL,
+                    postId: pending.postId,
+                    userId: userID,
+                    desiredLiked: pending.desiredLiked
+                )
+                let applied = communityStore.completeLikeSync(
+                    postId: pending.postId,
+                    viewerUserID: userID,
+                    ackRevision: pending.revision,
+                    serverLiked: response.liked,
+                    serverLikeCount: response.likeCount
+                )
+                guard applied else { continue }
+
+                if pending.postId == postId {
+                    liked = response.liked
+                    if let serverLikeCount = response.likeCount {
+                        likeCount = max(0, serverLikeCount)
+                    }
+                }
+            } catch {
+                if isCancellation(error) { return }
+                communityStore.markLikeSyncFailure(
+                    postId: pending.postId,
+                    viewerUserID: userID,
+                    ackRevision: pending.revision
+                )
+                break
+            }
+        }
+    }
+
+    private func withLikeState(_ response: PostDetailResponse, likeCount: Int, liked: Bool) -> PostDetailResponse {
+        PostDetailResponse(
+            ok: response.ok,
+            writable: response.writable,
+            isSamplePost: response.isSamplePost,
+            viewerLiked: liked,
+            board: response.board,
+            post: PostDetail(
+                id: response.post.id,
+                title: response.post.title,
+                content: response.post.content,
+                authorName: response.post.authorName,
+                createdAt: response.post.createdAt,
+                timeLabel: response.post.timeLabel,
+                viewCount: response.post.viewCount,
+                likeCount: likeCount
+            ),
+            adoptedCommentId: response.adoptedCommentId,
+            comments: response.comments
+        )
     }
 
     private func submitComment() async {
@@ -383,11 +557,14 @@ struct PostDetailView: View {
                 baseURL: config.baseURL,
                 postId: postId,
                 parentId: replyTargetID,
-                authorName: session.displayName.isEmpty ? "익명" : session.displayName,
-                content: commentText
+                authorName: commentAnonymous ? "익명" : (session.displayName.isEmpty ? "익명" : session.displayName),
+                content: commentText,
+                userId: session.user?.id,
+                accessToken: session.accessToken
             )
             commentText = ""
             replyTargetID = nil
+            commentInputFocused = false
             message = "등록 완료"
             communityStore.incrementCommentCount(postId: postId, delta: 1)
             await load(forceRefresh: true)
@@ -420,7 +597,7 @@ struct PostDetailView: View {
 
     @discardableResult
     private func applyCachedDetailSnapshotIfAvailable() -> Bool {
-        guard let snapshot = communityStore.postDetailSnapshot(postId: postId) else {
+        guard let snapshot = communityStore.postDetailSnapshot(postId: postId, viewerUserID: session.user?.id) else {
             return false
         }
         detail = snapshot.response
