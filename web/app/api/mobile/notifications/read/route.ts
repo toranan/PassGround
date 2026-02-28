@@ -14,10 +14,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const requestedIds = Array.isArray(body.ids)
-      ? body.ids.filter((value): value is string => typeof value === "string").map((value) => value.trim())
-      : [];
+    const body: Record<string, unknown> = await request.json().catch(() => ({}));
+    const rawIds: unknown[] = Array.isArray(body.ids) ? body.ids : [];
+    const requestedIds = rawIds
+      .filter((value: unknown): value is string => typeof value === "string")
+      .map((value: string) => value.trim());
     const ids = Array.from(new Set(requestedIds.filter((value) => isValidUUID(value))));
     const readAll = body.readAll === true || ids.length === 0;
 
@@ -55,4 +56,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
