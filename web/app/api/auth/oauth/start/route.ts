@@ -4,11 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 import { ENABLE_SOCIAL_AUTH } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
 
-type SocialProvider = "kakao" | "naver" | "google" | "apple";
+type SocialProvider = "kakao" | "naver" | "google";
 type SupportedOAuthProvider = Exclude<SocialProvider, "naver">;
 
 function parseProvider(value: string | null): SocialProvider | null {
-  if (value === "kakao" || value === "naver" || value === "google" || value === "apple") {
+  if (value === "kakao" || value === "naver" || value === "google") {
     return value;
   }
   return null;
