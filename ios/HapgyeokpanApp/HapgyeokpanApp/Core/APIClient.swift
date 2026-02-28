@@ -482,6 +482,31 @@ final class APIClient {
         ) as GenericOKResponse
     }
 
+    func updatePost(
+        baseURL: URL,
+        postId: String,
+        title: String,
+        content: String,
+        userId: String,
+        accessToken: String
+    ) async throws {
+        struct Body: Encodable {
+            let postId: String
+            let title: String
+            let content: String
+            let userId: String
+            let accessToken: String
+        }
+
+        _ = try await request(
+            baseURL: baseURL,
+            path: "api/posts/update",
+            method: "POST",
+            body: Body(postId: postId, title: title, content: content, userId: userId, accessToken: accessToken),
+            accessToken: accessToken
+        ) as GenericOKResponse
+    }
+
     func deleteComment(baseURL: URL, commentId: String, userId: String, accessToken: String) async throws -> Int {
         struct Body: Encodable {
             let commentId: String

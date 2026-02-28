@@ -24,6 +24,93 @@ private struct ParsedPostContent {
     let files: [PostResourceItem]
 }
 
+private struct PostEditSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let onSave: (String, String) async throws -> Void
+
+    @State private var title: String
+    @State private var content: String
+    @State private var isSaving = false
+    @State private var errorMessage = ""
+
+    init(initialTitle: String, initialContent: String, onSave: @escaping (String, String) async throws -> Void) {
+        self.onSave = onSave
+        _title = State(initialValue: initialTitle)
+        _content = State(initialValue: initialContent)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TextField("제목", text: $title)
+                .font(.headline)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+            Divider()
+
+            TextEditor(text: $content)
+                .font(.body)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+            }
+        }
+        .navigationTitle("게시글 수정")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("취소") { dismiss() }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await submit() }
+                } label: {
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Text("저장")
+                    }
+                }
+                .disabled(isSaving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+    }
+
+    @MainActor
+    private func submit() async {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            errorMessage = "제목을 입력해 주세요."
+            return
+        }
+        guard !trimmedContent.isEmpty else {
+            errorMessage = "내용을 입력해 주세요."
+            return
+        }
+        guard !isSaving else { return }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            try await onSave(trimmedTitle, trimmedContent)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
 private let commentAccentColor = Color(red: 47/255, green: 158/255, blue: 108/255)
 
 struct PostDetailView: View {
@@ -47,6 +134,7 @@ struct PostDetailView: View {
     @State private var message = ""
     @State private var hasLoadedRemote = false
     @State private var didBootstrap = false
+    @State private var showEditPostSheet = false
     @State private var showDeletePostAlert = false
     @State private var showDeleteCommentAlert = false
     @State private var pendingDeleteCommentID: String?
@@ -121,6 +209,26 @@ struct PostDetailView: View {
         .background(Color(.systemGray6))
         .navigationTitle("게시글")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let detail, canDeletePost(detail) {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            showEditPostSheet = true
+                        } label: {
+                            Label("수정하기", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            showDeletePostAlert = true
+                        } label: {
+                            Label("삭제하기", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.vertical")
+                    }
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             if let detail, !detail.isSamplePost && detail.writable {
                 VStack(spacing: 0) {
@@ -146,6 +254,18 @@ struct PostDetailView: View {
             scheduleLikeSyncFlush(immediate: true)
         }
         .refreshable { await load(forceRefresh: true) }
+        .sheet(isPresented: $showEditPostSheet) {
+            if let detail {
+                NavigationStack {
+                    PostEditSheetView(
+                        initialTitle: detail.post.title,
+                        initialContent: detail.post.content
+                    ) { title, content in
+                        try await updatePost(title: title, content: content)
+                    }
+                }
+            }
+        }
         .alert("게시글 삭제", isPresented: $showDeletePostAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
@@ -221,19 +341,6 @@ struct PostDetailView: View {
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
             Spacer()
-            if canDeletePost(detail) {
-                Menu {
-                    Button(role: .destructive) {
-                        showDeletePostAlert = true
-                    } label: {
-                        Label("삭제하기", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.vertical")
-                        .padding(4)
-                        .foregroundStyle(Color(.systemGray3))
-                }
-            }
         }
         .font(.subheadline)
         .padding(.horizontal, 16)
@@ -611,20 +718,29 @@ struct PostDetailView: View {
 
     private func canDeletePost(_ detail: PostDetailResponse) -> Bool {
         guard detail.isSamplePost == false else { return false }
-        guard detail.writable else { return false }
-        guard let userID = session.user?.id, !userID.isEmpty else { return false }
         if detail.viewerCanDelete == true { return true }
-        if let authorID = detail.post.authorId, !authorID.isEmpty {
+        if let userID = session.user?.id, !userID.isEmpty,
+           let authorID = detail.post.authorId, !authorID.isEmpty {
             return authorID == userID
+        }
+        let authorName = detail.post.authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let viewerName = session.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !authorName.isEmpty && authorName != "익명" && !viewerName.isEmpty {
+            return authorName == viewerName
         }
         return false
     }
 
     private func canDeleteComment(_ comment: CommentItem) -> Bool {
-        guard let userID = session.user?.id, !userID.isEmpty else { return false }
         if comment.canDelete == true { return true }
-        if let authorID = comment.authorId, !authorID.isEmpty {
+        if let userID = session.user?.id, !userID.isEmpty,
+           let authorID = comment.authorId, !authorID.isEmpty {
             return authorID == userID
+        }
+        let authorName = comment.authorName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let viewerName = session.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !authorName.isEmpty && authorName != "익명" && !viewerName.isEmpty {
+            return authorName == viewerName
         }
         return false
     }
@@ -884,6 +1000,28 @@ struct PostDetailView: View {
             if isCancellation(error) { return }
             message = error.localizedDescription
         }
+    }
+
+    @MainActor
+    private func updatePost(title: String, content: String) async throws {
+        guard let userID = session.user?.id else {
+            throw APIClientError.server(message: "로그인 후 이용해 주세요.")
+        }
+        guard !session.accessToken.isEmpty else {
+            throw APIClientError.server(message: "로그인 정보가 만료되었습니다.")
+        }
+
+        try await api.updatePost(
+            baseURL: config.baseURL,
+            postId: postId,
+            title: title,
+            content: content,
+            userId: userID,
+            accessToken: session.accessToken
+        )
+
+        message = "수정 완료"
+        await load(forceRefresh: true)
     }
 
     private func deleteComment(commentID: String) async {
