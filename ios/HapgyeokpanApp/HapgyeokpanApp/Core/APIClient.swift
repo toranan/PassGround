@@ -97,6 +97,7 @@ final class APIClient {
         board: String,
         limit: Int = 20,
         cursor: String? = nil,
+        cacheBust: String? = nil,
         cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     ) async throws -> PostsResponse {
         var query: [URLQueryItem] = [
@@ -106,6 +107,9 @@ final class APIClient {
         ]
         if let cursor, !cursor.isEmpty {
             query.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let cacheBust, !cacheBust.isEmpty {
+            query.append(URLQueryItem(name: "_cb", value: cacheBust))
         }
 
         return try await request(

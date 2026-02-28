@@ -229,7 +229,7 @@ struct PostDetailView: View {
                         Label("삭제하기", systemImage: "trash")
                     }
                 } label: {
-                    Image(systemName: "ellipsis")
+                    Image(systemName: "ellipsis.vertical")
                         .padding(4)
                         .foregroundStyle(Color(.systemGray3))
                 }
@@ -522,6 +522,7 @@ struct PostDetailView: View {
                                         .padding(.vertical, 2)
                                         .background(Color.yellow.opacity(0.2), in: Capsule())
                                 }
+                            }
 
                             Text(node.item.content)
                                 .font(.subheadline)
@@ -569,10 +570,11 @@ struct PostDetailView: View {
                                             }
                                         }
                                     } label: {
-                                        Image(systemName: "ellipsis")
+                                        Image(systemName: "ellipsis.vertical")
                                             .font(.caption)
-                                            .padding(4)
+                                            .padding(8)
                                             .foregroundStyle(Color(.systemGray3))
+                                            .contentShape(Rectangle())
                                     }
                                 }
                             }

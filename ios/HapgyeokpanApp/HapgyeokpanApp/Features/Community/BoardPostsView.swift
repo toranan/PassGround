@@ -242,6 +242,7 @@ struct BoardPostsView: View {
 
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
         let cursor = reset ? nil : nextCursor
+        let cacheBust = forceRefresh ? String(Int(Date().timeIntervalSince1970 * 1000)) : nil
 
         do {
             let response = try await api.fetchPosts(
@@ -250,6 +251,7 @@ struct BoardPostsView: View {
                 board: board.slug,
                 limit: pageSize,
                 cursor: cursor,
+                cacheBust: cacheBust,
                 cachePolicy: cachePolicy
             )
             let resolvedPosts = communityStore.mergeLikeOverrides(posts: response.posts)
