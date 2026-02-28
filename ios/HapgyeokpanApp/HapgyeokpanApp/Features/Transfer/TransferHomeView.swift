@@ -229,16 +229,18 @@ struct TransferHomeView: View {
     }
 
     private func load(forceRefresh: Bool = false) async {
-        if loading { return }
+        if loading && !forceRefresh { return }
         loading = true
         errorMessage = ""
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
+        let cacheBust = forceRefresh ? String(Int(Date().timeIntervalSince1970 * 1000)) : nil
 
         do {
             do {
                 let response = try await api.fetchHomeFeed(
                     baseURL: config.baseURL,
                     exam: exam,
+                    cacheBust: cacheBust,
                     cachePolicy: cachePolicy
                 )
                 latestNewsPosts = communityStore.mergeLikeOverrides(feedItems: response.latestNewsPosts)

@@ -24,6 +24,36 @@ private struct ParsedPostContent {
     let files: [PostResourceItem]
 }
 
+private struct SuccessToastView: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.white)
+            Text(text)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.72, blue: 0.47),
+                    Color(red: 0.05, green: 0.57, blue: 0.38),
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
+        .clipShape(Capsule())
+        .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 4)
+    }
+}
+
 private struct PostEditSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -138,6 +168,8 @@ struct PostDetailView: View {
     @State private var showDeletePostAlert = false
     @State private var showDeleteCommentAlert = false
     @State private var pendingDeleteCommentID: String?
+    @State private var successToastText: String?
+    @State private var successToastTask: Task<Void, Never>?
 
     @State private var likeCount = 0
     @State private var liked = false
@@ -229,18 +261,11 @@ struct PostDetailView: View {
                             message = "준비 중인 기능입니다."
                         }
                     }
-                    Divider()
-                    Button("URL 공유") {
-                        let urlStr = "https://pass-ground.vercel.app/c/\(exam.rawValue)/\(boardSlug)/\(postId)"
-                        UIPasteboard.general.string = urlStr
-                        message = "게시글 링크가 복사되었습니다."
-                    }
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .rotationEffect(.degrees(90))
+                    Text("⋮")
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Color(.systemGray2))
-                        .frame(width: 30, height: 30)
-                        .contentShape(Rectangle())
+                        .padding(.horizontal, 6)
                 }
             }
         }
@@ -267,8 +292,18 @@ struct PostDetailView: View {
         }
         .onDisappear {
             scheduleLikeSyncFlush(immediate: true)
+            successToastTask?.cancel()
         }
         .refreshable { await load(forceRefresh: true) }
+        .overlay(alignment: .top) {
+            if let successToastText {
+                SuccessToastView(text: successToastText)
+                    .padding(.top, 10)
+                    .padding(.horizontal, 16)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.88), value: successToastText != nil)
         .sheet(isPresented: $showEditPostSheet) {
             if let detail {
                 NavigationStack {
@@ -1010,7 +1045,8 @@ struct PostDetailView: View {
                 userId: userID,
                 accessToken: session.accessToken
             )
-            message = "삭제 완료"
+            showSuccessToast("게시글이 삭제되었어")
+            try? await Task.sleep(nanoseconds: 800_000_000)
             dismiss()
         } catch {
             if isCancellation(error) { return }
@@ -1062,12 +1098,29 @@ struct PostDetailView: View {
             pendingDeleteCommentID = nil
             showDeleteCommentAlert = false
             communityStore.incrementCommentCount(postId: postId, delta: -max(1, deletedCount))
-            message = "댓글 삭제 완료"
+            showSuccessToast("댓글이 삭제되었어")
             await load(forceRefresh: true)
         } catch {
             if isCancellation(error) { return }
             pendingDeleteCommentID = nil
             message = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func showSuccessToast(_ text: String) {
+        successToastTask?.cancel()
+        withAnimation {
+            successToastText = text
+        }
+        successToastTask = Task {
+            try? await Task.sleep(nanoseconds: 1_700_000_000)
+            if Task.isCancelled { return }
+            await MainActor.run {
+                withAnimation {
+                    successToastText = nil
+                }
+            }
         }
     }
 

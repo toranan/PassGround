@@ -225,7 +225,7 @@ struct BoardPostsView: View {
 
     private func loadPosts(reset: Bool, forceRefresh: Bool = false) async {
         if reset {
-            if loading { return }
+            if loading && !forceRefresh { return }
             loading = true
             errorMessage = ""
         } else {

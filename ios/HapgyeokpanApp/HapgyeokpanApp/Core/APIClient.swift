@@ -123,12 +123,17 @@ final class APIClient {
     func fetchHomeFeed(
         baseURL: URL,
         exam: ExamSlug,
+        cacheBust: String? = nil,
         cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     ) async throws -> HomeFeedResponse {
-        try await request(
+        var query = [URLQueryItem(name: "exam", value: exam.rawValue)]
+        if let cacheBust, !cacheBust.isEmpty {
+            query.append(URLQueryItem(name: "_cb", value: cacheBust))
+        }
+        return try await request(
             baseURL: baseURL,
             path: "api/mobile/home",
-            query: [URLQueryItem(name: "exam", value: exam.rawValue)],
+            query: query,
             cachePolicy: cachePolicy
         )
     }
