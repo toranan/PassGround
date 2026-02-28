@@ -165,24 +165,16 @@ struct PostDetailView: View {
             Divider()
 
             if !parsed.bodyText.isEmpty {
-                if let markdownContent = try? AttributedString(markdown: parsed.bodyText) {
-                    Text(markdownContent)
-                        .font(.body)
-                        .foregroundStyle(.primary)
-                        .lineSpacing(2)
-                        .textSelection(.enabled)
-                        .tint(commentAccentColor)
-                } else {
-                    Text(parsed.bodyText)
-                        .font(.body)
-                        .foregroundStyle(.primary)
-                        .lineSpacing(2)
-                        .textSelection(.enabled)
-                }
+                Text(parsed.bodyText)
+                    .font(.body)
+                    .foregroundStyle(Color(UIColor.darkText))
+                    .lineSpacing(6)
+                    .textSelection(.enabled)
             }
 
             if !parsed.links.isEmpty || !parsed.files.isEmpty {
                 Divider()
+                    .padding(.vertical, 4)
                 resourceSection(links: parsed.links, files: parsed.files)
             }
         }
@@ -235,126 +227,107 @@ struct PostDetailView: View {
 
     @ViewBuilder
     private func resourceSection(links: [PostResourceItem], files: [PostResourceItem]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if !links.isEmpty {
-                Text("관련 링크")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(links) { item in
-                        Link(destination: item.url) {
-                            Label(item.title, systemImage: "link")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(commentAccentColor)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                }
+        VStack(spacing: 10) {
+            ForEach(files) { item in
+                resourceCard(item: item)
             }
-
-            if !files.isEmpty {
-                Text("첨부 파일")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, links.isEmpty ? 0 : 4)
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(files) { item in
-                        Link(destination: item.url) {
-                            Label(item.title, systemImage: "paperclip")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(commentAccentColor)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                }
+            ForEach(links) { item in
+                resourceCard(item: item)
             }
         }
-        .padding(12)
-        .background(Color(UIColor.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.top, 4)
+    }
+
+    private func resourceCard(item: PostResourceItem) -> some View {
+        let isFile = item.kind == .file
+        return Link(destination: item.url) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(isFile ? commentAccentColor.opacity(0.12) : Color.blue.opacity(0.12))
+                        .frame(width: 38, height: 38)
+                    
+                    Image(systemName: isFile ? "doc.text.fill" : "link")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(isFile ? commentAccentColor : Color.blue)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.title)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        
+                    Text(isFile ? "첨부파일" : "관련 링크")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color(.systemGray3))
+            }
+            .padding(12)
+            .background(Color(.systemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func parsePostContent(_ raw: String) -> ParsedPostContent {
-        let markdownPattern = #"^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?://[^\s)]+)\)\s*$"#
-        let urlLinePattern = #"^(?:[🔗📎]\s*)?(https?://\S+)\s*$"#
-
-        guard
-            let markdownRegex = try? NSRegularExpression(pattern: markdownPattern, options: [.caseInsensitive]),
-            let urlLineRegex = try? NSRegularExpression(pattern: urlLinePattern, options: [.caseInsensitive])
-        else {
-            return ParsedPostContent(bodyText: raw, links: [], files: [])
-        }
-
-        var bodyLines: [String] = []
+        var bodyText = raw
         var links: [PostResourceItem] = []
         var files: [PostResourceItem] = []
         var seen = Set<String>()
 
-        for line in raw.components(separatedBy: .newlines) {
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.isEmpty {
-                bodyLines.append(line)
-                continue
-            }
-
-            let fullRange = NSRange(trimmed.startIndex..<trimmed.endIndex, in: trimmed)
-
-            if let match = markdownRegex.firstMatch(in: trimmed, options: [], range: fullRange),
-               let titleRange = Range(match.range(at: 1), in: trimmed),
-               let urlRange = Range(match.range(at: 2), in: trimmed) {
-                let title = String(trimmed[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                let urlString = String(trimmed[urlRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                if let resource = buildResourceItem(
-                    line: trimmed,
-                    title: title.isEmpty ? "링크 열기" : title,
-                    urlString: urlString,
-                    seen: &seen
-                ) {
-                    switch resource.kind {
-                    case .link:
-                        links.append(resource)
-                    case .file:
-                        files.append(resource)
+        let markdownPattern = #"(?:[🔗📎]\s*)?\[(.*?)\]\((https?://[^\s)]+)\)"#
+        if let regex = try? NSRegularExpression(pattern: markdownPattern, options: [.caseInsensitive]) {
+            let matches = regex.matches(in: bodyText, options: [], range: NSRange(bodyText.startIndex..., in: bodyText))
+            for match in matches.reversed() {
+                if let titleRange = Range(match.range(at: 1), in: bodyText),
+                   let urlRange = Range(match.range(at: 2), in: bodyText),
+                   let fullRange = Range(match.range(at: 0), in: bodyText) {
+                    
+                    let title = String(bodyText[titleRange])
+                    let urlString = String(bodyText[urlRange])
+                    
+                    if let resource = buildResourceItem(title: title, urlString: urlString, seen: &seen) {
+                        if resource.kind == .file { files.insert(resource, at: 0) }
+                        else { links.insert(resource, at: 0) }
                     }
-                    continue
+                    bodyText.removeSubrange(fullRange)
                 }
             }
-
-            if let match = urlLineRegex.firstMatch(in: trimmed, options: [], range: fullRange),
-               let urlRange = Range(match.range(at: 1), in: trimmed) {
-                let urlString = String(trimmed[urlRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                if let resource = buildResourceItem(
-                    line: trimmed,
-                    title: "링크 열기",
-                    urlString: urlString,
-                    seen: &seen
-                ) {
-                    switch resource.kind {
-                    case .link:
-                        links.append(resource)
-                    case .file:
-                        files.append(resource)
-                    }
-                    continue
-                }
-            }
-
-            bodyLines.append(line)
         }
 
-        let bodyText = bodyLines
-            .joined(separator: "\n")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let urlPattern = #"(?<!\()https?://\S+(?!\))"#
+        if let regex = try? NSRegularExpression(pattern: urlPattern, options: [.caseInsensitive]) {
+            let matches = regex.matches(in: bodyText, options: [], range: NSRange(bodyText.startIndex..., in: bodyText))
+            for match in matches.reversed() {
+                if let fullRange = Range(match.range(at: 0), in: bodyText) {
+                    let urlString = String(bodyText[fullRange])
+                    if let resource = buildResourceItem(title: "링크 열기", urlString: urlString, seen: &seen) {
+                        if resource.kind == .file { files.insert(resource, at: 0) }
+                        else { links.insert(resource, at: 0) }
+                    }
+                    bodyText.removeSubrange(fullRange)
+                }
+            }
+        }
 
         return ParsedPostContent(
-            bodyText: bodyText,
+            bodyText: bodyText.trimmingCharacters(in: .whitespacesAndNewlines),
             links: links,
             files: files
         )
     }
 
     private func buildResourceItem(
-        line: String,
         title: String,
         urlString: String,
         seen: inout Set<String>
@@ -362,20 +335,19 @@ struct PostDetailView: View {
         guard let url = URL(string: urlString) else { return nil }
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return nil }
 
-        let markedAsFile = line.contains("📎")
-        let inferredAsFile = isLikelyFile(url: url, title: title)
-        let kind: PostResourceItem.Kind = (markedAsFile || inferredAsFile) ? .file : .link
+        let kind: PostResourceItem.Kind = isLikelyFile(url: url, title: title) ? .file : .link
 
         let dedupKey = "\(kind == .file ? "file" : "link")#\(url.absoluteString)"
         if seen.contains(dedupKey) { return nil }
         seen.insert(dedupKey)
 
         let resolvedTitle: String
-        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || title == "링크 열기" {
-            let fallback = url.lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleanTitle.isEmpty || cleanTitle == "링크 열기" || cleanTitle == "관련 링크" {
+            let fallback = url.host ?? url.lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
             resolvedTitle = fallback.isEmpty ? "링크 열기" : fallback
         } else {
-            resolvedTitle = title
+            resolvedTitle = cleanTitle
         }
 
         return PostResourceItem(
