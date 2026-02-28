@@ -138,9 +138,6 @@ struct PostDetailView: View {
     @State private var showDeletePostAlert = false
     @State private var showDeleteCommentAlert = false
     @State private var pendingDeleteCommentID: String?
-    @State private var showPostActionSheet = false
-    @State private var showCommentActionSheet = false
-    @State private var selectedCommentForAction: CommentItem?
 
     @State private var likeCount = 0
     @State private var liked = false
@@ -213,20 +210,37 @@ struct PostDetailView: View {
         .navigationTitle("게시글")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if session.user != nil {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showPostActionSheet = true
-                    } label: {
-                        VStack(spacing: 3) {
-                            Circle().frame(width: 3.5, height: 3.5)
-                            Circle().frame(width: 3.5, height: 3.5)
-                            Circle().frame(width: 3.5, height: 3.5)
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    if let detail, canDeletePost(detail) {
+                        Button("수정") {
+                            showEditPostSheet = true
                         }
-                        .foregroundStyle(Color(.systemGray2))
-                        .padding(.horizontal, 4)
+                        Button(role: .destructive) {
+                            showDeletePostAlert = true
+                        } label: {
+                            Text("삭제")
+                        }
+                    } else {
+                        Button("신고") {
+                            message = "준비 중인 기능입니다."
+                        }
+                        Button("차단") {
+                            message = "준비 중인 기능입니다."
+                        }
                     }
-                    .buttonStyle(.plain)
+                    Divider()
+                    Button("URL 공유") {
+                        let urlStr = "https://pass-ground.vercel.app/c/\(exam.rawValue)/\(boardSlug)/\(postId)"
+                        UIPasteboard.general.string = urlStr
+                        message = "게시글 링크가 복사되었습니다."
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .rotationEffect(.degrees(90))
+                        .foregroundStyle(Color(.systemGray2))
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
                 }
             }
         }
@@ -285,37 +299,6 @@ struct PostDetailView: View {
             }
         } message: {
             Text("선택한 댓글을 삭제할까?")
-        }
-        .confirmationDialog("게시글 옵션", isPresented: $showPostActionSheet, titleVisibility: .hidden) {
-            if detail == nil {
-                Button("아직 불러오는 중이야", role: .cancel) {}
-            } else if let detail, canDeletePost(detail) {
-                Button("수정하기") {
-                    showEditPostSheet = true
-                }
-                Button("삭제하기", role: .destructive) {
-                    showDeletePostAlert = true
-                }
-                Button("취소", role: .cancel) {}
-            } else {
-                Button("내 글만 수정/삭제 가능해", role: .cancel) {}
-            }
-        }
-        .confirmationDialog("댓글 옵션", isPresented: $showCommentActionSheet, titleVisibility: .hidden) {
-            if let comment = selectedCommentForAction {
-                if canAdopt(comment: comment) {
-                    Button("채택하기") {
-                        Task { await adopt(commentID: comment.id) }
-                    }
-                }
-                if canDeleteComment(comment) {
-                    Button("삭제하기", role: .destructive) {
-                        pendingDeleteCommentID = comment.id
-                        showDeleteCommentAlert = true
-                    }
-                }
-            }
-            Button("취소", role: .cancel) {}
         }
     }
 
@@ -692,21 +675,30 @@ struct PostDetailView: View {
                                 Spacer()
                                 
                                 if canAdopt(comment: node.item) || canDeleteComment(node.item) {
-                                    Button {
-                                        selectedCommentForAction = node.item
-                                        showCommentActionSheet = true
-                                    } label: {
-                                        VStack(spacing: 3.5) {
-                                            Circle().frame(width: 3.5, height: 3.5)
-                                            Circle().frame(width: 3.5, height: 3.5)
-                                            Circle().frame(width: 3.5, height: 3.5)
+                                    Menu {
+                                        if canAdopt(comment: node.item) {
+                                            Button {
+                                                Task { await adopt(commentID: node.item.id) }
+                                            } label: {
+                                                Label("채택하기", systemImage: "checkmark.circle")
+                                            }
                                         }
-                                        .foregroundStyle(Color(.systemGray3))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 8)
-                                        .contentShape(Rectangle())
+                                        if canDeleteComment(node.item) {
+                                            Button(role: .destructive) {
+                                                pendingDeleteCommentID = node.item.id
+                                                showDeleteCommentAlert = true
+                                            } label: {
+                                                Label("삭제하기", systemImage: "trash")
+                                            }
+                                        }
+                                    } label: {
+                                        Text("⋮")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundStyle(Color(.systemGray3))
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 8)
+                                            .contentShape(Rectangle())
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.top, 4)
