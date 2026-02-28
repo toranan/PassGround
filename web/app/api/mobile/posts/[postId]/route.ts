@@ -8,7 +8,8 @@ type ParamsLike = { postId?: string };
 
 type CommentRow = {
   id: string;
-  author_name: string;
+  author_name: string | null;
+  author_id?: string | null;
   content: string;
   created_at: string;
   parent_id: string | null;
@@ -154,6 +155,15 @@ export async function GET(
 
   const supabase = getSupabaseServer();
   const admin = getSupabaseAdmin();
+  let viewerDisplayName: string | null = null;
+  if (requestedUserId && isValidUUID(requestedUserId)) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", requestedUserId)
+      .maybeSingle<{ display_name: string | null }>();
+    viewerDisplayName = profileRow?.display_name?.trim() || null;
+  }
 
   const { data: boardData } = await supabase
     .from("boards")
@@ -172,6 +182,7 @@ export async function GET(
       title: string;
       content: string;
       author_name: string | null;
+      author_id?: string | null;
       created_at: string | null;
       view_count?: number | null;
     }
@@ -179,7 +190,7 @@ export async function GET(
 
   const { data: modernPost, error: modernPostError } = await supabase
     .from("posts")
-    .select("id,title,content,author_name,created_at,view_count")
+    .select("id,title,content,author_name,author_id,created_at,view_count")
     .eq("id", postId)
     .eq("board_id", boardData.id)
     .maybeSingle();
@@ -195,6 +206,7 @@ export async function GET(
     postData = legacyPost
       ? {
         ...legacyPost,
+        author_id: null,
         view_count: 0,
       }
       : null;
@@ -208,7 +220,7 @@ export async function GET(
 
   const commentsPromise = supabase
     .from("comments")
-    .select("id,author_name,content,created_at,parent_id")
+    .select("id,author_name,author_id,content,created_at,parent_id")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
@@ -229,7 +241,11 @@ export async function GET(
   const adoptionData = adoptionResult.data;
 
   const authorNames = Array.from(
-    new Set((commentsData ?? []).map((comment) => comment.author_name).filter(Boolean))
+    new Set(
+      (commentsData ?? [])
+        .map((comment) => (typeof comment.author_name === "string" ? comment.author_name.trim() : ""))
+        .filter((value): value is string => Boolean(value))
+    )
   );
 
   const verificationMap = new Map<string, string>();
@@ -246,15 +262,46 @@ export async function GET(
     });
   }
 
-  const comments = (commentsData ?? []).map((comment: CommentRow) => ({
-    id: comment.id,
-    authorName: comment.author_name,
-    content: comment.content,
-    createdAt: comment.created_at,
-    timeLabel: formatRelativeTime(comment.created_at),
-    parentId: comment.parent_id,
-    verificationLevel: verificationMap.get(comment.author_name) ?? "none",
-  }));
+  const comments = (commentsData ?? []).map((comment: CommentRow) => {
+    const commentAuthorName = (comment.author_name ?? "").trim();
+    const canDeleteByLegacyName = Boolean(
+      !comment.author_id &&
+      viewerDisplayName &&
+      commentAuthorName &&
+      commentAuthorName !== "익명" &&
+      commentAuthorName === viewerDisplayName
+    );
+
+    return {
+      id: comment.id,
+      authorName: comment.author_name ?? "익명",
+      authorId: comment.author_id ?? null,
+      content: comment.content,
+      createdAt: comment.created_at,
+      timeLabel: formatRelativeTime(comment.created_at),
+      parentId: comment.parent_id,
+      verificationLevel: commentAuthorName ? verificationMap.get(commentAuthorName) ?? "none" : "none",
+      canDelete: Boolean(
+        (requestedUserId && comment.author_id && comment.author_id === requestedUserId) ||
+          canDeleteByLegacyName
+      ),
+    };
+  });
+
+  const postAuthorName = (postData.author_name ?? "").trim();
+  const canDeletePostByLegacyName = Boolean(
+    !postData.author_id &&
+    viewerDisplayName &&
+    postAuthorName &&
+    postAuthorName !== "익명" &&
+    postAuthorName === viewerDisplayName
+  );
+  const viewerCanDelete = Boolean(
+    (requestedUserId &&
+      postData.author_id &&
+      postData.author_id === requestedUserId) ||
+    canDeletePostByLegacyName
+  );
 
   return noStore(
     NextResponse.json({
@@ -262,12 +309,14 @@ export async function GET(
       writable: !(exam === "cpa" && !ENABLE_CPA_WRITE),
       isSamplePost: false,
       viewerLiked,
+      viewerCanDelete,
       board: { slug: boardInfo.slug, name: boardData.name ?? boardInfo.name },
       post: {
         id: postData.id,
         title: postData.title,
         content: postData.content,
         authorName: postData.author_name ?? "익명",
+        authorId: postData.author_id ?? null,
         createdAt: postData.created_at,
         timeLabel: formatRelativeTime(postData.created_at),
         viewCount: postData.view_count ?? 0,

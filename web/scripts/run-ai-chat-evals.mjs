@@ -57,6 +57,7 @@ async function main() {
     process.env.AI_EVAL_CASES || path.join(process.cwd(), "evals", `ai-chat-cases.${exam}.json`);
   const minPassRate = Number(process.env.AI_EVAL_MIN_PASS_RATE || "0.8");
   const disableCache = process.env.AI_EVAL_DISABLE_CACHE === "1";
+  const evalAccessToken = String(process.env.AI_EVAL_ACCESS_TOKEN || "").trim();
 
   const raw = await readFile(casesPath, "utf8");
   const cases = JSON.parse(raw);
@@ -72,7 +73,10 @@ async function main() {
     const startedAt = Date.now();
     const response = await fetch(`${baseUrl}/api/ai/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(evalAccessToken ? { Authorization: `Bearer ${evalAccessToken}` } : {}),
+      },
       body: JSON.stringify({
         exam,
         question: String(caseItem.question || ""),

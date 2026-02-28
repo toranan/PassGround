@@ -6,16 +6,7 @@ struct BlindPostCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
-            HStack {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 24, height: 24)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
-                    )
-                
+            HStack(spacing: 6) {
                 Text(post.authorName.isEmpty ? "익명" : post.authorName)
                     .font(.footnote)
                     .fontWeight(.medium)

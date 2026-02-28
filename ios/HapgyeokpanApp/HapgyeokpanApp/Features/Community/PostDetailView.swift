@@ -27,6 +27,7 @@ private struct ParsedPostContent {
 private let commentAccentColor = Color(red: 47/255, green: 158/255, blue: 108/255)
 
 struct PostDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var communityStore: CommunityStore
@@ -46,6 +47,9 @@ struct PostDetailView: View {
     @State private var message = ""
     @State private var hasLoadedRemote = false
     @State private var didBootstrap = false
+    @State private var showDeletePostAlert = false
+    @State private var showDeleteCommentAlert = false
+    @State private var pendingDeleteCommentID: String?
 
     @State private var likeCount = 0
     @State private var liked = false
@@ -57,6 +61,7 @@ struct PostDetailView: View {
     @State private var commentText = ""
     @State private var replyTargetID: String?
     @State private var commentAnonymous = true
+    @State private var commentSubmitInFlight = false
     @FocusState private var commentInputFocused: Bool
 
     init(
@@ -141,6 +146,25 @@ struct PostDetailView: View {
             scheduleLikeSyncFlush(immediate: true)
         }
         .refreshable { await load(forceRefresh: true) }
+        .alert("게시글 삭제", isPresented: $showDeletePostAlert) {
+            Button("취소", role: .cancel) {}
+            Button("삭제", role: .destructive) {
+                Task { await deletePost() }
+            }
+        } message: {
+            Text("정말 이 글을 삭제할까?")
+        }
+        .alert("댓글 삭제", isPresented: $showDeleteCommentAlert) {
+            Button("취소", role: .cancel) {
+                pendingDeleteCommentID = nil
+            }
+            Button("삭제", role: .destructive) {
+                guard let commentID = pendingDeleteCommentID else { return }
+                Task { await deleteComment(commentID: commentID) }
+            }
+        } message: {
+            Text("선택한 댓글을 삭제할까?")
+        }
     }
 
     @ViewBuilder
@@ -197,6 +221,13 @@ struct PostDetailView: View {
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
             Spacer()
+            if canDeletePost(detail) {
+                Button("삭제") {
+                    showDeletePostAlert = true
+                }
+                .foregroundStyle(.red)
+                .font(.subheadline.weight(.semibold))
+            }
         }
         .font(.subheadline)
         .padding(.horizontal, 16)
@@ -375,6 +406,7 @@ struct PostDetailView: View {
     }
 
     private var composerSection: some View {
+        let trimmedComment = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
         HStack(spacing: 10) {
             Button {
                 commentAnonymous.toggle()
@@ -411,11 +443,20 @@ struct PostDetailView: View {
             Button {
                 Task { await submitComment() }
             } label: {
-                Image(systemName: "paperplane.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(commentAccentColor)
+                Group {
+                    if commentSubmitInFlight {
+                        ProgressView()
+                            .tint(commentAccentColor)
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(commentAccentColor)
+                    }
+                }
             }
             .buttonStyle(.plain)
+            .disabled(commentSubmitInFlight || trimmedComment.isEmpty)
+            .opacity((commentSubmitInFlight || trimmedComment.isEmpty) ? 0.45 : 1)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -489,6 +530,13 @@ struct PostDetailView: View {
                                             Task { await adopt(commentID: node.item.id) }
                                         }
                                     }
+                                    if canDeleteComment(node.item) {
+                                        Button("삭제") {
+                                            pendingDeleteCommentID = node.item.id
+                                            showDeleteCommentAlert = true
+                                        }
+                                        .foregroundStyle(.red)
+                                    }
                                 }
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(Color(.systemGray2))
@@ -534,6 +582,26 @@ struct PostDetailView: View {
         if detail.isSamplePost || !detail.writable { return false }
         if session.displayName.isEmpty { return false }
         return session.displayName == detail.post.authorName && session.displayName != comment.authorName
+    }
+
+    private func canDeletePost(_ detail: PostDetailResponse) -> Bool {
+        guard detail.isSamplePost == false else { return false }
+        guard detail.writable else { return false }
+        guard let userID = session.user?.id, !userID.isEmpty else { return false }
+        if detail.viewerCanDelete == true { return true }
+        if let authorID = detail.post.authorId, !authorID.isEmpty {
+            return authorID == userID
+        }
+        return false
+    }
+
+    private func canDeleteComment(_ comment: CommentItem) -> Bool {
+        guard let userID = session.user?.id, !userID.isEmpty else { return false }
+        if comment.canDelete == true { return true }
+        if let authorID = comment.authorId, !authorID.isEmpty {
+            return authorID == userID
+        }
+        return false
     }
 
     private func commentTree(from comments: [CommentItem]) -> [CommentNode] {
@@ -699,12 +767,14 @@ struct PostDetailView: View {
             writable: response.writable,
             isSamplePost: response.isSamplePost,
             viewerLiked: liked,
+            viewerCanDelete: response.viewerCanDelete,
             board: response.board,
             post: PostDetail(
                 id: response.post.id,
                 title: response.post.title,
                 content: response.post.content,
                 authorName: response.post.authorName,
+                authorId: response.post.authorId,
                 createdAt: response.post.createdAt,
                 timeLabel: response.post.timeLabel,
                 viewCount: response.post.viewCount,
@@ -715,18 +785,25 @@ struct PostDetailView: View {
         )
     }
 
+    @MainActor
     private func submitComment() async {
-        guard !commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        let trimmed = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             message = "댓글 내용을 입력해 주세요."
             return
         }
+        guard !commentSubmitInFlight else { return }
+
+        commentSubmitInFlight = true
+        defer { commentSubmitInFlight = false }
+
         do {
             try await api.createComment(
                 baseURL: config.baseURL,
                 postId: postId,
                 parentId: replyTargetID,
                 authorName: commentAnonymous ? "익명" : (session.displayName.isEmpty ? "익명" : session.displayName),
-                content: commentText,
+                content: trimmed,
                 userId: session.user?.id,
                 accessToken: session.accessToken
             )
@@ -755,6 +832,62 @@ struct PostDetailView: View {
             await load()
         } catch {
             if isCancellation(error) { return }
+            message = error.localizedDescription
+        }
+    }
+
+    private func deletePost() async {
+        guard let userID = session.user?.id else {
+            message = "로그인 후 이용해 주세요."
+            return
+        }
+        guard !session.accessToken.isEmpty else {
+            message = "로그인 정보가 만료되었습니다."
+            return
+        }
+
+        do {
+            try await api.deletePost(
+                baseURL: config.baseURL,
+                postId: postId,
+                userId: userID,
+                accessToken: session.accessToken
+            )
+            message = "삭제 완료"
+            dismiss()
+        } catch {
+            if isCancellation(error) { return }
+            message = error.localizedDescription
+        }
+    }
+
+    private func deleteComment(commentID: String) async {
+        guard let userID = session.user?.id else {
+            message = "로그인 후 이용해 주세요."
+            pendingDeleteCommentID = nil
+            return
+        }
+        guard !session.accessToken.isEmpty else {
+            message = "로그인 정보가 만료되었습니다."
+            pendingDeleteCommentID = nil
+            return
+        }
+
+        do {
+            let deletedCount = try await api.deleteComment(
+                baseURL: config.baseURL,
+                commentId: commentID,
+                userId: userID,
+                accessToken: session.accessToken
+            )
+            pendingDeleteCommentID = nil
+            showDeleteCommentAlert = false
+            communityStore.incrementCommentCount(postId: postId, delta: -max(1, deletedCount))
+            message = "댓글 삭제 완료"
+            await load(forceRefresh: true)
+        } catch {
+            if isCancellation(error) { return }
+            pendingDeleteCommentID = nil
             message = error.localizedDescription
         }
     }
@@ -789,12 +922,14 @@ struct PostDetailView: View {
             writable: false,
             isSamplePost: false,
             viewerLiked: nil,
+            viewerCanDelete: false,
             board: BoardMetaLite(slug: boardSlug, name: boardName ?? "게시판"),
             post: PostDetail(
                 id: post.id,
                 title: post.title,
                 content: previewContent,
                 authorName: post.authorName,
+                authorId: nil,
                 createdAt: post.createdAt,
                 timeLabel: post.timeLabel,
                 viewCount: post.viewCount,

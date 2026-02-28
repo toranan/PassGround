@@ -21,33 +21,6 @@ struct NotificationInboxView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Tabs (Mock)
-            HStack(spacing: 0) {
-                VStack(spacing: 8) {
-                    Text("새 소식")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Rectangle()
-                        .fill(Color.black)
-                        .frame(height: 2)
-                }
-                .frame(maxWidth: .infinity)
-                
-                VStack(spacing: 8) {
-                    Text("키워드")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(height: 2)
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .padding(.top, 10)
-            .background(Color.white)
-            
-            Divider()
-
             List {
                 if !message.isEmpty {
                     Text(message)

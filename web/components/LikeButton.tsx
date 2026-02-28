@@ -38,23 +38,37 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
             return;
         }
 
+        const previousLiked = liked;
+        const previousCount = count;
+        const optimisticLiked = !previousLiked;
+
+        setLiked(optimisticLiked);
+        setCount(Math.max(0, previousCount + (optimisticLiked ? 1 : -1)));
         setIsLoading(true);
         setMessage("");
         try {
             const res = await fetch("/api/posts/like", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postId, userId }),
+                body: JSON.stringify({ postId, userId, desiredLiked: optimisticLiked }),
             });
 
             const data = await res.json();
             if (res.ok) {
                 setLiked(data.liked);
-                setCount((prev) => (data.liked ? prev + 1 : prev - 1));
+                if (typeof data.likeCount === "number") {
+                    setCount(Math.max(0, data.likeCount));
+                } else {
+                    setCount((prev) => Math.max(0, prev + (data.liked ? 1 : -1)));
+                }
             } else {
+                setLiked(previousLiked);
+                setCount(previousCount);
                 setMessage(data?.error ?? "좋아요 처리에 실패했습니다.");
             }
         } catch {
+            setLiked(previousLiked);
+            setCount(previousCount);
             setMessage("좋아요 처리 중 오류가 발생했습니다.");
         } finally {
             setIsLoading(false);

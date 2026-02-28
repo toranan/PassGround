@@ -336,7 +336,7 @@ private struct ScheduleMonthGroup: Identifiable {
 
 private enum ScheduleBucket: String, CaseIterable, Identifiable {
     case calendar = "달력"
-    case official = "공식 일정"
+    case official = "주요 일정"
 
     var id: String { rawValue }
 }
@@ -365,7 +365,8 @@ struct ScheduleView: View {
     @State private var showingLocalScheduleSheet = false
     @State private var localScheduleDraft = LocalScheduleDraft()
     @State private var selectedBucket: ScheduleBucket = .calendar
-    @State private var selectedDate = Date()
+    @State private var selectedDate: Date? = Date()
+    @State private var visibleMonth = ScheduleView.startOfMonth(for: Date())
 
     private var completionKey: String {
         "schedule_completed_ids_\(exam.rawValue)"
@@ -437,9 +438,26 @@ struct ScheduleView: View {
     }
 
     private var calendarDayEntries: [ScheduleEntry] {
-        mergedEntries.filter {
+        guard let selectedDate else { return [] }
+        return mergedEntries.filter {
             Calendar.current.isDate($0.startsAt, inSameDayAs: selectedDate)
         }
+    }
+
+    private var scheduleDotDays: Set<Date> {
+        Set(mergedEntries.map { Calendar.current.startOfDay(for: $0.startsAt) })
+    }
+
+    private var calendarGridDates: [Date?] {
+        Self.monthGridDates(for: visibleMonth)
+    }
+
+    private var weekdaySymbols: [String] {
+        Self.weekdaySymbols()
+    }
+
+    private var canAddSchedule: Bool {
+        selectedDate != nil
     }
 
     private var headerEntries: [ScheduleEntry] {
@@ -476,7 +494,7 @@ struct ScheduleView: View {
                 }
 
                 if !loading && headerEntries.isEmpty {
-                    Text(selectedBucket == .official ? "등록된 공식 일정이 없습니다." : "등록된 일정이 없습니다.")
+                    Text(selectedBucket == .official ? "등록된 주요 일정이 없습니다." : "등록된 일정이 없습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -514,6 +532,13 @@ struct ScheduleView: View {
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 refreshIfStale()
+            }
+        }
+        .onChange(of: selectedDate) { newDate in
+            guard let newDate else { return }
+            let month = Self.startOfMonth(for: newDate)
+            if !Calendar.current.isDate(month, equalTo: visibleMonth, toGranularity: .month) {
+                visibleMonth = month
             }
         }
         .refreshable {
@@ -564,12 +589,98 @@ struct ScheduleView: View {
 
     private var calendarSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            DatePicker(
-                "날짜 선택",
-                selection: $selectedDate,
-                displayedComponents: [.date]
-            )
-            .datePickerStyle(.graphical)
+            VStack(spacing: 10) {
+                HStack {
+                    Button {
+                        moveMonth(by: -1)
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(schedulePrimary)
+                            .padding(6)
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+
+                    Text(Self.monthHeader.string(from: visibleMonth))
+                        .font(.headline.weight(.bold))
+
+                    Spacer()
+
+                    Button {
+                        moveMonth(by: 1)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(schedulePrimary)
+                            .padding(6)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(weekdaySymbols, id: \.self) { symbol in
+                        Text(symbol)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    ForEach(Array(calendarGridDates.enumerated()), id: \.offset) { _, date in
+                        if let date {
+                            let isSelected = selectedDate.map { Calendar.current.isDate(date, inSameDayAs: $0) } ?? false
+                            let isToday = Calendar.current.isDateInToday(date)
+                            let hasEvent = scheduleDotDays.contains(Calendar.current.startOfDay(for: date))
+
+                            Button {
+                                selectedDate = date
+                            } label: {
+                                VStack(spacing: 3) {
+                                    Text("\(Calendar.current.component(.day, from: date))")
+                                        .font(.subheadline.weight(isSelected ? .bold : .regular))
+                                        .foregroundStyle(isSelected ? .white : .primary)
+                                        .frame(maxWidth: .infinity)
+
+                                    Circle()
+                                        .fill(isSelected ? Color.white : schedulePrimary)
+                                        .frame(width: 5, height: 5)
+                                        .opacity(hasEvent ? 1 : 0)
+                                }
+                                .frame(height: 42)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    Group {
+                                        if isSelected {
+                                            RoundedRectangle(cornerRadius: 10).fill(schedulePrimary)
+                                        } else if isToday {
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(schedulePrimary.opacity(0.45), lineWidth: 1)
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 10).fill(Color.clear)
+                                        }
+                                    }
+                                )
+                                .overlay(alignment: .topTrailing) {
+                                    if isToday {
+                                        Text("today")
+                                            .font(.system(size: 8, weight: .semibold))
+                                            .foregroundStyle(isSelected ? Color.white.opacity(0.9) : schedulePrimary.opacity(0.88))
+                                            .padding(.top, 2)
+                                            .padding(.trailing, 4)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            Color.clear
+                                .frame(height: 42)
+                        }
+                    }
+                }
+            }
             .padding(12)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -581,7 +692,7 @@ struct ScheduleView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("\(Self.dayHeader.string(from: selectedDate)) 일정")
+                    Text(selectedDate.map { "\(Self.dayHeader.string(from: $0)) 일정" } ?? "날짜를 선택해줘")
                         .font(.headline)
                         .fontWeight(.bold)
                     Spacer()
@@ -596,10 +707,11 @@ struct ScheduleView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(schedulePrimary)
+                        .background(canAddSchedule ? schedulePrimary : Color(.systemGray4))
                         .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
+                    .disabled(!canAddSchedule)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -611,7 +723,12 @@ struct ScheduleView: View {
                 )
                 .padding(.horizontal, 16)
 
-                if calendarDayEntries.isEmpty {
+                if selectedDate == nil {
+                    Text("달력에서 날짜를 눌러줘.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                } else if calendarDayEntries.isEmpty {
                     Text("선택한 날짜의 일정이 없습니다.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -693,7 +810,7 @@ struct ScheduleView: View {
                     .clipShape(Capsule())
 
                 if item.isOfficial {
-                    Text("공식")
+                    Text("주요")
                         .font(.caption2)
                         .fontWeight(.bold)
                         .foregroundStyle(.white)
@@ -759,12 +876,14 @@ struct ScheduleView: View {
         errorMessage = ""
 
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
+        let cacheBust = forceRefresh ? String(Int(Date().timeIntervalSince1970)) : nil
 
         do {
             let response = try await api.fetchSchedules(
                 baseURL: config.baseURL,
                 exam: exam,
-                cachePolicy: cachePolicy
+                cachePolicy: cachePolicy,
+                cacheBust: cacheBust
             )
             officialSchedules = response.schedules
             communityStore.saveScheduleSnapshot(exam: exam, schedules: response.schedules)
@@ -842,6 +961,7 @@ struct ScheduleView: View {
     private func saveLocalSchedule() {
         let title = localScheduleDraft.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
+        guard let selectedDate else { return }
 
         let calendar = Calendar.current
         let day = calendar.dateComponents([.year, .month, .day], from: selectedDate)
@@ -874,6 +994,7 @@ struct ScheduleView: View {
     }
 
     private func beginAddLocalScheduleForSelectedDate() {
+        guard selectedDate != nil else { return }
         var draft = LocalScheduleDraft()
         let calendar = Calendar.current
         let nowTime = calendar.dateComponents([.hour, .minute], from: Date())
@@ -885,6 +1006,15 @@ struct ScheduleView: View {
         ) ?? Date()
         localScheduleDraft = draft
         showingLocalScheduleSheet = true
+    }
+
+    private func moveMonth(by offset: Int) {
+        guard let month = Calendar.current.date(byAdding: .month, value: offset, to: visibleMonth) else {
+            return
+        }
+        let newMonth = Self.startOfMonth(for: month)
+        visibleMonth = newMonth
+        selectedDate = nil
     }
 
     private func deleteLocalSchedule(id: String) {
@@ -912,7 +1042,7 @@ struct ScheduleView: View {
                         Text("선택 날짜")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.92))
-                        Text(Self.dayHeader.string(from: selectedDate))
+                        Text(Self.dayHeader.string(from: selectedDate ?? visibleMonth))
                             .font(.headline)
                             .fontWeight(.bold)
                             .foregroundStyle(.white)
@@ -1063,6 +1193,47 @@ struct ScheduleView: View {
         formatter.dateFormat = "M월 d일(E)"
         return formatter
     }()
+
+    private static func startOfMonth(for date: Date) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: date)
+        return calendar.date(from: components) ?? date
+    }
+
+    private static func monthGridDates(for month: Date) -> [Date?] {
+        let calendar = Calendar.current
+        let start = startOfMonth(for: month)
+        let firstWeekday = calendar.component(.weekday, from: start)
+        let leading = (firstWeekday - calendar.firstWeekday + 7) % 7
+        let dayCount = calendar.range(of: .day, in: .month, for: start)?.count ?? 30
+
+        var values: [Date?] = Array(repeating: nil, count: leading)
+        values.reserveCapacity(leading + dayCount + 6)
+
+        let base = calendar.dateComponents([.year, .month], from: start)
+        for day in 1...dayCount {
+            var components = base
+            components.day = day
+            values.append(calendar.date(from: components))
+        }
+
+        while values.count % 7 != 0 {
+            values.append(nil)
+        }
+        return values
+    }
+
+    private static func weekdaySymbols() -> [String] {
+        let calendar = Calendar.current
+        var symbols = calendar.veryShortStandaloneWeekdaySymbols
+        if symbols.isEmpty {
+            symbols = ["일", "월", "화", "수", "목", "금", "토"]
+        }
+
+        let firstIndex = max(0, min(symbols.count - 1, calendar.firstWeekday - 1))
+        if firstIndex == 0 { return symbols }
+        return Array(symbols[firstIndex...]) + Array(symbols[..<firstIndex])
+    }
 
     private static func parseDate(_ value: String?) -> Date? {
         guard let value, !value.isEmpty else { return nil }

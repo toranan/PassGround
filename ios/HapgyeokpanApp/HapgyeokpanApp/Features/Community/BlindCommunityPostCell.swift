@@ -6,28 +6,16 @@ struct BlindCommunityPostCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header: Author Info
-            HStack(spacing: 8) {
-                // Profile Circular Image Placeholder
-                Circle()
-                    .fill(Color(UIColor.systemGray5))
-                    .frame(width: 32, height: 32)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    )
-                
-                HStack(spacing: 6) {
-                    Text(post.authorName.isEmpty ? "익명" : post.authorName)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    
-                    Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                
+            HStack(spacing: 6) {
+                Text(post.authorName.isEmpty ? "익명" : post.authorName)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
+                Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
                 Spacer()
             }
             

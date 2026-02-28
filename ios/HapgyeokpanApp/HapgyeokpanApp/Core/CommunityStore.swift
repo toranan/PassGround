@@ -8,6 +8,8 @@ final class CommunityStore: ObservableObject {
     static let rankingFreshWindow: TimeInterval = 45
     static let detailFreshWindow: TimeInterval = 90
     static let scheduleFreshWindow: TimeInterval = 180
+    static let optimisticLikeWindow: TimeInterval = 600
+    static let likeSyncRetentionWindow: TimeInterval = 60 * 60 * 24 * 7
 
     struct PostsSnapshot: Codable {
         let posts: [PostSummary]
@@ -65,10 +67,28 @@ final class CommunityStore: ObservableObject {
     struct PostDetailSnapshot: Codable {
         let response: PostDetailResponse
         let updatedAt: Date
+        let viewerUserID: String?
     }
 
     struct ScheduleSnapshot: Codable {
         let schedules: [ExamScheduleItem]
+        let updatedAt: Date
+    }
+
+    struct LikeOverride: Codable {
+        let likeCount: Int
+        let viewerLiked: Bool?
+        let viewerUserID: String?
+        let updatedAt: Date
+    }
+
+    struct PendingLikeSync: Codable {
+        let postId: String
+        let desiredLiked: Bool
+        let viewerUserID: String
+        let revision: Int
+        let attemptCount: Int
+        let nextRetryAt: Date
         let updatedAt: Date
     }
 
@@ -79,6 +99,8 @@ final class CommunityStore: ObservableObject {
         let rankingSnapshots: [String: RankingSnapshot]?
         let detailSnapshots: [String: PostDetailSnapshot]?
         let scheduleSnapshots: [String: ScheduleSnapshot]?
+        let likeOverrides: [String: LikeOverride]?
+        let pendingLikeSyncs: [String: PendingLikeSync]?
     }
 
     private enum Keys {
@@ -91,6 +113,8 @@ final class CommunityStore: ObservableObject {
     private var rankingSnapshots: [String: RankingSnapshot] = [:]
     private var detailSnapshots: [String: PostDetailSnapshot] = [:]
     private var scheduleSnapshots: [String: ScheduleSnapshot] = [:]
+    private var likeOverrides: [String: LikeOverride] = [:]
+    private var pendingLikeSyncs: [String: PendingLikeSync] = [:]
 
     init() {
         restore()
@@ -100,8 +124,19 @@ final class CommunityStore: ObservableObject {
         "\(exam.rawValue)#\(board)"
     }
 
+    private func likeSyncKey(postId: String, viewerUserID: String) -> String {
+        "\(viewerUserID)#\(postId)"
+    }
+
     func postsSnapshot(exam: ExamSlug, board: String) -> PostsSnapshot? {
-        postSnapshots[key(exam: exam, board: board)]
+        pruneExpiredLikeOverridesIfNeeded()
+        guard let snapshot = postSnapshots[key(exam: exam, board: board)] else { return nil }
+        return PostsSnapshot(
+            posts: mergeLikeOverrides(posts: snapshot.posts),
+            nextCursor: snapshot.nextCursor,
+            hasMore: snapshot.hasMore,
+            updatedAt: snapshot.updatedAt
+        )
     }
 
     func boardsSnapshot(exam: ExamSlug) -> BoardsSnapshot? {
@@ -109,7 +144,14 @@ final class CommunityStore: ObservableObject {
     }
 
     func homeSnapshot(exam: ExamSlug) -> HomeSnapshot? {
-        homeSnapshots[exam.rawValue]
+        pruneExpiredLikeOverridesIfNeeded()
+        guard let snapshot = homeSnapshots[exam.rawValue] else { return nil }
+        return HomeSnapshot(
+            realtimePosts: mergeLikeOverrides(feedItems: snapshot.realtimePosts),
+            latestPosts: mergeLikeOverrides(feedItems: snapshot.latestPosts),
+            latestNewsPosts: mergeLikeOverrides(feedItems: snapshot.latestNewsPosts),
+            updatedAt: snapshot.updatedAt
+        )
     }
 
     func rankingSnapshot(exam: ExamSlug) -> RankingSnapshot? {
@@ -120,12 +162,21 @@ final class CommunityStore: ObservableObject {
         scheduleSnapshots[exam.rawValue]
     }
 
-    func postDetailSnapshot(postId: String) -> PostDetailSnapshot? {
-        detailSnapshots[postId]
+    func postDetailSnapshot(postId: String, viewerUserID: String?) -> PostDetailSnapshot? {
+        pruneExpiredLikeOverridesIfNeeded()
+        guard let snapshot = detailSnapshots[postId] else { return nil }
+        if let viewerUserID {
+            guard snapshot.viewerUserID == nil || snapshot.viewerUserID == viewerUserID else { return nil }
+        }
+        return PostDetailSnapshot(
+            response: mergeLikeOverrides(response: snapshot.response, viewerUserID: viewerUserID),
+            updatedAt: snapshot.updatedAt,
+            viewerUserID: snapshot.viewerUserID
+        )
     }
 
-    func hasFreshPostDetailSnapshot(postId: String) -> Bool {
-        guard let snapshot = detailSnapshots[postId] else { return false }
+    func hasFreshPostDetailSnapshot(postId: String, viewerUserID: String?) -> Bool {
+        guard let snapshot = postDetailSnapshot(postId: postId, viewerUserID: viewerUserID) else { return false }
         return Date().timeIntervalSince(snapshot.updatedAt) <= Self.detailFreshWindow
     }
 
@@ -136,8 +187,10 @@ final class CommunityStore: ObservableObject {
         nextCursor: String?,
         hasMore: Bool
     ) {
+        pruneExpiredLikeOverridesIfNeeded()
+        let resolvedPosts = mergeLikeOverrides(posts: posts)
         postSnapshots[key(exam: exam, board: board)] = PostsSnapshot(
-            posts: posts,
+            posts: resolvedPosts,
             nextCursor: nextCursor,
             hasMore: hasMore,
             updatedAt: Date()
@@ -164,10 +217,11 @@ final class CommunityStore: ObservableObject {
         latestPosts: [HomeFeedPost],
         latestNewsPosts: [HomeFeedPost]
     ) {
+        pruneExpiredLikeOverridesIfNeeded()
         homeSnapshots[exam.rawValue] = HomeSnapshot(
-            realtimePosts: realtimePosts,
-            latestPosts: latestPosts,
-            latestNewsPosts: latestNewsPosts,
+            realtimePosts: mergeLikeOverrides(feedItems: realtimePosts),
+            latestPosts: mergeLikeOverrides(feedItems: latestPosts),
+            latestNewsPosts: mergeLikeOverrides(feedItems: latestNewsPosts),
             updatedAt: Date()
         )
         persist()
@@ -186,9 +240,14 @@ final class CommunityStore: ObservableObject {
         persist()
     }
 
-    func savePostDetailSnapshot(postId: String, response: PostDetailResponse) {
+    func savePostDetailSnapshot(postId: String, response: PostDetailResponse, viewerUserID: String?) {
         guard !postId.isEmpty else { return }
-        detailSnapshots[postId] = PostDetailSnapshot(response: response, updatedAt: Date())
+        pruneExpiredLikeOverridesIfNeeded()
+        detailSnapshots[postId] = PostDetailSnapshot(
+            response: mergeLikeOverrides(response: response, viewerUserID: viewerUserID),
+            updatedAt: Date(),
+            viewerUserID: viewerUserID
+        )
         persist()
     }
 
@@ -197,11 +256,19 @@ final class CommunityStore: ObservableObject {
         persist()
     }
 
-    func updateLikeCount(postId: String, likeCount: Int) {
+    func updateLikeCount(postId: String, likeCount: Int, viewerLiked: Bool? = nil, viewerUserID: String? = nil) {
         guard !postId.isEmpty else { return }
 
+        pruneExpiredLikeOverridesIfNeeded()
         let safeLikeCount = max(0, likeCount)
-        var changed = false
+        let previousOverride = likeOverrides[postId]
+        likeOverrides[postId] = LikeOverride(
+            likeCount: safeLikeCount,
+            viewerLiked: viewerLiked ?? previousOverride?.viewerLiked,
+            viewerUserID: viewerUserID ?? previousOverride?.viewerUserID,
+            updatedAt: Date()
+        )
+        var changed = true
 
         for (snapshotKey, snapshot) in postSnapshots {
             var didChangeSnapshot = false
@@ -245,13 +312,15 @@ final class CommunityStore: ObservableObject {
                 ok: response.ok,
                 writable: response.writable,
                 isSamplePost: response.isSamplePost,
-                viewerLiked: response.viewerLiked,
+                viewerLiked: viewerLiked ?? response.viewerLiked,
+                viewerCanDelete: response.viewerCanDelete,
                 board: response.board,
                 post: PostDetail(
                     id: response.post.id,
                     title: response.post.title,
                     content: response.post.content,
                     authorName: response.post.authorName,
+                    authorId: response.post.authorId,
                     createdAt: response.post.createdAt,
                     timeLabel: response.post.timeLabel,
                     viewCount: response.post.viewCount,
@@ -260,13 +329,154 @@ final class CommunityStore: ObservableObject {
                 adoptedCommentId: response.adoptedCommentId,
                 comments: response.comments
             )
-            detailSnapshots[postId] = PostDetailSnapshot(response: updatedResponse, updatedAt: Date())
+            detailSnapshots[postId] = PostDetailSnapshot(
+                response: updatedResponse,
+                updatedAt: Date(),
+                viewerUserID: viewerUserID ?? snapshot.viewerUserID
+            )
             changed = true
         }
 
         if changed {
             persist()
         }
+    }
+
+    func enqueueLikeSync(postId: String, desiredLiked: Bool, viewerUserID: String) {
+        guard !postId.isEmpty, !viewerUserID.isEmpty else { return }
+        pruneExpiredLikeSyncsIfNeeded()
+
+        let key = likeSyncKey(postId: postId, viewerUserID: viewerUserID)
+        let previous = pendingLikeSyncs[key]
+        let nextRevision = (previous?.revision ?? 0) + 1
+        let now = Date()
+        pendingLikeSyncs[key] = PendingLikeSync(
+            postId: postId,
+            desiredLiked: desiredLiked,
+            viewerUserID: viewerUserID,
+            revision: nextRevision,
+            attemptCount: 0,
+            nextRetryAt: now,
+            updatedAt: now
+        )
+        persist()
+    }
+
+    func nextReadyLikeSync(viewerUserID: String, now: Date = Date()) -> PendingLikeSync? {
+        guard !viewerUserID.isEmpty else { return nil }
+        pruneExpiredLikeSyncsIfNeeded()
+        return pendingLikeSyncs.values
+            .filter { item in
+                item.viewerUserID == viewerUserID && item.nextRetryAt <= now
+            }
+            .sorted { lhs, rhs in
+                if lhs.updatedAt != rhs.updatedAt { return lhs.updatedAt < rhs.updatedAt }
+                return lhs.revision < rhs.revision
+            }
+            .first
+    }
+
+    @discardableResult
+    func completeLikeSync(
+        postId: String,
+        viewerUserID: String,
+        ackRevision: Int,
+        serverLiked: Bool,
+        serverLikeCount: Int?
+    ) -> Bool {
+        let key = likeSyncKey(postId: postId, viewerUserID: viewerUserID)
+        guard let current = pendingLikeSyncs[key] else { return false }
+        guard current.revision == ackRevision else { return false }
+
+        pendingLikeSyncs.removeValue(forKey: key)
+
+        if let resolvedLikeCount = resolvedLikeCountForAck(postId: postId, serverLikeCount: serverLikeCount) {
+            updateLikeCount(
+                postId: postId,
+                likeCount: resolvedLikeCount,
+                viewerLiked: serverLiked,
+                viewerUserID: viewerUserID
+            )
+        } else {
+            persist()
+        }
+        return true
+    }
+
+    func markLikeSyncFailure(postId: String, viewerUserID: String, ackRevision: Int) {
+        let key = likeSyncKey(postId: postId, viewerUserID: viewerUserID)
+        guard let current = pendingLikeSyncs[key] else { return }
+        guard current.revision == ackRevision else { return }
+
+        let nextAttempt = current.attemptCount + 1
+        let exponent = Double(min(6, nextAttempt))
+        let baseDelay = min(60.0, pow(2.0, exponent))
+        let jitter = Double.random(in: 0...0.35)
+        let delay = baseDelay + jitter
+        pendingLikeSyncs[key] = PendingLikeSync(
+            postId: current.postId,
+            desiredLiked: current.desiredLiked,
+            viewerUserID: current.viewerUserID,
+            revision: current.revision,
+            attemptCount: nextAttempt,
+            nextRetryAt: Date().addingTimeInterval(delay),
+            updatedAt: current.updatedAt
+        )
+        persist()
+    }
+
+    func mergeLikeOverrides(posts: [PostSummary]) -> [PostSummary] {
+        pruneExpiredLikeOverridesIfNeeded()
+        return posts.map { applyLikeOverride(to: $0) }
+    }
+
+    func mergeLikeOverrides(feedItems: [HomeFeedPost]) -> [HomeFeedPost] {
+        pruneExpiredLikeOverridesIfNeeded()
+        return feedItems.map { item in
+            HomeFeedPost(
+                id: item.id,
+                boardSlug: item.boardSlug,
+                boardName: item.boardName,
+                post: applyLikeOverride(to: item.post)
+            )
+        }
+    }
+
+    func mergeLikeOverrides(response: PostDetailResponse, viewerUserID: String?) -> PostDetailResponse {
+        pruneExpiredLikeOverridesIfNeeded()
+        guard let override = currentLikeOverride(postId: response.post.id) else {
+            return response
+        }
+
+        let resolvedViewerLiked: Bool?
+        if let overrideLiked = override.viewerLiked,
+           override.viewerUserID == nil || override.viewerUserID == viewerUserID {
+            resolvedViewerLiked = overrideLiked
+        } else {
+            resolvedViewerLiked = response.viewerLiked
+        }
+
+        return PostDetailResponse(
+            ok: response.ok,
+            writable: response.writable,
+            isSamplePost: response.isSamplePost,
+            viewerLiked: resolvedViewerLiked,
+            viewerCanDelete: response.viewerCanDelete,
+            board: response.board,
+            post: PostDetail(
+                id: response.post.id,
+                title: response.post.title,
+                content: response.post.content,
+                authorName: response.post.authorName,
+                authorId: response.post.authorId,
+                createdAt: response.post.createdAt,
+                timeLabel: response.post.timeLabel,
+                viewCount: response.post.viewCount,
+                likeCount: override.likeCount
+            ),
+            adoptedCommentId: response.adoptedCommentId,
+            comments: response.comments
+        )
     }
 
     func incrementCommentCount(postId: String, delta: Int = 1) {
@@ -344,6 +554,44 @@ final class CommunityStore: ObservableObject {
         )
     }
 
+    private func applyLikeOverride(to post: PostSummary) -> PostSummary {
+        guard let override = currentLikeOverride(postId: post.id) else { return post }
+        return update(post: post, likeCount: override.likeCount, commentDelta: 0)
+    }
+
+    private func currentLikeOverride(postId: String) -> LikeOverride? {
+        likeOverrides[postId]
+    }
+
+    private func resolvedLikeCountForAck(postId: String, serverLikeCount: Int?) -> Int? {
+        if let serverLikeCount {
+            return max(0, serverLikeCount)
+        }
+        if let override = likeOverrides[postId] {
+            return max(0, override.likeCount)
+        }
+        if let detailCount = detailSnapshots[postId]?.response.post.likeCount {
+            return max(0, detailCount)
+        }
+        return nil
+    }
+
+    private func pruneExpiredLikeOverridesIfNeeded() {
+        guard !likeOverrides.isEmpty else { return }
+        let now = Date()
+        likeOverrides = likeOverrides.filter { _, item in
+            now.timeIntervalSince(item.updatedAt) <= Self.optimisticLikeWindow
+        }
+    }
+
+    private func pruneExpiredLikeSyncsIfNeeded() {
+        guard !pendingLikeSyncs.isEmpty else { return }
+        let now = Date()
+        pendingLikeSyncs = pendingLikeSyncs.filter { _, item in
+            now.timeIntervalSince(item.updatedAt) <= Self.likeSyncRetentionWindow
+        }
+    }
+
     private func restore() {
         guard let data = UserDefaults.standard.data(forKey: Keys.persistedState) else {
             return
@@ -359,16 +607,24 @@ final class CommunityStore: ObservableObject {
         rankingSnapshots = state.rankingSnapshots ?? [:]
         detailSnapshots = state.detailSnapshots ?? [:]
         scheduleSnapshots = state.scheduleSnapshots ?? [:]
+        likeOverrides = state.likeOverrides ?? [:]
+        pendingLikeSyncs = state.pendingLikeSyncs ?? [:]
+        pruneExpiredLikeOverridesIfNeeded()
+        pruneExpiredLikeSyncsIfNeeded()
     }
 
     private func persist() {
+        pruneExpiredLikeOverridesIfNeeded()
+        pruneExpiredLikeSyncsIfNeeded()
         let state = PersistedState(
             postSnapshots: postSnapshots,
             boardSnapshots: boardSnapshots,
             homeSnapshots: homeSnapshots,
             rankingSnapshots: rankingSnapshots,
             detailSnapshots: detailSnapshots,
-            scheduleSnapshots: scheduleSnapshots
+            scheduleSnapshots: scheduleSnapshots,
+            likeOverrides: likeOverrides,
+            pendingLikeSyncs: pendingLikeSyncs
         )
         guard let data = try? JSONEncoder().encode(state) else { return }
         UserDefaults.standard.set(data, forKey: Keys.persistedState)

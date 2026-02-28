@@ -50,6 +50,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const postId = typeof body.postId === "string" ? body.postId.trim() : "";
   const userId = typeof body.userId === "string" ? body.userId.trim() : "";
+  const desiredLiked = typeof body.desiredLiked === "boolean" ? body.desiredLiked : null;
 
   if (!isValidUUID(postId)) {
     return NextResponse.json({ error: "게시글 정보가 올바르지 않습니다." }, { status: 400 });
@@ -91,6 +92,33 @@ export async function POST(request: Request) {
     );
   }
 
+  // Idempotent mode: apply explicit target state if provided.
+  if (desiredLiked !== null) {
+    if (desiredLiked) {
+      const { error } = await admin.from("post_likes").insert({
+        post_id: postId,
+        user_id: userId,
+      });
+
+      if (error && !isDuplicateLikeConflict(error)) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      const likeCount = await getLikeCount(admin, postId);
+      return NextResponse.json({ ok: true, liked: true, likeCount: likeCount || 1 });
+    }
+
+    const { error } = await admin
+      .from("post_likes")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true, liked: false, likeCount: await getLikeCount(admin, postId) });
+  }
+
+  // Backward-compatible toggle mode.
   const { data: existing } = await admin
     .from("post_likes")
     .select("post_id,user_id")

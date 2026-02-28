@@ -7,6 +7,7 @@ struct RankingView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
+    private let showCutoffTab = false
 
     @State private var exam: ExamSlug = .transfer
     @State private var currentTab: String = "강사 랭킹"
@@ -50,11 +51,13 @@ struct RankingView: View {
                                 .fontWeight(currentTab == "강사 랭킹" ? .bold : .medium)
                                 .foregroundColor(currentTab == "강사 랭킹" ? DesignSystem.primary : .gray)
                         }
-                        Button(action: { currentTab = "최신 커트라인" }) {
-                            Text("최신 커트라인")
-                                .font(.subheadline)
-                                .fontWeight(currentTab == "최신 커트라인" ? .bold : .medium)
-                                .foregroundColor(currentTab == "최신 커트라인" ? DesignSystem.primary : .gray)
+                        if showCutoffTab {
+                            Button(action: { currentTab = "최신 커트라인" }) {
+                                Text("최신 커트라인")
+                                    .font(.subheadline)
+                                    .fontWeight(currentTab == "최신 커트라인" ? .bold : .medium)
+                                    .foregroundColor(currentTab == "최신 커트라인" ? DesignSystem.primary : .gray)
+                            }
                         }
                         Spacer()
                     }
@@ -62,7 +65,7 @@ struct RankingView: View {
                 }
                 .padding(.top, 10)
                 
-                if loading && rankings.isEmpty && cutoffs.isEmpty {
+                if loading && rankings.isEmpty {
                     ProgressView("데이터를 불러오는 중...")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(40)
@@ -72,10 +75,10 @@ struct RankingView: View {
                         .font(.footnote)
                         .padding()
                 } else {
-                    if currentTab == "강사 랭킹" {
-                        rankingList
-                    } else {
+                    if showCutoffTab && currentTab == "최신 커트라인" {
                         cutoffList
+                    } else {
+                        rankingList
                     }
                 }
             }
@@ -159,11 +162,6 @@ struct RankingView: View {
                             }
                             
                             Spacer()
-                            
-                            Text("\(row.voteCount)표")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.primary)
                         }
                         .padding(.horizontal, DesignSystem.padding)
                         .padding(.vertical, 14)
@@ -424,6 +422,10 @@ struct RankingView: View {
 
             await refreshVoteStatusIfNeeded(forceRefresh: forceRefresh)
         } catch {
+            if APIClient.isCancellationError(error) {
+                loading = false
+                return
+            }
             errorMessage = error.localizedDescription
         }
 

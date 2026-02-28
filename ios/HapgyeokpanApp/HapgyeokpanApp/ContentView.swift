@@ -12,6 +12,8 @@ enum DesignSystem {
 }
 
 struct ContentView: View {
+    @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var session: SessionStore
     @State private var selectedTab: TabSelection = .home
     @State private var loadedTabs: Set<TabSelection> = [.home]
 
@@ -35,6 +37,17 @@ struct ContentView: View {
             MainBottomTabBar(selectedTab: $selectedTab)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .sheet(
+            isPresented: Binding(
+                get: { session.isLoggedIn && session.requiresNicknameSetup },
+                set: { _ in }
+            )
+        ) {
+            NicknameSetupSheet()
+                .environmentObject(config)
+                .environmentObject(session)
+                .interactiveDismissDisabled(true)
+        }
     }
 
     @ViewBuilder
@@ -99,6 +112,120 @@ struct MainBottomTabBar: View {
     }
 }
 
+private struct NicknameSetupSheet: View {
+    @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var session: SessionStore
+
+    private let api = APIClient()
+
+    @State private var nickname = ""
+    @State private var saving = false
+    @State private var errorMessage = ""
+
+    private var trimmedNickname: String {
+        nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var validationError: String? {
+        validateNickname(trimmedNickname)
+    }
+
+    private var canSubmit: Bool {
+        !saving && validationError == nil
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("처음 로그인했네! 닉네임 한 번만 정해줘.")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+
+                Text("커뮤니티와 AI도우미에서 사용할 이름이야.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                TextField("닉네임 입력 (2~20자)", text: $nickname)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                if let validationError {
+                    Text(validationError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else {
+                    Text("한글/영문/숫자/_/공백만 사용할 수 있어.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Button {
+                    Task { await submitNickname() }
+                } label: {
+                    Text(saving ? "저장 중..." : "닉네임 저장")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canSubmit)
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .navigationTitle("닉네임 설정")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if nickname.isEmpty {
+                    nickname = session.user?.nickname ?? ""
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func submitNickname() async {
+        guard canSubmit else { return }
+        guard let user = session.user else { return }
+        guard !session.accessToken.isEmpty else {
+            errorMessage = "로그인이 만료됐어. 다시 로그인해줘."
+            return
+        }
+
+        saving = true
+        errorMessage = ""
+        defer { saving = false }
+
+        do {
+            let updatedUser = try await api.updateNickname(
+                baseURL: config.baseURL,
+                accessToken: session.accessToken,
+                userId: user.id,
+                nickname: trimmedNickname
+            )
+            session.completeNicknameSetup(updatedUser: updatedUser)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func validateNickname(_ value: String) -> String? {
+        if value.count < 2 { return "닉네임은 2자 이상이어야 해." }
+        if value.count > 20 { return "닉네임은 20자 이하여야 해." }
+        let isValid = value.range(of: "^[a-zA-Z0-9가-힣_ ]+$", options: .regularExpression) != nil
+        if !isValid { return "특수문자는 사용할 수 없어." }
+        return nil
+    }
+}
+
 private struct ChatMessage: Identifiable {
     enum Role {
         case user
@@ -145,6 +272,7 @@ private struct ChatCoachView: View {
     @State private var sending = false
     @State private var pendingDeltaText = ""
     @State private var renderingDelta = false
+    @State private var sawStreamSignal = false
     @State private var submittingQuestion = false
     @State private var pendingQuestionSubmission: PendingQuestionSubmission?
     @State private var socialLoginProvider: String?
@@ -459,6 +587,7 @@ private struct ChatCoachView: View {
     private func sendMessage() async {
         let question = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !sending else { return }
+        let historyMessages = buildHistoryMessages(limit: 8)
         guard session.isLoggedIn else {
             messages.append(
                 ChatMessage(
@@ -469,6 +598,9 @@ private struct ChatCoachView: View {
             )
             return
         }
+
+        sending = true
+        defer { sending = false }
 
         await session.refreshIfNeeded(baseURL: config.baseURL)
         let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -487,9 +619,9 @@ private struct ChatCoachView: View {
 
         input = ""
         inputFocused = false
-        sending = true
         pendingDeltaText = ""
         renderingDelta = false
+        sawStreamSignal = false
         pendingQuestionSubmission = nil
         messages.append(ChatMessage(role: .user, text: question, subtitle: nil))
         let assistantId = UUID()
@@ -507,6 +639,7 @@ private struct ChatCoachView: View {
                 baseURL: config.baseURL,
                 exam: exam,
                 question: question,
+                messages: historyMessages,
                 accessToken: accessToken
             ) { event in
                 Task { @MainActor in
@@ -531,11 +664,28 @@ private struct ChatCoachView: View {
                 : nil
         } catch {
             let streamError = error
+            if sawStreamSignal {
+                if streamError.localizedDescription.contains("HTTP 401") {
+                    updateAssistantMessage(id: assistantId) { message in
+                        message.text = "로그인이 만료됐어. 마이페이지에서 다시 로그인해줘."
+                        message.subtitle = ChatCoachView.assistantName
+                    }
+                } else {
+                    updateAssistantMessage(id: assistantId) { message in
+                        if message.text == ChatCoachView.loadingMessage {
+                            message.text = "응답 도중 연결이 끊겼어. 한 번만 다시 보내줘."
+                        }
+                        message.subtitle = ChatCoachView.assistantName
+                    }
+                }
+                return
+            }
             do {
                 let fallback = try await api.chat(
                     baseURL: config.baseURL,
                     exam: exam,
                     question: question,
+                    messages: historyMessages,
                     accessToken: accessToken
                 )
                 await ensureMinimumLoadingVisible(since: requestStartedAt)
@@ -569,7 +719,26 @@ private struct ChatCoachView: View {
             }
         }
 
-        sending = false
+    }
+
+    private func buildHistoryMessages(limit: Int) -> [AIChatHistoryMessage] {
+        let history = messages.compactMap { message -> AIChatHistoryMessage? in
+            let text = message.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return nil }
+            switch message.role {
+            case .user:
+                return AIChatHistoryMessage(role: "user", text: text)
+            case .assistant:
+                if text == ChatCoachView.welcomeMessage || text == ChatCoachView.loadingMessage {
+                    return nil
+                }
+                return AIChatHistoryMessage(role: "assistant", text: text)
+            case .system:
+                return nil
+            }
+        }
+        if history.count <= limit { return history }
+        return Array(history.suffix(limit))
     }
 
     @MainActor
@@ -579,18 +748,7 @@ private struct ChatCoachView: View {
         defer { socialLoginProvider = nil }
 
         do {
-            let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
-            let authResponse: OAuthExchangeResponse
-            switch result {
-            case .pkcePayload(let response):
-                authResponse = response
-            case .implicitTokens(let access, let refresh):
-                authResponse = try await api.finalizeOAuth(
-                    baseURL: config.baseURL,
-                    accessToken: access,
-                    refreshToken: refresh
-                )
-            }
+            let authResponse = try await resolveCoachAuthResponse(provider: provider)
 
             session.save(user: authResponse.user, tokens: authResponse.session)
             messages.append(
@@ -611,6 +769,30 @@ private struct ChatCoachView: View {
         }
     }
 
+    private func resolveCoachAuthResponse(provider: String) async throws -> OAuthExchangeResponse {
+        if provider == "apple" {
+            let native = try await oauth.startAppleNative()
+            return try await api.finalizeAppleNative(
+                baseURL: config.baseURL,
+                idToken: native.idToken,
+                rawNonce: native.rawNonce,
+                authorizationCode: native.authorizationCode
+            )
+        }
+
+        let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
+        switch result {
+        case .pkcePayload(let response):
+            return response
+        case .implicitTokens(let access, let refresh):
+            return try await api.finalizeOAuth(
+                baseURL: config.baseURL,
+                accessToken: access,
+                refreshToken: refresh
+            )
+        }
+    }
+
     @MainActor
     private func ensureMinimumLoadingVisible(since startedAt: Date, minimumMs: Double = 450) async {
         let elapsedMs = Date().timeIntervalSince(startedAt) * 1000
@@ -623,6 +805,7 @@ private struct ChatCoachView: View {
 
     @MainActor
     private func handleStreamEvent(_ event: AIChatStreamEvent, assistantId: UUID) {
+        sawStreamSignal = true
         switch event {
         case .ready:
             break

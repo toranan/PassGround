@@ -180,6 +180,7 @@ struct PostDetailResponse: Codable {
     let writable: Bool
     let isSamplePost: Bool
     let viewerLiked: Bool?
+    let viewerCanDelete: Bool?
     let board: BoardMetaLite
     let post: PostDetail
     let adoptedCommentId: String?
@@ -196,6 +197,7 @@ struct PostDetail: Codable {
     let title: String
     let content: String
     let authorName: String
+    let authorId: String?
     let createdAt: String?
     let timeLabel: String
     let viewCount: Int
@@ -205,11 +207,13 @@ struct PostDetail: Codable {
 struct CommentItem: Codable, Identifiable {
     let id: String
     let authorName: String
+    let authorId: String?
     let content: String
     let createdAt: String
     let timeLabel: String
     let parentId: String?
     let verificationLevel: String
+    let canDelete: Bool?
 }
 
 struct GenericOKResponse: Codable {

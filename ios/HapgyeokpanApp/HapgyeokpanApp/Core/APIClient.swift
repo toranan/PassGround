@@ -391,20 +391,40 @@ final class APIClient {
         return try await fetchVoteStatus(baseURL: baseURL, exam: exam, accessToken: accessToken)
     }
 
-    func createPost(baseURL: URL, exam: ExamSlug, board: String, authorName: String, title: String, content: String) async throws {
+    func createPost(
+        baseURL: URL,
+        exam: ExamSlug,
+        board: String,
+        authorName: String,
+        title: String,
+        content: String,
+        userId: String? = nil,
+        accessToken: String? = nil
+    ) async throws {
         struct Body: Encodable {
             let examSlug: String
             let boardSlug: String
             let authorName: String
             let title: String
             let content: String
+            let userId: String?
+            let accessToken: String?
         }
 
         _ = try await request(
             baseURL: baseURL,
             path: "api/posts/create",
             method: "POST",
-            body: Body(examSlug: exam.rawValue, boardSlug: board, authorName: authorName, title: title, content: content)
+            body: Body(
+                examSlug: exam.rawValue,
+                boardSlug: board,
+                authorName: authorName,
+                title: title,
+                content: content,
+                userId: userId,
+                accessToken: accessToken
+            ),
+            accessToken: accessToken
         ) as GenericOKResponse
     }
 
@@ -440,6 +460,44 @@ final class APIClient {
             ),
             accessToken: accessToken
         ) as GenericOKResponse
+    }
+
+    func deletePost(baseURL: URL, postId: String, userId: String, accessToken: String) async throws {
+        struct Body: Encodable {
+            let postId: String
+            let userId: String
+            let accessToken: String
+        }
+
+        _ = try await request(
+            baseURL: baseURL,
+            path: "api/posts/delete",
+            method: "POST",
+            body: Body(postId: postId, userId: userId, accessToken: accessToken),
+            accessToken: accessToken
+        ) as GenericOKResponse
+    }
+
+    func deleteComment(baseURL: URL, commentId: String, userId: String, accessToken: String) async throws -> Int {
+        struct Body: Encodable {
+            let commentId: String
+            let userId: String
+            let accessToken: String
+        }
+
+        struct Response: Codable {
+            let ok: Bool
+            let deletedCount: Int?
+        }
+
+        let response: Response = try await request(
+            baseURL: baseURL,
+            path: "api/comments/delete",
+            method: "POST",
+            body: Body(commentId: commentId, userId: userId, accessToken: accessToken),
+            accessToken: accessToken
+        )
+        return max(1, response.deletedCount ?? 1)
     }
 
     func toggleLike(baseURL: URL, postId: String, userId: String, desiredLiked: Bool? = nil) async throws -> LikeResponse {

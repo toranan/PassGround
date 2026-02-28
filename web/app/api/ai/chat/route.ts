@@ -22,6 +22,7 @@ import {
 } from "@/lib/aiChatCache";
 import { recordAiChatObservation } from "@/lib/aiObservability";
 import { inferKnowledgeTags } from "@/lib/knowledgeTags";
+import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
 
 type Exam = "transfer" | "cpa";
 type IntentRoute = "fact" | "emotion" | "mixed";
@@ -57,6 +58,11 @@ type ResponseContext = {
   knowledgeItemId: string;
   similarity: number;
   preview: string;
+};
+
+type ChatHistoryMessage = {
+  role: "user" | "assistant";
+  text: string;
 };
 
 type ChatSuccessPayload = {
@@ -258,6 +264,36 @@ function compactText(value: string, maxLength: number): string {
   return sliced.trim();
 }
 
+function normalizeHistoryMessages(value: unknown, maxItems = 8): ChatHistoryMessage[] {
+  if (!Array.isArray(value)) return [];
+
+  const normalized: ChatHistoryMessage[] = [];
+  const tail = value.slice(-Math.max(0, maxItems));
+  for (const item of tail) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const role = normalizeText(row.role, 20).toLowerCase();
+    if (role !== "user" && role !== "assistant") continue;
+    const text = normalizeText(row.text ?? row.content, 500);
+    if (!text) continue;
+    normalized.push({ role, text });
+  }
+  return normalized;
+}
+
+function buildConversationHistoryText(historyMessages: ChatHistoryMessage[]): string {
+  if (!historyMessages.length) return "";
+  return historyMessages
+    .map((item, index) => `${index + 1}. ${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
+    .join("\n");
+}
+
+function buildQuestionWithHistory(question: string, historyMessages: ChatHistoryMessage[]): string {
+  if (!historyMessages.length) return question;
+  const historyText = buildConversationHistoryText(historyMessages);
+  return [`이전 대화 맥락:\n${historyText}`, `현재 질문:\n${question}`].join("\n\n");
+}
+
 function scoreAdviceRow(params: {
   row: CoachingAdviceRow;
   queryTags: string[];
@@ -363,8 +399,13 @@ async function classifyIntent(question: string): Promise<IntentRoute> {
   }
 }
 
-function buildEmotionPrompts(question: string, adviceSnippets: CoachingAdviceSnippet[]) {
+function buildEmotionPrompts(
+  question: string,
+  adviceSnippets: CoachingAdviceSnippet[],
+  historyMessages: ChatHistoryMessage[] = []
+) {
   const adviceReference = buildAdviceReferenceText(adviceSnippets);
+  const historyText = buildConversationHistoryText(historyMessages);
 
   return {
     systemPrompt: [
@@ -376,15 +417,23 @@ function buildEmotionPrompts(question: string, adviceSnippets: CoachingAdviceSni
       "질문이 불명확하면 짧게 한 번 되물어 맥락을 확인한다.",
       "과장이나 근거 없는 단정은 금지한다.",
     ].join("\n"),
-    userPrompt: [`학생 말: ${question}`, "", `조언 레퍼런스:\n${adviceReference}`].join("\n"),
+    userPrompt: [
+      historyText ? `이전 대화 맥락:\n${historyText}` : "",
+      `학생 말: ${question}`,
+      "",
+      `조언 레퍼런스:\n${adviceReference}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
   };
 }
 
 async function generateEmotionAnswer(
   question: string,
-  adviceSnippets: CoachingAdviceSnippet[] = []
+  adviceSnippets: CoachingAdviceSnippet[] = [],
+  historyMessages: ChatHistoryMessage[] = []
 ): Promise<string> {
-  const prompts = buildEmotionPrompts(question, adviceSnippets);
+  const prompts = buildEmotionPrompts(question, adviceSnippets, historyMessages);
   return generateText({
     ...prompts,
     temperature: 0.5,
@@ -394,9 +443,10 @@ async function generateEmotionAnswer(
 async function generateEmotionAnswerStream(
   question: string,
   adviceSnippets: CoachingAdviceSnippet[] = [],
+  historyMessages: ChatHistoryMessage[] = [],
   onDelta: (delta: string) => void
 ): Promise<string> {
-  const prompts = buildEmotionPrompts(question, adviceSnippets);
+  const prompts = buildEmotionPrompts(question, adviceSnippets, historyMessages);
   return streamText({
     ...prompts,
     temperature: 0.5,
@@ -453,7 +503,9 @@ async function runChatWorkflow(params: {
   const matchCount = typeof body.matchCount === "number" ? Math.max(1, Math.min(12, Math.floor(body.matchCount))) : 6;
   const intent = await classifyIntent(question);
   const isGeneralChat = isGeneralConversationQuestion(question);
-  const useCache = shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat;
+  const historyMessages = normalizeHistoryMessages(body.messages);
+  const useCache =
+    shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
   let advicePromise: Promise<CoachingAdviceSnippet[]> | null = null;
 
@@ -511,12 +563,12 @@ async function runChatWorkflow(params: {
     const generationStarted = Date.now();
     let answer = "";
     if (stream) {
-      answer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
+      answer = await generateEmotionAnswerStream(question, adviceSnippets, historyMessages, (delta) => {
         if (!delta) return;
         stream.onDelta(delta);
       });
     } else {
-      answer = await generateEmotionAnswer(question, adviceSnippets);
+      answer = await generateEmotionAnswer(question, adviceSnippets, historyMessages);
     }
     generationMs = Date.now() - generationStarted;
 
@@ -681,6 +733,7 @@ async function runChatWorkflow(params: {
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
   const useGeneralCoachingFallback = intent === "fact" && !hasEnoughContext && isGeneralChat;
+  const questionWithHistory = buildQuestionWithHistory(question, historyMessages);
 
   const generationStarted = Date.now();
   let route: FinalRoute = hasEnoughContext ? "grounded" : "fallback";
@@ -693,16 +746,16 @@ async function runChatWorkflow(params: {
     stream?.onMeta({ intent, route, cache: cacheStatus, adviceCount: adviceSnippets.length });
 
     let factAnswer = "";
-    if (stream) {
-      stream.onDelta("정보 답변:\n");
-      if (hasEnoughContext) {
-        factAnswer = await generateGroundedAnswerStream({
-          question,
-          contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
-          onDelta: (delta) => {
-            if (!delta) return;
-            stream.onDelta(delta);
-          },
+      if (stream) {
+        stream.onDelta("정보 답변:\n");
+        if (hasEnoughContext) {
+          factAnswer = await generateGroundedAnswerStream({
+            question: questionWithHistory,
+            contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
+            onDelta: (delta) => {
+              if (!delta) return;
+              stream.onDelta(delta);
+            },
         });
       } else {
         factAnswer = FACT_FALLBACK_ANSWER;
@@ -710,7 +763,7 @@ async function runChatWorkflow(params: {
       }
 
       stream.onDelta("\n\n코칭:\n");
-      const emotionAnswer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
+      const emotionAnswer = await generateEmotionAnswerStream(question, adviceSnippets, historyMessages, (delta) => {
         if (!delta) return;
         stream.onDelta(delta);
       });
@@ -718,12 +771,12 @@ async function runChatWorkflow(params: {
     } else {
       factAnswer = hasEnoughContext
         ? await generateGroundedAnswer({
-            question,
+            question: questionWithHistory,
             contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
           })
         : FACT_FALLBACK_ANSWER;
 
-      const emotionAnswer = await generateEmotionAnswer(question, adviceSnippets);
+      const emotionAnswer = await generateEmotionAnswer(question, adviceSnippets, historyMessages);
       answer = composeMixedAnswer(factAnswer, emotionAnswer);
     }
   } else {
@@ -739,12 +792,12 @@ async function runChatWorkflow(params: {
       });
 
       if (stream) {
-        answer = await generateEmotionAnswerStream(question, adviceSnippets, (delta) => {
+        answer = await generateEmotionAnswerStream(question, adviceSnippets, historyMessages, (delta) => {
           if (!delta) return;
           stream.onDelta(delta);
         });
       } else {
-        answer = await generateEmotionAnswer(question, adviceSnippets);
+        answer = await generateEmotionAnswer(question, adviceSnippets, historyMessages);
       }
     } else {
       route = hasEnoughContext ? "grounded" : "fallback";
@@ -753,7 +806,7 @@ async function runChatWorkflow(params: {
       if (stream) {
         if (hasEnoughContext) {
           answer = await generateGroundedAnswerStream({
-            question,
+            question: questionWithHistory,
             contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
             onDelta: (delta) => {
               if (!delta) return;
@@ -769,7 +822,7 @@ async function runChatWorkflow(params: {
       } else {
         answer = hasEnoughContext
           ? await generateGroundedAnswer({
-              question,
+              question: questionWithHistory,
               contexts: contexts.map((ctx) => ({ chunkText: ctx.chunkText, similarity: ctx.similarity })),
             })
           : FACT_FALLBACK_ANSWER;
@@ -843,12 +896,23 @@ async function runChatWorkflow(params: {
 }
 
 export async function POST(request: Request) {
+  const traceId = request.headers.get("x-request-id")?.trim() || crypto.randomUUID();
+  const accessToken = getBearerToken(request);
+  if (!accessToken || !(await getUserByAccessToken(accessToken))) {
+    return NextResponse.json(
+      {
+        error: "AI 도우미는 로그인 후 이용할 수 있습니다.",
+        traceId,
+      },
+      { status: 401 }
+    );
+  }
+
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const exam = resolveExam(normalizeText(body.exam, 20) || "transfer");
   const examError = validateExam(exam);
   if (examError) return examError;
 
-  const traceId = request.headers.get("x-request-id")?.trim() || crypto.randomUUID();
   const question = normalizeText(body.question, 1000);
   if (!question) {
     return NextResponse.json({ error: "질문(question)은 필수입니다.", traceId }, { status: 400 });

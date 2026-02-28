@@ -1,5 +1,7 @@
 import Foundation
 import AuthenticationServices
+import CryptoKit
+import Security
 import UIKit
 
 enum OAuthCoordinateResult {
@@ -7,8 +9,17 @@ enum OAuthCoordinateResult {
     case implicitTokens(accessToken: String, refreshToken: String)
 }
 
+struct AppleNativeAuthResult {
+    let idToken: String
+    let authorizationCode: String?
+    let rawNonce: String
+}
+
 final class OAuthCoordinator: NSObject {
     private var session: ASWebAuthenticationSession?
+    private var appleAuthController: ASAuthorizationController?
+    private var appleAuthContinuation: CheckedContinuation<AppleNativeAuthResult, Error>?
+    private var currentAppleNonce: String?
     private static let callbackNotification = Notification.Name("HapgyeokpanOAuthCallback")
 
     func start(provider: String, baseURL: URL) async throws -> OAuthCoordinateResult {
@@ -38,6 +49,29 @@ final class OAuthCoordinator: NSObject {
         NotificationCenter.default.post(name: callbackNotification, object: url)
     }
 
+    func startAppleNative() async throws -> AppleNativeAuthResult {
+        if appleAuthContinuation != nil {
+            throw APIClientError.server(message: "로그인이 진행 중이야. 잠시만 기다려줘.")
+        }
+
+        let rawNonce = Self.randomNonceString()
+        currentAppleNonce = rawNonce
+
+        return try await withCheckedThrowingContinuation { continuation in
+            appleAuthContinuation = continuation
+
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            request.requestedScopes = [.fullName, .email]
+            request.nonce = Self.sha256(rawNonce)
+
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            appleAuthController = controller
+            controller.performRequests()
+        }
+    }
+
     private static func isOAuthCallbackURL(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased(), scheme == "hapgyeokpan" else { return false }
         let host = url.host?.lowercased() ?? ""
@@ -48,6 +82,54 @@ final class OAuthCoordinator: NSObject {
     private static func isKakaoTalkInstalled() -> Bool {
         guard let url = URL(string: "kakaotalk://") else { return false }
         return UIApplication.shared.canOpenURL(url)
+    }
+
+    private static func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remainingLength = length
+
+        while remainingLength > 0 {
+            var randoms: [UInt8] = Array(repeating: 0, count: 16)
+            let errorCode = SecRandomCopyBytes(kSecRandomDefault, randoms.count, &randoms)
+            if errorCode != errSecSuccess {
+                return UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            }
+
+            randoms.forEach { random in
+                if remainingLength == 0 {
+                    return
+                }
+
+                if random < charset.count {
+                    result.append(charset[Int(random)])
+                    remainingLength -= 1
+                }
+            }
+        }
+
+        return result
+    }
+
+    private static func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private func completeAppleAuth(_ result: Result<AppleNativeAuthResult, Error>) {
+        guard let continuation = appleAuthContinuation else { return }
+        appleAuthContinuation = nil
+        appleAuthController = nil
+        currentAppleNonce = nil
+
+        switch result {
+        case .success(let value):
+            continuation.resume(returning: value)
+        case .failure(let error):
+            continuation.resume(throwing: error)
+        }
     }
 
     private func buildStartURL(provider: String, baseURL: URL) throws -> URL {
@@ -199,8 +281,67 @@ final class OAuthCoordinator: NSObject {
     }
 }
 
-extension OAuthCoordinator: ASWebAuthenticationPresentationContextProviding {
+extension OAuthCoordinator: ASAuthorizationControllerDelegate {
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            completeAppleAuth(.failure(APIClientError.server(message: "Apple 로그인 정보를 확인할 수 없어.")))
+            return
+        }
+        guard let nonce = currentAppleNonce else {
+            completeAppleAuth(.failure(APIClientError.server(message: "Apple 로그인 요청 상태가 유효하지 않아.")))
+            return
+        }
+        guard
+            let tokenData = credential.identityToken,
+            let idToken = String(data: tokenData, encoding: .utf8),
+            !idToken.isEmpty
+        else {
+            completeAppleAuth(.failure(APIClientError.server(message: "Apple ID 토큰을 받지 못했어.")))
+            return
+        }
+
+        let code: String?
+        if let authorizationCode = credential.authorizationCode {
+            code = String(data: authorizationCode, encoding: .utf8)
+        } else {
+            code = nil
+        }
+
+        completeAppleAuth(
+            .success(
+                AppleNativeAuthResult(
+                    idToken: idToken,
+                    authorizationCode: code,
+                    rawNonce: nonce
+                )
+            )
+        )
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        let nsError = error as NSError
+        if nsError.domain == ASAuthorizationError.errorDomain,
+           nsError.code == ASAuthorizationError.canceled.rawValue {
+            completeAppleAuth(.failure(APIClientError.server(message: "로그인을 취소했어.")))
+            return
+        }
+        completeAppleAuth(.failure(error))
+    }
+}
+
+extension OAuthCoordinator: ASWebAuthenticationPresentationContextProviding, ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first else {
+            return ASPresentationAnchor()
+        }
+        return window
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = scene.windows.first else {
             return ASPresentationAnchor()

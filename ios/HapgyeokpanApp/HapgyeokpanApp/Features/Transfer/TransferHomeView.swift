@@ -64,7 +64,7 @@ struct TransferHomeView: View {
         .background(Color.white) // 전체 배경을 흰색으로 변경 (블라인드 스타일)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .principal) {
                 Text("합격판")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
@@ -175,13 +175,11 @@ struct TransferHomeView: View {
             }
 
             if items.isEmpty {
-                if !loading {
-                    Text(emptyText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                }
+                Text(emptyText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
             } else {
                 let rows = Array(items.prefix(3))
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in

@@ -26,122 +26,148 @@ struct PostComposerView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var attachments: [LocalAttachment] = []
     @State private var showFileImporter = false
+    @State private var postAnonymous = true
 
     @State private var isSubmitting = false
     @State private var message = ""
 
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("익명 글쓰기")
-                        .font(.title3.bold())
-                    Text("작성자 실명은 노출되지 않습니다.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Text("작성자: \(session.displayName.isEmpty ? "익명" : session.displayName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(14)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            .listRowSeparator(.hidden)
-
-            Section("제목") {
-                TextField("제목을 입력하세요", text: $title)
-                    .textFieldStyle(.plain)
-                    .padding(10)
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .listRowSeparator(.hidden)
-
-            Section("내용") {
+        VStack(spacing: 0) {
+            // MARK: - 제목 영역
+            TextField("제목", text: $title)
+                .font(.system(size: 20, weight: .bold))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+            
+            Divider()
+                .padding(.horizontal, 16)
+            
+            // MARK: - 본문 영역
+            ZStack(alignment: .topLeading) {
                 TextEditor(text: $content)
-                    .frame(minHeight: 170)
-                    .padding(6)
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .listRowSeparator(.hidden)
-
-            Section("첨부") {
-                HStack {
-                    PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 5, matching: .images) {
-                        Label("이미지", systemImage: "photo")
-                    }
-
-                    Spacer()
-
-                    Button {
-                        showFileImporter = true
-                    } label: {
-                        Label("파일", systemImage: "paperclip")
-                    }
+                    .font(.system(size: 16))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .scrollContentBackground(.hidden)
+                    .background(Color(UIColor.systemBackground))
+                
+                if content.isEmpty {
+                    Text("내용을 입력하세요.\n\n욕설, 타인 비방, 광고 등의 내용은 제재 대상입니다.")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(UIColor.placeholderText))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 20)
+                        .allowsHitTesting(false)
                 }
-
-                if attachments.isEmpty {
-                    Text("첨부 없음")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(attachments) { item in
-                        HStack {
-                            Image(systemName: item.isImage ? "photo" : "doc")
-                                .foregroundStyle(.secondary)
-                            Text(item.filename)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                            Spacer()
-                            Button(role: .destructive) {
-                                attachments.removeAll { $0.id == item.id }
-                            } label: {
-                                Image(systemName: "trash")
+            }
+            
+            // MARK: - 상태 메시지 및 첨부파일 영역
+            if !message.isEmpty {
+                Text(message)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(message.contains("완료") ? .green : .red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+            
+            if !attachments.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(attachments) { item in
+                            HStack(spacing: 6) {
+                                Image(systemName: item.isImage ? "photo.fill" : "doc.fill")
+                                    .foregroundColor(Color(red: 0.05, green: 0.65, blue: 0.65))
+                                Text(item.filename)
+                                    .font(.system(size: 13))
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .frame(maxWidth: 120)
+                                Button {
+                                    attachments.removeAll { $0.id == item.id }
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(Color(UIColor.systemGray3))
+                                }
                             }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(8)
                         }
-                        .padding(.vertical, 2)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
                 }
             }
-            .listRowSeparator(.hidden)
-
-            Section {
-                if !message.isEmpty {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(message.contains("완료") ? .green : .red)
+            
+            // MARK: - 하단 첨부 툴바
+            HStack(spacing: 20) {
+                PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 5, matching: .images) {
+                    Image(systemName: "camera")
+                        .font(.system(size: 22))
+                        .foregroundColor(.gray)
                 }
-
+                
                 Button {
-                    Task { await submit() }
+                    showFileImporter = true
                 } label: {
-                    HStack {
-                        Spacer()
-                        if isSubmitting {
-                            ProgressView()
-                                .tint(.white)
-                        } else {
-                            Text("등록")
-                                .font(.headline)
-                        }
-                        Spacer()
+                    Image(systemName: "paperclip")
+                        .font(.system(size: 22))
+                        .foregroundColor(.gray)
+                }
+                
+                Spacer()
+                
+                Button {
+                    postAnonymous.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: postAnonymous ? "checkmark.square.fill" : "square")
+                        Text("익명")
+                            .font(.system(size: 13, weight: .bold))
                     }
-                    .padding(.vertical, 10)
-                    .foregroundStyle(.white)
-                    .background(Color.black, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundColor(postAnonymous ? .red : .gray)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(postAnonymous ? Color.red.opacity(0.1) : Color(UIColor.systemGray6))
+                    .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
-                .disabled(isSubmitting)
             }
-            .listRowSeparator(.hidden)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(UIColor.systemBackground))
+            .overlay(
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(Color(UIColor.systemGray5)),
+                alignment: .top
+            )
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .background(Color(UIColor.systemBackground))
         .navigationTitle("글쓰기")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("닫기") { dismiss() }
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark")
+                        .foregroundColor(.primary)
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    Task { await submit() }
+                }) {
+                    if isSubmitting {
+                        ProgressView().tint(.red)
+                    } else {
+                        Text("등록")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.red)
+                    }
+                }
+                .disabled(isSubmitting)
             }
         }
         .fileImporter(
@@ -230,9 +256,11 @@ struct PostComposerView: View {
                 baseURL: config.baseURL,
                 exam: exam,
                 board: boardSlug,
-                authorName: session.displayName.isEmpty ? "익명" : session.displayName,
+                authorName: postAnonymous ? "익명" : (session.displayName.isEmpty ? "익명" : session.displayName),
                 title: trimmedTitle,
-                content: finalContent
+                content: finalContent,
+                userId: session.user?.id,
+                accessToken: session.accessToken.isEmpty ? nil : session.accessToken
             )
 
             message = "등록 완료"

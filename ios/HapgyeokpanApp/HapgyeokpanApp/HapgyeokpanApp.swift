@@ -16,6 +16,9 @@ struct HapgyeokpanApp: App {
                 .task {
                     await session.refreshIfNeeded(baseURL: config.baseURL)
                 }
+                .onOpenURL { url in
+                    OAuthCoordinator.handleIncomingURL(url)
+                }
                 .onChange(of: scenePhase) { newPhase in
                     guard newPhase == .active else { return }
                     Task {

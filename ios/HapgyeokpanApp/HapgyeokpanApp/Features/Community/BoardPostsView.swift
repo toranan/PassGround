@@ -252,12 +252,13 @@ struct BoardPostsView: View {
                 cursor: cursor,
                 cachePolicy: cachePolicy
             )
+            let resolvedPosts = communityStore.mergeLikeOverrides(posts: response.posts)
 
             if reset {
-                posts = response.posts
+                posts = resolvedPosts
             } else {
                 var seen = Set(posts.map(\.id))
-                let appended = response.posts.filter { seen.insert($0.id).inserted }
+                let appended = resolvedPosts.filter { seen.insert($0.id).inserted }
                 posts.append(contentsOf: appended)
             }
 
@@ -291,7 +292,7 @@ struct BoardPostsView: View {
     private func prefetchPostDetail(postId: String) async {
         guard !postId.isEmpty else { return }
         guard !prefetchedPostIDs.contains(postId) else { return }
-        if communityStore.hasFreshPostDetailSnapshot(postId: postId) {
+        if communityStore.hasFreshPostDetailSnapshot(postId: postId, viewerUserID: session.user?.id) {
             prefetchedPostIDs.insert(postId)
             return
         }
@@ -306,7 +307,11 @@ struct BoardPostsView: View {
                 userId: session.user?.id,
                 cachePolicy: .useProtocolCachePolicy
             )
-            communityStore.savePostDetailSnapshot(postId: postId, response: response)
+            communityStore.savePostDetailSnapshot(
+                postId: postId,
+                response: response,
+                viewerUserID: session.user?.id
+            )
         } catch {
             if isCancellation(error) { return }
             prefetchedPostIDs.remove(postId)
@@ -325,28 +330,16 @@ struct BlindCommunityPostCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header: Author Info
-            HStack(spacing: 8) {
-                // Profile Circular Image Placeholder
-                Circle()
-                    .fill(Color(UIColor.systemGray5))
-                    .frame(width: 32, height: 32)
-                    .overlay(
-                        Image(systemName: "building.2.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    )
-                
-                HStack(spacing: 6) {
-                    Text(post.authorName.isEmpty ? "익명" : post.authorName)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    
-                    Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                
+            HStack(spacing: 6) {
+                Text(post.authorName.isEmpty ? "익명" : post.authorName)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
+                Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
                 Spacer()
             }
             

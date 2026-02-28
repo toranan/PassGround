@@ -32,7 +32,6 @@ struct MyPageView: View {
                     loginSection
                 } else {
                     profileSection
-                    pointLedgerSection
                     accountSection
                 }
 
