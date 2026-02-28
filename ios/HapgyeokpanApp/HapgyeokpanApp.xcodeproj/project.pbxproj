@@ -3,24 +3,28 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		089286E2ECE4D1BAC9C094B1 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8D0AC55233008BA694E011 /* Models.swift */; };
-		11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */; };
 		0B389776DBB49CEB3A617D1B /* PostComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31313D0DF316F91ECFBE2254 /* PostComposerView.swift */; };
 		0CD059FECFCCB9A9B09FF2B3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43C152F62AC9968D801AD617 /* Foundation.framework */; };
+		11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */; };
 		2B0AA3267531B8E31EED972E /* MyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */; };
+		8F7E6D5C4B3A291807F6E5D4 /* NotificationInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */; };
 		2FDB8344C85BA2B6419A09F5 /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33414E8FBF83CC9F9DFCD720 /* AdminView.swift */; };
 		3351FCF8249F2D9888B3EA4B /* HapgyeokpanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31012DDE772E5E483D5884E6 /* HapgyeokpanApp.swift */; };
 		45B73BE0E2005DF0EBB8661E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B22966285FCE7E36E84F2A1F /* ContentView.swift */; };
 		53EFD52104134A634E2BC8CB /* BoardPostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC7D26A83A3817973C4908D /* BoardPostsView.swift */; };
 		581DBD63FF7A372749E8999E /* CommunityBoardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F45AE5C5691415941846C /* CommunityBoardsView.swift */; };
-			7E0743373F7042B6B438C323 /* VerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655A97B3B4369AB44FAD351C /* VerificationView.swift */; };
-			AAF3AA40B747C28B9BD4DC66 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */; };
-			B1E2D3C4F5061728394A5B6C /* CommunityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */; };
-			C45902D37A639C0DE5F9E855 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */; };
+		7E0743373F7042B6B438C323 /* VerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655A97B3B4369AB44FAD351C /* VerificationView.swift */; };
+		A1B2C3D4E5F60718293A4B01 /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B11 /* KakaoSDKAuth */; };
+		A1B2C3D4E5F60718293A4B02 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B12 /* KakaoSDKUser */; };
+		A1B2C3D4E5F60718293A4B03 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B13 /* KakaoSDKCommon */; };
+		AAF3AA40B747C28B9BD4DC66 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */; };
+		B1E2D3C4F5061728394A5B6C /* CommunityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */; };
+		C45902D37A639C0DE5F9E855 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */; };
 		CBAC4969589A9317D0469E72 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618E04F7504958DD01651353 /* RankingView.swift */; };
 		DF4AC2457AD83CB2A7F8D7E7 /* TransferHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C688B0187E4CAC2D85727C /* TransferHomeView.swift */; };
 		E51524C078490014CA59793A /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA708A973876B310F7ACE63 /* PostDetailView.swift */; };
@@ -32,8 +36,9 @@
 /* Begin PBXFileReference section */
 		08130C8B82395094D9E53592 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "hapgom-avatar.png"; sourceTree = "<group>"; };
 		1DA708A973876B310F7ACE63 /* PostDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
+		22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "hapgom-avatar.png"; sourceTree = "<group>"; };
+		2A9820252F52FB2A00F9DFC5 /* HapgyeokpanApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HapgyeokpanApp.entitlements; sourceTree = "<group>"; };
 		31012DDE772E5E483D5884E6 /* HapgyeokpanApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HapgyeokpanApp.swift; sourceTree = "<group>"; };
 		31313D0DF316F91ECFBE2254 /* PostComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PostComposerView.swift; sourceTree = "<group>"; };
 		33414E8FBF83CC9F9DFCD720 /* AdminView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdminView.swift; sourceTree = "<group>"; };
@@ -41,16 +46,17 @@
 		43C152F62AC9968D801AD617 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		443D81B34F1CB67128FB0129 /* HapgyeokpanApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HapgyeokpanApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyPageView.swift; sourceTree = "<group>"; };
+		9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationInboxView.swift; sourceTree = "<group>"; };
 		53C688B0187E4CAC2D85727C /* TransferHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TransferHomeView.swift; sourceTree = "<group>"; };
 		573AC60F7F1B320A140819AB /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		618E04F7504958DD01651353 /* RankingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
 		655A97B3B4369AB44FAD351C /* VerificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VerificationView.swift; sourceTree = "<group>"; };
 		7B9F45AE5C5691415941846C /* CommunityBoardsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommunityBoardsView.swift; sourceTree = "<group>"; };
-			7E53395B5A9F844647A24118 /* TimerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
-			A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
-			B22966285FCE7E36E84F2A1F /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-			C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommunityStore.swift; sourceTree = "<group>"; };
+		7E53395B5A9F844647A24118 /* TimerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
+		A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		B22966285FCE7E36E84F2A1F /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BDC7D26A83A3817973C4908D /* BoardPostsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoardPostsView.swift; sourceTree = "<group>"; };
+		C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommunityStore.swift; sourceTree = "<group>"; };
 		D1E40B5A80DB3D13D4CA6192 /* OAuthCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OAuthCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -60,6 +66,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				0CD059FECFCCB9A9B09FF2B3 /* Foundation.framework in Frameworks */,
+				A1B2C3D4E5F60718293A4B01 /* KakaoSDKAuth in Frameworks */,
+				A1B2C3D4E5F60718293A4B02 /* KakaoSDKUser in Frameworks */,
+				A1B2C3D4E5F60718293A4B03 /* KakaoSDKCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +125,7 @@
 		724E396958C658CF21E05B45 /* HapgyeokpanApp */ = {
 			isa = PBXGroup;
 			children = (
+				2A9820252F52FB2A00F9DFC5 /* HapgyeokpanApp.entitlements */,
 				F21426E38FD761214833EA18 /* Core */,
 				2514F372F42A2D62E460FB5F /* Features */,
 				733F89154BC02BBB422C68EB /* Resources */,
@@ -146,6 +156,7 @@
 			isa = PBXGroup;
 			children = (
 				4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */,
+				9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */,
 			);
 			path = MyPage;
 			sourceTree = "<group>";
@@ -193,16 +204,16 @@
 			path = Transfer;
 			sourceTree = "<group>";
 		};
-			F21426E38FD761214833EA18 /* Core */ = {
-				isa = PBXGroup;
-				children = (
-					A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */,
-					C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */,
-					3B8D0AC55233008BA694E011 /* Models.swift */,
-					573AC60F7F1B320A140819AB /* SessionStore.swift */,
-					D1E40B5A80DB3D13D4CA6192 /* OAuthCoordinator.swift */,
-					10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */,
-				);
+		F21426E38FD761214833EA18 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */,
+				C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */,
+				3B8D0AC55233008BA694E011 /* Models.swift */,
+				573AC60F7F1B320A140819AB /* SessionStore.swift */,
+				D1E40B5A80DB3D13D4CA6192 /* OAuthCoordinator.swift */,
+				10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */,
+			);
 			path = Core;
 			sourceTree = "<group>";
 		};
@@ -222,6 +233,11 @@
 			dependencies = (
 			);
 			name = HapgyeokpanApp;
+			packageProductDependencies = (
+				A1B2C3D4E5F60718293A4B11 /* KakaoSDKAuth */,
+				A1B2C3D4E5F60718293A4B12 /* KakaoSDKUser */,
+				A1B2C3D4E5F60718293A4B13 /* KakaoSDKCommon */,
+			);
 			productName = HapgyeokpanApp;
 			productReference = 443D81B34F1CB67128FB0129 /* HapgyeokpanApp.app */;
 			productType = "com.apple.product-type.application";
@@ -250,6 +266,9 @@
 				Base,
 			);
 			mainGroup = 0A0F423959680AE98B0F7945;
+			packageReferences = (
+				A1B2C3D4E5F60718293A4B10 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
+			);
 			productRefGroup = 9D3D23BE6E0E5FDF33A83ABC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -276,10 +295,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				3351FCF8249F2D9888B3EA4B /* HapgyeokpanApp.swift in Sources */,
-					45B73BE0E2005DF0EBB8661E /* ContentView.swift in Sources */,
-					AAF3AA40B747C28B9BD4DC66 /* AppConfig.swift in Sources */,
-					B1E2D3C4F5061728394A5B6C /* CommunityStore.swift in Sources */,
-					089286E2ECE4D1BAC9C094B1 /* Models.swift in Sources */,
+				45B73BE0E2005DF0EBB8661E /* ContentView.swift in Sources */,
+				AAF3AA40B747C28B9BD4DC66 /* AppConfig.swift in Sources */,
+				B1E2D3C4F5061728394A5B6C /* CommunityStore.swift in Sources */,
+				089286E2ECE4D1BAC9C094B1 /* Models.swift in Sources */,
 				F3D334F1D10C844BE25D4E95 /* SessionStore.swift in Sources */,
 				FF8155C6E3495DD411865AD9 /* OAuthCoordinator.swift in Sources */,
 				C45902D37A639C0DE5F9E855 /* APIClient.swift in Sources */,
@@ -291,6 +310,7 @@
 				CBAC4969589A9317D0469E72 /* RankingView.swift in Sources */,
 				FBD62EE1F6404E52A18BF2CC /* TimerView.swift in Sources */,
 				2B0AA3267531B8E31EED972E /* MyPageView.swift in Sources */,
+				8F7E6D5C4B3A291807F6E5D4 /* NotificationInboxView.swift in Sources */,
 				7E0743373F7042B6B438C323 /* VerificationView.swift in Sources */,
 				2FDB8344C85BA2B6419A09F5 /* AdminView.swift in Sources */,
 			);
@@ -305,11 +325,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = HapgyeokpanApp/HapgyeokpanApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YA6CU6MN98;
 				INFOPLIST_FILE = HapgyeokpanApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				KAKAO_NATIVE_APP_KEY = 4b04c0a03806569a0d26b59c8fd303f2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = kr.hapgyeokpan.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -367,7 +392,8 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -439,11 +465,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = HapgyeokpanApp/HapgyeokpanApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YA6CU6MN98;
 				INFOPLIST_FILE = HapgyeokpanApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				KAKAO_NATIVE_APP_KEY = 4b04c0a03806569a0d26b59c8fd303f2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = kr.hapgyeokpan.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -474,6 +505,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1B2C3D4E5F60718293A4B10 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kakao/kakao-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.24.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D4E5F60718293A4B11 /* KakaoSDKAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D4E5F60718293A4B10 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKAuth;
+		};
+		A1B2C3D4E5F60718293A4B12 /* KakaoSDKUser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D4E5F60718293A4B10 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKUser;
+		};
+		A1B2C3D4E5F60718293A4B13 /* KakaoSDKCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D4E5F60718293A4B10 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
+			productName = KakaoSDKCommon;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E6A03A49DF180F825AFA57DE /* Project object */;
 }

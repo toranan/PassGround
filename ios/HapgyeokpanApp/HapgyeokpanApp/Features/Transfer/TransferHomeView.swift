@@ -20,6 +20,8 @@ struct TransferHomeView: View {
     @State private var didBootstrap = false
     @State private var lastAutoRefreshAt = Date.distantPast
     @State private var prefetchedPostIDs: Set<String> = []
+    @State private var unreadCount = 0
+
 
     var body: some View {
         ScrollView {
@@ -27,12 +29,6 @@ struct TransferHomeView: View {
                 // 상단 배너 영역 (블라인드 느낌의 프로모션 배너)
                 bannerSection
                     .padding(.bottom, 8)
-
-                if loading {
-                    ProgressView("피드 불러오는 중...")
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(30)
-                }
 
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
@@ -68,10 +64,27 @@ struct TransferHomeView: View {
         .background(Color.white) // 전체 배경을 흰색으로 변경 (블라인드 스타일)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) {
+            ToolbarItem(placement: .topBarLeading) {
                 Text("합격판")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(destination: NotificationInboxView()) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "bell")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.primary)
+                        
+                        if unreadCount > 0 {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                                .offset(x: 2, y: -2)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
             }
         }
         .task {
@@ -162,11 +175,13 @@ struct TransferHomeView: View {
             }
 
             if items.isEmpty {
-                Text(emptyText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                if !loading {
+                    Text(emptyText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                }
             } else {
                 let rows = Array(items.prefix(3))
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
@@ -228,15 +243,15 @@ struct TransferHomeView: View {
                     exam: exam,
                     cachePolicy: cachePolicy
                 )
-                latestNewsPosts = response.latestNewsPosts
-                realtimePosts = response.realtimePosts
-                latestPosts = response.latestPosts
+                latestNewsPosts = communityStore.mergeLikeOverrides(feedItems: response.latestNewsPosts)
+                realtimePosts = communityStore.mergeLikeOverrides(feedItems: response.realtimePosts)
+                latestPosts = communityStore.mergeLikeOverrides(feedItems: response.latestPosts)
             } catch {
                 guard shouldFallbackToLegacyHomeAPI(error) else { throw error }
                 let legacy = try await loadLegacyHomeFeed(cachePolicy: cachePolicy)
-                latestNewsPosts = legacy.latestNewsPosts
-                realtimePosts = legacy.realtimePosts
-                latestPosts = legacy.latestPosts
+                latestNewsPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestNewsPosts)
+                realtimePosts = communityStore.mergeLikeOverrides(feedItems: legacy.realtimePosts)
+                latestPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestPosts)
             }
 
             communityStore.saveHomeSnapshot(
@@ -245,6 +260,7 @@ struct TransferHomeView: View {
                 latestPosts: latestPosts,
                 latestNewsPosts: latestNewsPosts
             )
+            await refreshUnreadCount()
         } catch {
             if isCancellation(error) {
                 loading = false
@@ -361,7 +377,7 @@ struct TransferHomeView: View {
         let postId = item.post.id
         guard !postId.isEmpty else { return }
         guard !prefetchedPostIDs.contains(postId) else { return }
-        if communityStore.hasFreshPostDetailSnapshot(postId: postId) {
+        if communityStore.hasFreshPostDetailSnapshot(postId: postId, viewerUserID: session.user?.id) {
             prefetchedPostIDs.insert(postId)
             return
         }
@@ -376,10 +392,38 @@ struct TransferHomeView: View {
                 userId: session.user?.id,
                 cachePolicy: .useProtocolCachePolicy
             )
-            communityStore.savePostDetailSnapshot(postId: postId, response: response)
+            communityStore.savePostDetailSnapshot(
+                postId: postId,
+                response: response,
+                viewerUserID: session.user?.id
+            )
         } catch {
             if isCancellation(error) { return }
             prefetchedPostIDs.remove(postId)
+        }
+    }
+
+    @MainActor
+    private func refreshUnreadCount() async {
+        guard let userId = session.user?.id else {
+            unreadCount = 0
+            return
+        }
+        guard !session.accessToken.isEmpty else {
+            unreadCount = 0
+            return
+        }
+
+        do {
+            let response = try await api.fetchNotifications(
+                baseURL: config.baseURL,
+                userId: userId,
+                accessToken: session.accessToken,
+                limit: 1
+            )
+            unreadCount = response.unreadCount
+        } catch {
+            if APIClient.isCancellationError(error) { return }
         }
     }
 

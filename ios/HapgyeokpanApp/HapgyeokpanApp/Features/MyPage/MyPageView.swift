@@ -13,6 +13,7 @@ struct MyPageView: View {
     @State private var loading = false
 
     @State private var adminState: AdminMeResponse?
+    @State private var unreadNotificationCount = 0
 
     var body: some View {
         ScrollView {
@@ -256,12 +257,12 @@ struct MyPageView: View {
                 }
                 .buttonStyle(.plain)
                 
-                Divider().padding(.leading, DesignSystem.padding + 32)
                 
                 Button(action: {
                     session.clear()
                     pointsData = nil
                     adminState = nil
+                    unreadNotificationCount = 0
                 }) {
                     HStack {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -300,10 +301,35 @@ struct MyPageView: View {
 
             pointsData = try await pointsTask
             adminState = try? await adminTask
+            await refreshUnreadNotificationCount()
         } catch {
             message = error.localizedDescription
         }
         loading = false
+    }
+
+    @MainActor
+    private func refreshUnreadNotificationCount() async {
+        guard let userId = session.user?.id else {
+            unreadNotificationCount = 0
+            return
+        }
+        guard !session.accessToken.isEmpty else {
+            unreadNotificationCount = 0
+            return
+        }
+
+        do {
+            let response = try await api.fetchNotifications(
+                baseURL: config.baseURL,
+                userId: userId,
+                accessToken: session.accessToken,
+                limit: 1
+            )
+            unreadNotificationCount = response.unreadCount
+        } catch {
+            if APIClient.isCancellationError(error) { return }
+        }
     }
 
     private func login(provider: String) async {
@@ -311,19 +337,7 @@ struct MyPageView: View {
         message = ""
 
         do {
-            let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
-            let authResponse: OAuthExchangeResponse
-            
-            switch result {
-            case .pkcePayload(let response):
-                authResponse = response
-            case .implicitTokens(let access, let refresh):
-                authResponse = try await api.finalizeOAuth(
-                    baseURL: config.baseURL,
-                    accessToken: access,
-                    refreshToken: refresh
-                )
-            }
+            let authResponse = try await resolveAuthResponse(provider: provider)
             
             session.save(user: authResponse.user, tokens: authResponse.session)
             nicknameInput = authResponse.user.nickname
@@ -336,6 +350,30 @@ struct MyPageView: View {
         }
 
         loading = false
+    }
+
+    private func resolveAuthResponse(provider: String) async throws -> OAuthExchangeResponse {
+        if provider == "apple" {
+            let native = try await oauth.startAppleNative()
+            return try await api.finalizeAppleNative(
+                baseURL: config.baseURL,
+                idToken: native.idToken,
+                rawNonce: native.rawNonce,
+                authorizationCode: native.authorizationCode
+            )
+        }
+
+        let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
+        switch result {
+        case .pkcePayload(let response):
+            return response
+        case .implicitTokens(let access, let refresh):
+            return try await api.finalizeOAuth(
+                baseURL: config.baseURL,
+                accessToken: access,
+                refreshToken: refresh
+            )
+        }
     }
 
     private func saveNickname() async {

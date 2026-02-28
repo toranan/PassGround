@@ -4,7 +4,6 @@ private let communityPrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 
 struct CommunityBoardsView: View {
     @EnvironmentObject private var config: AppConfig
-    @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var communityStore: CommunityStore
     @Environment(\.scenePhase) private var scenePhase
 
@@ -17,9 +16,6 @@ struct CommunityBoardsView: View {
     @State private var message = ""
     @State private var didBootstrap = false
     @State private var lastAutoRefreshAt = Date.distantPast
-    @State private var showingNotifications = false
-    @State private var unreadNotificationCount = 0
-    @State private var lastNotificationRefreshAt = Date.distantPast
 
     var body: some View {
         ScrollView {
@@ -45,11 +41,6 @@ struct CommunityBoardsView: View {
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                if session.isLoggedIn {
-                    notificationButton
-                }
-            }
         }
         .task {
             guard !didBootstrap else { return }
@@ -58,30 +49,17 @@ struct CommunityBoardsView: View {
             if !fresh {
                 await loadBoards()
             }
-            await loadUnreadNotificationCount(forceRefresh: true)
         }
         .onAppear {
             refreshBoardsIfStale()
-            refreshNotificationBadgeIfStale()
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 refreshBoardsIfStale()
-                refreshNotificationBadgeIfStale()
             }
         }
         .refreshable {
             await loadBoards(forceRefresh: true)
-            await loadUnreadNotificationCount(forceRefresh: true)
-        }
-        .sheet(isPresented: $showingNotifications, onDismiss: {
-            Task { await loadUnreadNotificationCount(forceRefresh: true) }
-        }) {
-            NavigationStack {
-                CommunityNotificationsSheet()
-                    .environmentObject(config)
-                    .environmentObject(session)
-            }
         }
     }
 
@@ -111,30 +89,6 @@ struct CommunityBoardsView: View {
                 }
             }
         }
-    }
-
-    private var notificationButton: some View {
-        Button {
-            showingNotifications = true
-        } label: {
-            ZStack(alignment: .topTrailing) {
-                Image(systemName: "bell")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                if unreadNotificationCount > 0 {
-                    Text(unreadNotificationCount > 99 ? "99+" : "\(unreadNotificationCount)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, unreadNotificationCount > 9 ? 5 : 4)
-                        .padding(.vertical, 1)
-                        .background(Color.red, in: Capsule())
-                        .offset(x: 10, y: -8)
-                }
-            }
-            .frame(width: 30, height: 30)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("알림")
     }
 
     private func boardRow(_ board: BoardInfo) -> some View {
@@ -223,48 +177,6 @@ struct CommunityBoardsView: View {
         Task { await loadBoards() }
     }
 
-    private func refreshNotificationBadgeIfStale() {
-        guard session.isLoggedIn else {
-            unreadNotificationCount = 0
-            return
-        }
-
-        let now = Date()
-        guard now.timeIntervalSince(lastNotificationRefreshAt) > 8 else { return }
-        Task { await loadUnreadNotificationCount() }
-    }
-
-    private func loadUnreadNotificationCount(forceRefresh: Bool = false) async {
-        guard let userID = session.user?.id else {
-            unreadNotificationCount = 0
-            return
-        }
-        guard !session.accessToken.isEmpty else {
-            unreadNotificationCount = 0
-            return
-        }
-
-        if !forceRefresh {
-            let now = Date()
-            if now.timeIntervalSince(lastNotificationRefreshAt) <= 8 {
-                return
-            }
-        }
-
-        do {
-            let response = try await api.fetchNotifications(
-                baseURL: config.baseURL,
-                userId: userID,
-                accessToken: session.accessToken,
-                limit: 1
-            )
-            unreadNotificationCount = response.unreadCount
-            lastNotificationRefreshAt = Date()
-        } catch {
-            if isCancellation(error) { return }
-        }
-    }
-
     private func fallbackBoards(for exam: ExamSlug) -> [BoardInfo] {
         _ = exam
         return [
@@ -287,178 +199,6 @@ struct CommunityBoardsView: View {
             }
         }
         return error.localizedDescription
-    }
-
-    private func isCancellation(_ error: Error) -> Bool {
-        APIClient.isCancellationError(error)
-    }
-}
-
-private struct CommunityNotificationsSheet: View {
-    @EnvironmentObject private var config: AppConfig
-    @EnvironmentObject private var session: SessionStore
-    @Environment(\.dismiss) private var dismiss
-
-    private let api = APIClient()
-
-    @State private var items: [CommunityNotificationItem] = []
-    @State private var unreadCount = 0
-    @State private var loading = false
-    @State private var message = ""
-    @State private var didBootstrap = false
-
-    var body: some View {
-        List {
-            if !message.isEmpty {
-                Section {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                }
-            }
-
-            if items.isEmpty && !loading {
-                Section {
-                    Text("새 알림이 없어.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Section {
-                    ForEach(items) { item in
-                        notificationRow(item)
-                    }
-                } header: {
-                    if unreadCount > 0 {
-                        Text("읽지 않은 알림 \(unreadCount)개")
-                    } else {
-                        Text("전체 알림")
-                    }
-                }
-            }
-        }
-        .overlay {
-            if loading && items.isEmpty {
-                ProgressView("알림 불러오는 중...")
-            }
-        }
-        .navigationTitle("알림")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("닫기") { dismiss() }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                if unreadCount > 0 {
-                    Button("모두 읽음") {
-                        Task { await markAllRead() }
-                    }
-                    .font(.caption.weight(.semibold))
-                }
-            }
-        }
-        .task {
-            guard !didBootstrap else { return }
-            didBootstrap = true
-            await load()
-        }
-        .refreshable {
-            await load(forceRefresh: true)
-        }
-    }
-
-    private func notificationRow(_ item: CommunityNotificationItem) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .top, spacing: 8) {
-                if !item.isRead {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
-                        .padding(.top, 4)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    if !item.body.isEmpty {
-                        Text(item.body)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                    Text(item.timeLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    @MainActor
-    private func load(forceRefresh: Bool = false) async {
-        guard let userID = session.user?.id else {
-            items = []
-            unreadCount = 0
-            message = "로그인 후 알림을 확인할 수 있어."
-            return
-        }
-        guard !session.accessToken.isEmpty else {
-            items = []
-            unreadCount = 0
-            message = "로그인이 만료됐어. 다시 로그인해줘."
-            return
-        }
-
-        if loading && !forceRefresh { return }
-        loading = true
-        message = ""
-        defer { loading = false }
-
-        do {
-            let response = try await api.fetchNotifications(
-                baseURL: config.baseURL,
-                userId: userID,
-                accessToken: session.accessToken,
-                limit: 60
-            )
-            items = response.items
-            unreadCount = response.unreadCount
-        } catch {
-            if isCancellation(error) { return }
-            message = error.localizedDescription
-        }
-    }
-
-    @MainActor
-    private func markAllRead() async {
-        guard !session.accessToken.isEmpty else { return }
-        do {
-            let response = try await api.markAllNotificationsRead(
-                baseURL: config.baseURL,
-                accessToken: session.accessToken
-            )
-            unreadCount = response.unreadCount
-            items = items.map { item in
-                CommunityNotificationItem(
-                    id: item.id,
-                    type: item.type,
-                    title: item.title,
-                    body: item.body,
-                    postId: item.postId,
-                    commentId: item.commentId,
-                    examSlug: item.examSlug,
-                    boardSlug: item.boardSlug,
-                    actorName: item.actorName,
-                    isRead: true,
-                    createdAt: item.createdAt,
-                    timeLabel: item.timeLabel
-                )
-            }
-        } catch {
-            if isCancellation(error) { return }
-            message = error.localizedDescription
-        }
     }
 
     private func isCancellation(_ error: Error) -> Bool {
