@@ -153,7 +153,8 @@ export async function POST(request: Request) {
   const auth = await ensureAdmin(request);
   if (!auth.ok) return auth.response;
 
-  const body = await request.json().catch(() => ({}));
+  const bodyRaw = await request.json().catch(() => ({}));
+  const body: Record<string, unknown> = typeof bodyRaw === "object" && bodyRaw !== null ? bodyRaw : {};
   const exam = resolveExam(normalizeText(body.exam, 20) || "transfer");
   const examError = validateExam(exam);
   if (examError) return examError;
@@ -162,9 +163,9 @@ export async function POST(request: Request) {
   const rawContent = normalizeText(body.content, 6000);
   const linkUrl = normalizeHttpUrl(body.linkUrl);
   const authorName = normalizeText(body.authorName, 40) || "합격판 운영팀";
-  const requestedAttachments: NewsAttachment[] = Array.isArray(body.attachments)
-    ? body.attachments
-      .map((item) => {
+  const rawAttachments: unknown[] = Array.isArray(body.attachments) ? body.attachments : [];
+  const requestedAttachments: NewsAttachment[] = rawAttachments
+      .map((item: unknown) => {
         if (!item || typeof item !== "object") return null;
         const candidate = item as { url?: unknown; filename?: unknown };
         const url = normalizeHttpUrl(candidate.url);
@@ -176,8 +177,7 @@ export async function POST(request: Request) {
         };
       })
       .filter((value): value is NewsAttachment => value !== null)
-      .slice(0, 10)
-    : [];
+      .slice(0, 10);
 
   if (!title) {
     return NextResponse.json({ error: "뉴스 제목은 필수입니다." }, { status: 400 });
