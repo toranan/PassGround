@@ -222,11 +222,17 @@ struct PostDetailView: View {
                 .font(.subheadline)
             Spacer()
             if canDeletePost(detail) {
-                Button("삭제") {
-                    showDeletePostAlert = true
+                Menu {
+                    Button(role: .destructive) {
+                        showDeletePostAlert = true
+                    } label: {
+                        Label("삭제하기", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .padding(4)
+                        .foregroundStyle(Color(.systemGray3))
                 }
-                .foregroundStyle(.red)
-                .font(.subheadline.weight(.semibold))
             }
         }
         .font(.subheadline)
@@ -407,7 +413,7 @@ struct PostDetailView: View {
 
     private var composerSection: some View {
         let trimmedComment = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
-        HStack(spacing: 10) {
+        return HStack(spacing: 10) {
             Button {
                 commentAnonymous.toggle()
             } label: {
@@ -517,43 +523,60 @@ struct PostDetailView: View {
                                         .background(Color.yellow.opacity(0.2), in: Capsule())
                                 }
 
-                                Spacer()
-
-                                HStack(spacing: 8) {
-                                    if detail?.isSamplePost == false && detail?.writable == true {
-                                        Button("답글") {
-                                            replyTargetID = node.item.id
-                                        }
-                                    }
-                                    if canAdopt(comment: node.item) {
-                                        Button("채택") {
-                                            Task { await adopt(commentID: node.item.id) }
-                                        }
-                                    }
-                                    if canDeleteComment(node.item) {
-                                        Button("삭제") {
-                                            pendingDeleteCommentID = node.item.id
-                                            showDeleteCommentAlert = true
-                                        }
-                                        .foregroundStyle(.red)
-                                    }
-                                }
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(Color(.systemGray2))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(isReply ? Color.white : Color(.systemGray6), in: RoundedRectangle(cornerRadius: 6))
-                            }
-
                             Text(node.item.content)
                                 .font(.subheadline)
                                 .foregroundStyle(.primary)
                                 .lineSpacing(2)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            Text(node.item.timeLabel)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                            HStack(alignment: .center, spacing: 12) {
+                                Text(node.item.timeLabel)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                
+                                if detail?.isSamplePost == false && detail?.writable == true {
+                                    Button {
+                                        replyTargetID = node.item.id
+                                        commentInputFocused = true
+                                    } label: {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "bubble.right")
+                                            Text("답글")
+                                        }
+                                    }
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(Color(.systemGray2))
+                                    .buttonStyle(.plain)
+                                }
+                                
+                                Spacer()
+                                
+                                if canAdopt(comment: node.item) || canDeleteComment(node.item) {
+                                    Menu {
+                                        if canAdopt(comment: node.item) {
+                                            Button {
+                                                Task { await adopt(commentID: node.item.id) }
+                                            } label: {
+                                                Label("채택하기", systemImage: "checkmark.circle")
+                                            }
+                                        }
+                                        if canDeleteComment(node.item) {
+                                            Button(role: .destructive) {
+                                                pendingDeleteCommentID = node.item.id
+                                                showDeleteCommentAlert = true
+                                            } label: {
+                                                Label("삭제하기", systemImage: "trash")
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: "ellipsis")
+                                            .font(.caption)
+                                            .padding(4)
+                                            .foregroundStyle(Color(.systemGray3))
+                                    }
+                                }
+                            }
+                            .padding(.top, 4)
                         }
                     }
                     .padding(.all, isReply ? 12 : 14)
