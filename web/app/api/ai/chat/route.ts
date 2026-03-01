@@ -224,6 +224,11 @@ type CutoffFlowState = {
   slots: CutoffChatParams;
 };
 
+type CutoffFlowAiResult = {
+  active: boolean;
+  slots: CutoffChatParams;
+};
+
 function resolveExam(value: string): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
   return null;
@@ -419,6 +424,137 @@ function deriveCutoffFlowState(question: string, historyMessages: ChatHistoryMes
   }
 
   return { active, slots };
+}
+
+function sanitizeCutoffYear(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const rounded = Math.round(value);
+    return rounded >= 2000 && rounded <= 2100 ? rounded : null;
+  }
+  if (typeof value !== "string") return null;
+  const matched = value.match(/20\d{2}/)?.[0];
+  if (!matched) return null;
+  const year = Number(matched);
+  return Number.isFinite(year) && year >= 2000 && year <= 2100 ? year : null;
+}
+
+function parseCutoffFlowAiResult(raw: string): CutoffFlowAiResult | null {
+  const direct = raw.trim();
+  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!jsonCandidate) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonCandidate);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object") return null;
+  const row = parsed as Record<string, unknown>;
+
+  const activeRaw = normalizeText(row.activeFlow ?? row.active, 20).toLowerCase();
+  const active = activeRaw === "cutoff" || activeRaw === "true" || activeRaw === "1";
+  const year = sanitizeCutoffYear(row.year);
+  const university = normalizeText(row.university, 120);
+  const major = normalizeText(row.major, 120);
+  const score = normalizeText(row.score, 80);
+
+  return {
+    active,
+    slots: { year, university, major, score },
+  };
+}
+
+async function resolveCutoffFlowStateWithAI(params: {
+  question: string;
+  historyMessages: ChatHistoryMessage[];
+  heuristic: CutoffFlowState;
+}): Promise<CutoffFlowState> {
+  const { question, historyMessages, heuristic } = params;
+  const shouldTryAi = heuristic.active || isCutoffQuestion(question);
+  if (!shouldTryAi) return heuristic;
+
+  const historyText = historyMessages
+    .slice(-8)
+    .map((item, index) => `${index + 1}. ${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
+    .join("\n");
+
+  try {
+    const raw = await generateText({
+      systemPrompt: [
+        "너는 대화 상태 추적기다.",
+        "목표: 현재 메시지가 '커트라인 분석 흐름'을 계속하는지 판단하고 슬롯을 추출한다.",
+        "출력은 JSON만 허용한다. 코드블록 금지.",
+        "JSON 스키마:",
+        "{",
+        '  "activeFlow": "cutoff|none",',
+        '  "year": 2027 | null,',
+        '  "university": "성균관대학교" | "",',
+        '  "major": "소프트웨어학과" | "",',
+        '  "score": "150" | ""',
+        "}",
+      ].join("\n"),
+      userPrompt: [
+        "최근 대화:",
+        historyText || "없음",
+        "",
+        `현재 사용자 메시지: ${question}`,
+      ].join("\n"),
+      temperature: 0,
+      maxOutputTokens: 180,
+    });
+
+    const ai = parseCutoffFlowAiResult(raw);
+    if (!ai) return heuristic;
+
+    const mergedSlots = mergeCutoffChatParams(heuristic.slots, ai.slots);
+    const explicitCurrentCutoff = isCutoffQuestion(question) || (heuristic.active && isCutoffContinuationQuestion(question));
+    const active = explicitCurrentCutoff || (heuristic.active && ai.active);
+
+    return {
+      active,
+      slots: mergedSlots,
+    };
+  } catch {
+    return heuristic;
+  }
+}
+
+function buildCutoffSlotPrompt(slots: CutoffChatParams): string {
+  const known: string[] = [];
+  if (slots.year) known.push(`학년도 ${slots.year}`);
+  if (slots.university) known.push(`학교 ${slots.university}`);
+  if (slots.major) known.push(`학과 ${slots.major}`);
+  if (slots.score) known.push(`점수 ${slots.score}`);
+  const summary = known.length ? `지금까지 확인된 값은 ${known.join(", ")}야.` : "";
+
+  const missingLabels: string[] = [];
+  if (!slots.year) missingLabels.push("학년도");
+  if (!slots.university) missingLabels.push("학교명");
+  if (!slots.major) missingLabels.push("학과명");
+  if (!slots.score) missingLabels.push("점수(또는 틀린 개수)");
+
+  if (!missingLabels.length) return "컷 분석 정보를 확인하고 있어.";
+
+  const exampleParts: string[] = [];
+  if (!slots.year) exampleParts.push("2027학년도");
+  if (!slots.university) exampleParts.push("성균관대학교");
+  if (!slots.major) exampleParts.push("소프트웨어학과");
+  if (!slots.score) exampleParts.push("영수합 150점");
+
+  const requestLine =
+    missingLabels.length === 1
+      ? `분석하려면 ${missingLabels[0]}만 알려주면 돼.`
+      : `분석하려면 ${missingLabels.join(", ")} 정보가 더 필요해.`;
+
+  return [
+    summary,
+    requestLine,
+    "아래 형식으로 한 번에 보내줘:",
+    exampleParts.join(" "),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function splitForStream(text: string, chunkSize = 80): string[] {
@@ -679,7 +815,12 @@ async function runChatWorkflow(params: {
   const intent = await classifyIntent(question);
   const isGeneralChat = isGeneralConversationQuestion(question);
   const historyMessages = normalizeHistoryMessages(body.messages);
-  const cutoffFlow = deriveCutoffFlowState(question, historyMessages);
+  const heuristicCutoffFlow = deriveCutoffFlowState(question, historyMessages);
+  const cutoffFlow = await resolveCutoffFlowStateWithAI({
+    question,
+    historyMessages,
+    heuristic: heuristicCutoffFlow,
+  });
   const useCache =
     shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
@@ -732,7 +873,7 @@ async function runChatWorkflow(params: {
     }
   };
 
-  if (cutoffFlow.active && intent !== "emotion") {
+  if (cutoffFlow.active) {
     const cutoff = cutoffFlow.slots;
     const missing: string[] = [];
     if (!cutoff.year) missing.push("학년도");
@@ -741,14 +882,7 @@ async function runChatWorkflow(params: {
     if (!cutoff.score) missing.push("점수(또는 틀린 개수)");
 
     if (missing.length > 0) {
-      const answer =
-        missing.length === 1 && missing[0] === "학년도"
-          ? "질문 고마워. 정확한 안내를 위해 학년도를 먼저 알려줘.\n예: 2027학년도 성균관대학교 소프트웨어학과 영수합 150점"
-          : [
-              "정확한 컷 분석을 위해 입력 정보가 더 필요해.",
-              `누락된 항목: ${missing.join(", ")}`,
-              "예시: 2027학년도 성균관대학교 소프트웨어학과 영수합 150점",
-            ].join("\n");
+      const answer = buildCutoffSlotPrompt(cutoff);
 
       stream?.onMeta({ intent, route: "fallback", cache: cacheStatus, mode: "cutoff_input" });
       if (stream) {
