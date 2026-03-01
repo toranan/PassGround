@@ -177,31 +177,6 @@ const GENERAL_CHAT_KEYWORDS = [
   "잡담",
 ];
 
-const STUDY_COACHING_KEYWORDS = [
-  "공부",
-  "학습",
-  "루틴",
-  "계획",
-  "복습",
-  "시간관리",
-  "영어공부",
-  "수학공부",
-  "편입영어",
-  "편입수학",
-];
-
-const COACHING_REQUEST_MARKERS = [
-  "어떻게",
-  "방법",
-  "팁",
-  "전략",
-  "추천",
-  "해야",
-  "할까",
-  "뭐부터",
-  "도와줘",
-];
-
 const CUTOFF_CHAT_KEYWORDS = [
   "커트라인",
   "컷",
@@ -268,6 +243,12 @@ type CutoffFlowParams = {
 
 type MessageRouteAiResult = {
   route: MessageRouteDecision;
+  confidence: number | null;
+};
+
+type CoachingFallbackAiResult = {
+  shouldCoaching: boolean;
+  reason: "general_chat" | "study_coaching" | "profile_followup" | "none";
   confidence: number | null;
 };
 
@@ -495,15 +476,43 @@ function isGeneralConversationQuestion(question: string): boolean {
   return false;
 }
 
-function isStudyCoachingQuestion(question: string): boolean {
-  const text = question.toLowerCase().trim();
-  if (!text) return false;
+function parseCoachingFallbackAiResult(raw: string): CoachingFallbackAiResult | null {
+  const direct = raw.trim();
+  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!jsonCandidate) return null;
 
-  const studyHits = countKeywordHits(text, STUDY_COACHING_KEYWORDS);
-  const coachingMarkerHits = countKeywordHits(text, COACHING_REQUEST_MARKERS);
-  if (studyHits >= 1 && coachingMarkerHits >= 1) return true;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonCandidate);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object") return null;
 
-  return /(공부|학습|루틴|계획|복습).*(어떻게|방법|해야|할까|추천)/.test(text);
+  const row = parsed as Record<string, unknown>;
+  const shouldCoaching = row.shouldCoaching === true;
+  const reasonRaw = normalizeText(row.reason, 40).toLowerCase();
+  const reason: CoachingFallbackAiResult["reason"] =
+    reasonRaw === "general_chat" ||
+    reasonRaw === "study_coaching" ||
+    reasonRaw === "profile_followup" ||
+    reasonRaw === "none"
+      ? reasonRaw
+      : "none";
+  const confidenceRaw =
+    typeof row.confidence === "number"
+      ? row.confidence
+      : typeof row.confidence === "string"
+      ? Number(row.confidence)
+      : NaN;
+  const confidence =
+    Number.isFinite(confidenceRaw) && confidenceRaw >= 0 && confidenceRaw <= 1 ? confidenceRaw : null;
+
+  return {
+    shouldCoaching,
+    reason,
+    confidence,
+  };
 }
 
 function normalizeIntentLabel(raw: string): IntentRoute | null {
@@ -858,6 +867,73 @@ async function classifyIntent(question: string): Promise<IntentRoute> {
     return classifyIntentHeuristics(question) ?? "fact";
   } catch {
     return classifyIntentHeuristics(question) ?? "fact";
+  }
+}
+
+async function resolveCoachingFallbackWithAI(params: {
+  question: string;
+  historyMessages: ChatHistoryMessage[];
+  intent: IntentRoute;
+  hasEnoughContext: boolean;
+  isGeneralChat: boolean;
+}): Promise<{ shouldFallback: boolean; reason: CoachingFallbackAiResult["reason"] }> {
+  const { question, historyMessages, intent, hasEnoughContext, isGeneralChat } = params;
+  if (intent !== "fact" || hasEnoughContext) {
+    return { shouldFallback: false, reason: "none" };
+  }
+
+  const heuristicFallback = isGeneralChat;
+  const historyText = buildConversationHistoryText(historyMessages);
+
+  try {
+    const raw = await generateText({
+      systemPrompt: [
+        "너는 코칭 fallback 분기 판정기다.",
+        "현재 질문이 사실 근거 부족 상태일 때, 정보부족 안내 대신 코칭 답변으로 전환할지 판단한다.",
+        "판정 기준:",
+        "- general_chat: 인사/가벼운 잡담/짧은 안부",
+        "- study_coaching: 공부법, 전략, 루틴, 멘탈 관리처럼 코칭이 유효한 질문",
+        "- profile_followup: 직전 코칭 대화에서 사용자가 짧게 본인 상태(등급/베이스/점수 등)만 답한 후속 입력",
+        "- none: 위에 해당하지 않음",
+        "출력은 JSON만 허용. 코드블록 금지.",
+        'JSON 스키마: {"shouldCoaching":true,"reason":"general_chat|study_coaching|profile_followup|none","confidence":0.0}',
+      ].join("\n"),
+      userPrompt: [
+        `현재 intent: ${intent}`,
+        `RAG 근거 충분 여부: ${hasEnoughContext ? "yes" : "no"}`,
+        `일반대화 휴리스틱 신호: ${isGeneralChat ? "yes" : "no"}`,
+        historyText ? `최근 대화:\n${historyText}` : "최근 대화: 없음",
+        "",
+        `현재 사용자 메시지: ${question}`,
+      ].join("\n"),
+      temperature: 0,
+      maxOutputTokens: 120,
+    });
+
+    const ai = parseCoachingFallbackAiResult(raw);
+    if (!ai || (ai.confidence !== null && ai.confidence < 0.55)) {
+      return {
+        shouldFallback: heuristicFallback,
+        reason: heuristicFallback ? "general_chat" : "none",
+      };
+    }
+
+    if (!ai.shouldCoaching) {
+      return {
+        shouldFallback: heuristicFallback,
+        reason: heuristicFallback ? "general_chat" : "none",
+      };
+    }
+
+    return {
+      shouldFallback: true,
+      reason: ai.reason === "none" ? "study_coaching" : ai.reason,
+    };
+  } catch {
+    return {
+      shouldFallback: heuristicFallback,
+      reason: heuristicFallback ? "general_chat" : "none",
+    };
   }
 }
 
@@ -1384,8 +1460,14 @@ async function runChatWorkflow(params: {
   }));
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
-  const useGeneralCoachingFallback =
-    intent === "fact" && !hasEnoughContext && (isGeneralChat || isStudyCoachingQuestion(question));
+  const coachingFallback = await resolveCoachingFallbackWithAI({
+    question,
+    historyMessages,
+    intent,
+    hasEnoughContext,
+    isGeneralChat,
+  });
+  const useGeneralCoachingFallback = coachingFallback.shouldFallback;
   const questionWithHistory = buildQuestionWithHistory(question, historyMessages);
 
   const generationStarted = Date.now();
@@ -1440,7 +1522,7 @@ async function runChatWorkflow(params: {
         intent,
         route,
         cache: cacheStatus,
-        reason: "general_chat_fallback",
+        reason: coachingFallback.reason,
         adviceCount: adviceSnippets.length,
       });
 
