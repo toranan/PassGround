@@ -478,6 +478,36 @@ struct AdminCutoffItem: Codable, Identifiable {
     let track: String
 }
 
+struct RAGCutoffAnalysisResponse: Codable {
+    let ok: Bool
+    let source: String?
+    let found: Bool
+    let status: String?
+    let label: String?
+    let summary: String?
+    let detail: String?
+    let targetGuide: String?
+    let basis: [String]?
+    let message: String?
+    let evidenceCount: Int?
+    let traceId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case source
+        case found
+        case status
+        case label
+        case summary
+        case detail
+        case targetGuide
+        case basis
+        case message
+        case evidenceCount
+        case traceId
+    }
+}
+
 struct AIChatResponse: Codable {
     let ok: Bool
     let exam: String

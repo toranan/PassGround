@@ -1,4 +1,20 @@
 import SwiftUI
+import Foundation
+
+private enum DataCenterTab: String, CaseIterable {
+    case ranking = "강사 랭킹"
+    case cutoff = "최신 커트라인"
+    case aiCutoff = "AI 커트라인 분석"
+}
+
+private struct CutoffAnalysisResult {
+    let verdict: String
+    let verdictColor: Color
+    let basisLabel: String
+    let detail: String
+    let targetGuide: String
+    let references: [String]
+}
 
 struct RankingView: View {
     @EnvironmentObject private var config: AppConfig
@@ -7,10 +23,9 @@ struct RankingView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
-    private let showCutoffTab = true
 
     @State private var exam: ExamSlug = .transfer
-    @State private var currentTab: String = "강사 랭킹"
+    @State private var currentTab: DataCenterTab = .ranking
     
     // Rankings
     @State private var rankings: [RankingItem] = []
@@ -21,6 +36,13 @@ struct RankingView: View {
     
     // Cutoffs
     @State private var cutoffs: [CutoffItem] = []
+    @State private var analysisYear = ""
+    @State private var analysisUniversity = ""
+    @State private var analysisMajor = ""
+    @State private var analysisScore = ""
+    @State private var analysisMessage = ""
+    @State private var analysisResult: CutoffAnalysisResult?
+    @State private var analysisLoading = false
     
     // Status
     @State private var voteStatus: VoteStatusResponse?
@@ -45,19 +67,23 @@ struct RankingView: View {
                         .padding(.horizontal, DesignSystem.padding)
                     
                     HStack(spacing: 16) {
-                        Button(action: { currentTab = "강사 랭킹" }) {
-                            Text("강사 랭킹")
+                        Button(action: { currentTab = .ranking }) {
+                            Text(DataCenterTab.ranking.rawValue)
                                 .font(.subheadline)
-                                .fontWeight(currentTab == "강사 랭킹" ? .bold : .medium)
-                                .foregroundColor(currentTab == "강사 랭킹" ? DesignSystem.primary : .gray)
+                                .fontWeight(currentTab == .ranking ? .bold : .medium)
+                                .foregroundColor(currentTab == .ranking ? DesignSystem.primary : .gray)
                         }
-                        if showCutoffTab {
-                            Button(action: { currentTab = "최신 커트라인" }) {
-                                Text("최신 커트라인")
-                                    .font(.subheadline)
-                                    .fontWeight(currentTab == "최신 커트라인" ? .bold : .medium)
-                                    .foregroundColor(currentTab == "최신 커트라인" ? DesignSystem.primary : .gray)
-                            }
+                        Button(action: { currentTab = .cutoff }) {
+                            Text(DataCenterTab.cutoff.rawValue)
+                                .font(.subheadline)
+                                .fontWeight(currentTab == .cutoff ? .bold : .medium)
+                                .foregroundColor(currentTab == .cutoff ? DesignSystem.primary : .gray)
+                        }
+                        Button(action: { currentTab = .aiCutoff }) {
+                            Text(DataCenterTab.aiCutoff.rawValue)
+                                .font(.subheadline)
+                                .fontWeight(currentTab == .aiCutoff ? .bold : .medium)
+                                .foregroundColor(currentTab == .aiCutoff ? DesignSystem.primary : .gray)
                         }
                         Spacer()
                     }
@@ -75,8 +101,10 @@ struct RankingView: View {
                         .font(.footnote)
                         .padding()
                 } else {
-                    if showCutoffTab && currentTab == "최신 커트라인" {
+                    if currentTab == .cutoff {
                         cutoffList
+                    } else if currentTab == .aiCutoff {
+                        cutoffAnalysisView
                     } else {
                         rankingList
                     }
@@ -228,7 +256,232 @@ struct RankingView: View {
             .padding(.horizontal, DesignSystem.padding)
         }
     }
+
+    private var cutoffAnalysisView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("AI 커트라인 분석")
+                .font(.headline)
+                .padding(.horizontal, DesignSystem.padding)
+
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
+                    TextField("학년도 (예: 2026)", text: $analysisYear)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .keyboardType(.numberPad)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 11)
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                    TextField("점수 / 틀린 개수", text: $analysisScore)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .keyboardType(.decimalPad)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 11)
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                TextField("학교명 (예: 성균관대학교)", text: $analysisUniversity)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                TextField("학과명 (예: 소프트웨어학과)", text: $analysisMajor)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                Button(action: {
+                    Task { await runCutoffAnalysis() }
+                }) {
+                    Text(analysisLoading ? "분석 중..." : "분석하기")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(analysisLoading ? DesignSystem.primary.opacity(0.55) : DesignSystem.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .disabled(analysisLoading)
+            }
+            .padding(12)
+            .background(DesignSystem.cardBackground)
+            .cornerRadius(DesignSystem.cardCornerRadius)
+            .padding(.horizontal, DesignSystem.padding)
+
+            if !analysisMessage.isEmpty {
+                Text(analysisMessage)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, DesignSystem.padding)
+            }
+
+            if let result = analysisResult {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text(result.verdict)
+                            .font(.title3.bold())
+                            .foregroundColor(result.verdictColor)
+                        Spacer()
+                        Text(result.basisLabel)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Text(result.detail)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+
+                    Text(result.targetGuide)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    if !result.references.isEmpty {
+                        Divider()
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("참고 데이터")
+                                .font(.caption.bold())
+                                .foregroundColor(.secondary)
+                            ForEach(result.references, id: \.self) { line in
+                                Text("• \(line)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                .padding(14)
+                .background(DesignSystem.cardBackground)
+                .cornerRadius(DesignSystem.cardCornerRadius)
+                .padding(.horizontal, DesignSystem.padding)
+            }
+        }
+    }
     
+    @MainActor
+    private func runCutoffAnalysis() async {
+        analysisMessage = ""
+        analysisResult = nil
+
+        let yearText = analysisYear.trimmingCharacters(in: .whitespacesAndNewlines)
+        let universityText = analysisUniversity.trimmingCharacters(in: .whitespacesAndNewlines)
+        let majorText = analysisMajor.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scoreText = analysisScore.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let year = Int(yearText), year >= 2000, year <= 2100 else {
+            analysisMessage = "학년도는 4자리 숫자로 입력해줘. (예: 2026)"
+            return
+        }
+        guard !majorText.isEmpty else {
+            analysisMessage = "학과명을 입력해줘."
+            return
+        }
+        guard !universityText.isEmpty else {
+            analysisMessage = "학교명을 입력해줘."
+            return
+        }
+        guard parseNumber(scoreText) != nil else {
+            analysisMessage = "점수(또는 틀린 개수)를 숫자로 입력해줘."
+            return
+        }
+
+        analysisLoading = true
+        analysisMessage = "생각 정리중..."
+        defer { analysisLoading = false }
+
+        do {
+            let access = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+            let response = try await api.analyzeRAGCutoff(
+                baseURL: config.baseURL,
+                exam: exam,
+                year: year,
+                university: universityText,
+                major: majorText,
+                score: scoreText,
+                accessToken: access.isEmpty ? nil : access
+            )
+
+            if response.found {
+                let status = response.status ?? ""
+                let verdict = response.label?.isEmpty == false ? response.label! : verdictText(for: status)
+                let detail = response.detail?.isEmpty == false
+                    ? response.detail!
+                    : (response.summary?.isEmpty == false ? response.summary! : "RAG 근거를 기준으로 결과를 정리했어.")
+                let guide = response.targetGuide?.isEmpty == false
+                    ? response.targetGuide!
+                    : "부족한 영역을 보강해서 다시 점검해보자."
+                let references = (response.basis ?? []).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+                analysisResult = CutoffAnalysisResult(
+                    verdict: verdict,
+                    verdictColor: verdictColor(for: status),
+                    basisLabel: "RAG 근거 기반",
+                    detail: detail,
+                    targetGuide: guide,
+                    references: references
+                )
+                analysisMessage = response.summary ?? ""
+            } else {
+                analysisResult = nil
+                analysisMessage =
+                    response.message?.isEmpty == false
+                    ? response.message!
+                    : "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다."
+            }
+        } catch {
+            let fallback = "분석 요청에 실패했어. 잠시 후 다시 시도해줘."
+            if let localized = (error as? LocalizedError)?.errorDescription, !localized.isEmpty {
+                analysisMessage = localized
+            } else {
+                analysisMessage = fallback
+            }
+        }
+    }
+
+    private func parseNumber(_ value: String) -> Double? {
+        let normalized = value
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "점", with: "")
+            .replacingOccurrences(of: "개", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Double(normalized)
+    }
+
+    private func verdictColor(for status: String) -> Color {
+        switch status {
+        case "pass":
+            return .green
+        case "waitlist":
+            return .orange
+        case "fail":
+            return .red
+        default:
+            return .secondary
+        }
+    }
+
+    private func verdictText(for status: String) -> String {
+        switch status {
+        case "pass":
+            return "합격권"
+        case "waitlist":
+            return "추합권"
+        case "fail":
+            return "불합격권"
+        default:
+            return "정보부족"
+        }
+    }
+
     // MARK: - Voting Modal
     private var voteSheetView: some View {
         VStack(spacing: 0) {

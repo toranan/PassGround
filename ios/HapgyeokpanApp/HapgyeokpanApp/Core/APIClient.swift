@@ -174,6 +174,38 @@ final class APIClient {
         )
     }
 
+    func analyzeRAGCutoff(
+        baseURL: URL,
+        exam: ExamSlug,
+        year: Int,
+        university: String,
+        major: String,
+        score: String,
+        accessToken: String? = nil
+    ) async throws -> RAGCutoffAnalysisResponse {
+        struct Body: Encodable {
+            let exam: String
+            let year: Int
+            let university: String
+            let major: String
+            let score: String
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/mobile/cutoff/analyze",
+            method: "POST",
+            body: Body(
+                exam: exam.rawValue,
+                year: year,
+                university: university,
+                major: major,
+                score: score
+            ),
+            accessToken: accessToken
+        )
+    }
+
     func fetchBriefings(baseURL: URL, exam: ExamSlug) async throws -> DailyBriefingResponse {
         try await request(baseURL: baseURL, path: "api/daily/\(exam.rawValue)")
     }
