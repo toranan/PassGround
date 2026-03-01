@@ -90,13 +90,18 @@ function aggregateCounts(rows: { post_id: string }[] | null | undefined): Map<st
   return map;
 }
 
-function withCache(response: NextResponse) {
+function withCache(response: NextResponse, bypassCache = false) {
+  if (bypassCache) {
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
   response.headers.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=40");
   return response;
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const bypassCache = (url.searchParams.get("_cb") ?? "").trim().length > 0;
   const exam = parseExam(url.searchParams.get("exam")?.trim() ?? null);
 
   if (!exam) {
@@ -114,7 +119,7 @@ export async function GET(request: Request) {
   const newsBoardSlug = "news";
   const communityBoardSlugs = examInfo.boards
     .map((board) => board.slug)
-    .filter((slug) => slug !== "free" && slug !== newsBoardSlug)
+    .filter((slug) => slug !== newsBoardSlug)
     .slice(0, 8);
   const allBoardSlugs = Array.from(new Set([...communityBoardSlugs, newsBoardSlug]));
 
@@ -127,7 +132,8 @@ export async function GET(request: Request) {
         latestPosts: [],
         latestNewsPosts: [],
         source: "no-board",
-      })
+      }),
+      bypassCache
     );
   }
 
@@ -155,7 +161,8 @@ export async function GET(request: Request) {
         latestPosts: [],
         latestNewsPosts: [],
         source: "board-empty",
-      })
+      }),
+      bypassCache
     );
   }
 
@@ -196,7 +203,8 @@ export async function GET(request: Request) {
         latestPosts: [],
         latestNewsPosts: [],
         source: "post-empty",
-      })
+      }),
+      bypassCache
     );
   }
 
@@ -304,6 +312,7 @@ export async function GET(request: Request) {
       latestPosts,
       latestNewsPosts,
       source: "db",
-    })
+    }),
+    bypassCache
   );
 }

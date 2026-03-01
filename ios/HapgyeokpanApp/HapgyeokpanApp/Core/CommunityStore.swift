@@ -227,6 +227,19 @@ final class CommunityStore: ObservableObject {
         persist()
     }
 
+    func invalidateHomeSnapshot(exam: ExamSlug? = nil) {
+        let didChange: Bool
+        if let exam {
+            didChange = homeSnapshots.removeValue(forKey: exam.rawValue) != nil
+        } else {
+            didChange = !homeSnapshots.isEmpty
+            homeSnapshots.removeAll()
+        }
+        if didChange {
+            persist()
+        }
+    }
+
     func saveRankingSnapshot(
         exam: ExamSlug,
         rankings: [RankingItem],
@@ -520,6 +533,54 @@ final class CommunityStore: ObservableObject {
             )
             changed = true
         }
+
+        if changed {
+            persist()
+        }
+    }
+
+    func removePost(postId: String) {
+        guard !postId.isEmpty else { return }
+        var changed = false
+
+        for (snapshotKey, snapshot) in postSnapshots {
+            let filtered = snapshot.posts.filter { $0.id != postId }
+            guard filtered.count != snapshot.posts.count else { continue }
+            postSnapshots[snapshotKey] = PostsSnapshot(
+                posts: filtered,
+                nextCursor: snapshot.nextCursor,
+                hasMore: snapshot.hasMore,
+                updatedAt: Date()
+            )
+            changed = true
+        }
+
+        for (snapshotKey, snapshot) in homeSnapshots {
+            let updatedRealtime = snapshot.realtimePosts.filter { $0.post.id != postId }
+            let updatedLatest = snapshot.latestPosts.filter { $0.post.id != postId }
+            let updatedLatestNews = snapshot.latestNewsPosts.filter { $0.post.id != postId }
+            let hasDiff =
+                updatedRealtime.count != snapshot.realtimePosts.count ||
+                updatedLatest.count != snapshot.latestPosts.count ||
+                updatedLatestNews.count != snapshot.latestNewsPosts.count
+            guard hasDiff else { continue }
+            homeSnapshots[snapshotKey] = HomeSnapshot(
+                realtimePosts: updatedRealtime,
+                latestPosts: updatedLatest,
+                latestNewsPosts: updatedLatestNews,
+                updatedAt: Date()
+            )
+            changed = true
+        }
+
+        if detailSnapshots.removeValue(forKey: postId) != nil { changed = true }
+        if likeOverrides.removeValue(forKey: postId) != nil { changed = true }
+
+        let pendingCount = pendingLikeSyncs.count
+        pendingLikeSyncs = pendingLikeSyncs.filter { _, item in
+            item.postId != postId
+        }
+        if pendingLikeSyncs.count != pendingCount { changed = true }
 
         if changed {
             persist()

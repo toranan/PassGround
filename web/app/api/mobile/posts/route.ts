@@ -86,13 +86,18 @@ function aggregateCounts(rows: { post_id: string }[] | null | undefined): Map<st
   return map;
 }
 
-function withCache(response: NextResponse) {
+function withCache(response: NextResponse, bypassCache = false) {
+  if (bypassCache) {
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
   response.headers.set("Cache-Control", "public, s-maxage=8, stale-while-revalidate=24");
   return response;
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const bypassCache = (searchParams.get("_cb") ?? "").trim().length > 0;
   const exam = (searchParams.get("exam") ?? "").trim();
   const board = (searchParams.get("board") ?? "").trim();
   const limit = parseLimit(searchParams.get("limit"));
@@ -182,7 +187,8 @@ export async function GET(request: Request) {
         hasMore: false,
         nextCursor: null,
         source: "db-empty",
-      })
+      }),
+      bypassCache
     );
   }
 
@@ -255,6 +261,7 @@ export async function GET(request: Request) {
       hasMore,
       nextCursor,
       source: "db",
-    })
+    }),
+    bypassCache
   );
 }

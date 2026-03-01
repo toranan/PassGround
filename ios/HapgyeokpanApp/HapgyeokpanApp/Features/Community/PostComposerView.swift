@@ -13,6 +13,7 @@ private struct LocalAttachment: Identifiable {
 struct PostComposerView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var communityStore: CommunityStore
     @EnvironmentObject private var session: SessionStore
 
     private let api = APIClient()
@@ -263,6 +264,7 @@ struct PostComposerView: View {
                 accessToken: session.accessToken.isEmpty ? nil : session.accessToken
             )
 
+            communityStore.invalidateHomeSnapshot(exam: exam)
             message = "등록 완료"
             dismiss()
         } catch {

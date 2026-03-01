@@ -25,6 +25,7 @@ struct BoardPostsView: View {
     @State private var didBootstrap = false
     @State private var lastAutoRefreshAt = Date.distantPast
     @State private var prefetchedPostIDs: Set<String> = []
+    @State private var loadRevision = 0
     private let pageSize = 20
 
     private var filteredPosts: [PostSummary] {
@@ -232,6 +233,9 @@ struct BoardPostsView: View {
             if loading || loadingMore || !hasMore { return }
             loadingMore = true
         }
+
+        loadRevision += 1
+        let requestRevision = loadRevision
         defer {
             if reset {
                 loading = false
@@ -254,6 +258,7 @@ struct BoardPostsView: View {
                 cacheBust: cacheBust,
                 cachePolicy: cachePolicy
             )
+            guard requestRevision == loadRevision else { return }
             let resolvedPosts = communityStore.mergeLikeOverrides(posts: response.posts)
 
             if reset {
@@ -277,6 +282,7 @@ struct BoardPostsView: View {
             if isCancellation(error) {
                 return
             }
+            guard requestRevision == loadRevision else { return }
             errorMessage = error.localizedDescription
         }
     }

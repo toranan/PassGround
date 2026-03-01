@@ -225,9 +225,13 @@ struct PostDetailView: View {
                     }
 
                     if let detail {
-                        postSection(detail)
-                        actionSection(detail)
-                        commentsSection(detail)
+                        VStack(spacing: 0) {
+                            postSection(detail)
+                            Divider()
+                            actionSection(detail)
+                            Divider()
+                            commentsSection(detail)
+                        }
                     }
                 }
                 .padding(.bottom, 16)
@@ -658,7 +662,7 @@ struct PostDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
 
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 3) {
                             HStack(alignment: .top, spacing: 8) {
                                 Text(node.item.authorName)
                                     .font(.subheadline.weight(.bold))
@@ -679,36 +683,9 @@ struct PostDetailView: View {
                                         .padding(.vertical, 2)
                                         .background(Color.yellow.opacity(0.2), in: Capsule())
                                 }
-                            }
 
-                            Text(node.item.content)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                                .lineSpacing(2)
-                                .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
 
-                            HStack(alignment: .center, spacing: 12) {
-                                Text(node.item.timeLabel)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                
-                                if detail?.isSamplePost == false && detail?.writable == true {
-                                    Button {
-                                        replyTargetID = node.item.id
-                                        commentInputFocused = true
-                                    } label: {
-                                        HStack(spacing: 3) {
-                                            Image(systemName: "bubble.right")
-                                            Text("답글")
-                                        }
-                                    }
-                                    .font(.caption2.weight(.medium))
-                                    .foregroundStyle(Color(.systemGray2))
-                                    .buttonStyle(.plain)
-                                }
-                                
-                                Spacer()
-                                
                                 if canAdopt(comment: node.item) || canDeleteComment(node.item) {
                                     Menu {
                                         if canAdopt(comment: node.item) {
@@ -730,20 +707,49 @@ struct PostDetailView: View {
                                         Text("⋮")
                                             .font(.system(size: 20, weight: .bold))
                                             .foregroundStyle(Color(.systemGray3))
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 8)
                                             .contentShape(Rectangle())
                                     }
                                 }
                             }
-                            .padding(.top, 4)
+
+                            Text(node.item.content)
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+                                .lineSpacing(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.top, -1)
+
+                            HStack(alignment: .center, spacing: 12) {
+                                Text(node.item.timeLabel)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                
+                                if detail?.isSamplePost == false && detail?.writable == true {
+                                    Button {
+                                        replyTargetID = node.item.id
+                                        commentInputFocused = true
+                                    } label: {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "bubble.right")
+                                            Text("답글")
+                                        }
+                                    }
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(Color(.systemGray2))
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.top, 2)
                         }
                     }
-                    .padding(.all, isReply ? 12 : 14)
+                    .padding(.top, isReply ? 8 : 11)
+                    .padding(.bottom, isReply ? 6 : 6)
+                    .padding(.horizontal, isReply ? 12 : 14)
                     .background(isReply ? Color(.systemGray6).opacity(0.8) : Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: isReply ? 10 : 0))
                     .padding(.trailing, 12)
-                    .padding(.vertical, isReply ? 6 : 0)
+                    .padding(.top, isReply ? 4 : 0)
+                    .padding(.bottom, isReply ? 2 : 4)
                 }
 
                 if !isReply {
@@ -1045,6 +1051,7 @@ struct PostDetailView: View {
                 userId: userID,
                 accessToken: session.accessToken
             )
+            communityStore.removePost(postId: postId)
             showSuccessToast("게시글이 삭제되었어")
             try? await Task.sleep(nanoseconds: 800_000_000)
             dismiss()

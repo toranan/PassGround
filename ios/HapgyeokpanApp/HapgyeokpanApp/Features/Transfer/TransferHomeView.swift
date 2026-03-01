@@ -21,6 +21,7 @@ struct TransferHomeView: View {
     @State private var lastAutoRefreshAt = Date.distantPast
     @State private var prefetchedPostIDs: Set<String> = []
     @State private var unreadCount = 0
+    @State private var loadRevision = 0
 
 
     var body: some View {
@@ -92,7 +93,7 @@ struct TransferHomeView: View {
             didBootstrap = true
             let fresh = applyCachedSnapshotIfAvailable()
             if !fresh {
-                await load()
+                await load(forceRefresh: true)
             }
         }
         .onAppear {
@@ -232,10 +233,21 @@ struct TransferHomeView: View {
         if loading && !forceRefresh { return }
         loading = true
         errorMessage = ""
+        loadRevision += 1
+        let requestRevision = loadRevision
+        defer {
+            if requestRevision == loadRevision {
+                loading = false
+            }
+        }
         let cachePolicy: URLRequest.CachePolicy = forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy
         let cacheBust = forceRefresh ? String(Int(Date().timeIntervalSince1970 * 1000)) : nil
 
         do {
+            let resolvedLatestNewsPosts: [HomeFeedPost]
+            let resolvedRealtimePosts: [HomeFeedPost]
+            let resolvedLatestPosts: [HomeFeedPost]
+
             do {
                 let response = try await api.fetchHomeFeed(
                     baseURL: config.baseURL,
@@ -243,17 +255,21 @@ struct TransferHomeView: View {
                     cacheBust: cacheBust,
                     cachePolicy: cachePolicy
                 )
-                latestNewsPosts = communityStore.mergeLikeOverrides(feedItems: response.latestNewsPosts)
-                realtimePosts = communityStore.mergeLikeOverrides(feedItems: response.realtimePosts)
-                latestPosts = communityStore.mergeLikeOverrides(feedItems: response.latestPosts)
+                resolvedLatestNewsPosts = communityStore.mergeLikeOverrides(feedItems: response.latestNewsPosts)
+                resolvedRealtimePosts = communityStore.mergeLikeOverrides(feedItems: response.realtimePosts)
+                resolvedLatestPosts = communityStore.mergeLikeOverrides(feedItems: response.latestPosts)
             } catch {
                 guard shouldFallbackToLegacyHomeAPI(error) else { throw error }
                 let legacy = try await loadLegacyHomeFeed(cachePolicy: cachePolicy)
-                latestNewsPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestNewsPosts)
-                realtimePosts = communityStore.mergeLikeOverrides(feedItems: legacy.realtimePosts)
-                latestPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestPosts)
+                resolvedLatestNewsPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestNewsPosts)
+                resolvedRealtimePosts = communityStore.mergeLikeOverrides(feedItems: legacy.realtimePosts)
+                resolvedLatestPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestPosts)
             }
 
+            guard requestRevision == loadRevision else { return }
+            latestNewsPosts = resolvedLatestNewsPosts
+            realtimePosts = resolvedRealtimePosts
+            latestPosts = resolvedLatestPosts
             communityStore.saveHomeSnapshot(
                 exam: exam,
                 realtimePosts: realtimePosts,
@@ -263,13 +279,11 @@ struct TransferHomeView: View {
             await refreshUnreadCount()
         } catch {
             if isCancellation(error) {
-                loading = false
                 return
             }
+            guard requestRevision == loadRevision else { return }
             errorMessage = Self.readableErrorMessage(error, baseURL: config.baseURL)
         }
-
-        loading = false
     }
 
     private func loadLegacyHomeFeed(
@@ -281,7 +295,7 @@ struct TransferHomeView: View {
             cachePolicy: cachePolicy
         )
         var boards = boardsResponse.boards.isEmpty ? fallbackBoards(for: exam) : Array(boardsResponse.boards.prefix(8))
-        boards = boards.filter { $0.slug != "free" && $0.slug != "news" }
+        boards = boards.filter { $0.slug != "news" }
 
         let baseURL = config.baseURL
         let examValue = exam
@@ -370,7 +384,7 @@ struct TransferHomeView: View {
         let now = Date()
         guard now.timeIntervalSince(lastAutoRefreshAt) > 8 else { return }
         lastAutoRefreshAt = now
-        Task { await load() }
+        Task { await load(forceRefresh: true) }
     }
 
     private func prefetchPostDetail(_ item: HomeFeedPost) async {
