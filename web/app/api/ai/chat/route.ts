@@ -177,6 +177,31 @@ const GENERAL_CHAT_KEYWORDS = [
   "잡담",
 ];
 
+const STUDY_COACHING_KEYWORDS = [
+  "공부",
+  "학습",
+  "루틴",
+  "계획",
+  "복습",
+  "시간관리",
+  "영어공부",
+  "수학공부",
+  "편입영어",
+  "편입수학",
+];
+
+const COACHING_REQUEST_MARKERS = [
+  "어떻게",
+  "방법",
+  "팁",
+  "전략",
+  "추천",
+  "해야",
+  "할까",
+  "뭐부터",
+  "도와줘",
+];
+
 const CUTOFF_CHAT_KEYWORDS = [
   "커트라인",
   "컷",
@@ -243,6 +268,7 @@ type CutoffFlowParams = {
 
 type MessageRouteAiResult = {
   route: MessageRouteDecision;
+  confidence: number | null;
 };
 
 function createEmptyCutoffParams(): CutoffChatParams {
@@ -264,6 +290,7 @@ function createInactiveCutoffFlow(): CutoffFlowState {
 function createDefaultMessageRouteAiResult(): MessageRouteAiResult {
   return {
     route: "fact_or_emotion",
+    confidence: null,
   };
 }
 
@@ -312,17 +339,27 @@ function parseMessageRouteAiResult(raw: string): MessageRouteAiResult | null {
   const routeRaw = normalizeText(row.route, 40);
   const route = parseMessageRouteDecisionLabel(routeRaw);
   if (!route) return null;
+  const confidenceRaw =
+    typeof row.confidence === "number"
+      ? row.confidence
+      : typeof row.confidence === "string"
+      ? Number(row.confidence)
+      : NaN;
+  const confidence =
+    Number.isFinite(confidenceRaw) && confidenceRaw >= 0 && confidenceRaw <= 1 ? confidenceRaw : null;
 
-  return { route };
+  return { route, confidence };
 }
 
 function classifyMessageRouteHeuristic(question: string, historyContext: CutoffHistoryContext): MessageRouteDecision {
   const currentIsCutoff = isCutoffQuestion(question);
   const currentIsContinuation = isCutoffContinuationQuestion(question);
   const likelyCutoffStart = isLikelyCutoffStartQuestion(question);
+  const hasSlotSignal = hasCutoffSlotSignal(question);
 
   if (currentIsCutoff) return historyContext.active ? "cutoff_continue" : "cutoff_start";
   if (likelyCutoffStart) return historyContext.active ? "cutoff_continue" : "cutoff_start";
+  if (historyContext.active && hasSlotSignal) return "cutoff_continue";
   if (historyContext.active && currentIsContinuation) return "cutoff_continue";
   if (isGeneralConversationQuestion(question)) return "smalltalk";
   return createDefaultMessageRouteDecision();
@@ -335,7 +372,9 @@ function deriveCutoffHistoryContext(historyMessages: ChatHistoryMessage[]): Cuto
   let turnsSinceCutoff = Number.POSITIVE_INFINITY;
 
   for (const text of userHistory) {
-    const looksCutoff = isCutoffQuestion(text) || (sawCutoffContext && isCutoffContinuationQuestion(text));
+    const looksCutoff =
+      isCutoffQuestion(text) ||
+      (sawCutoffContext && (isCutoffContinuationQuestion(text) || hasCutoffSlotSignal(text)));
     if (looksCutoff) {
       sawCutoffContext = true;
       turnsSinceCutoff = 0;
@@ -346,7 +385,7 @@ function deriveCutoffHistoryContext(historyMessages: ChatHistoryMessage[]): Cuto
   }
 
   return {
-    active: sawCutoffContext && turnsSinceCutoff <= 2,
+    active: sawCutoffContext && turnsSinceCutoff <= 4,
     slots,
   };
 }
@@ -361,13 +400,18 @@ async function resolveMessageRouteWithAI(params: {
   const currentIsCutoff = isCutoffQuestion(question);
   const currentIsContinuation = isCutoffContinuationQuestion(question);
   const likelyCutoffStart = isLikelyCutoffStartQuestion(question);
-  const shouldTryAi = historyContext.active || currentIsCutoff || currentIsContinuation || likelyCutoffStart;
-  if (!shouldTryAi) return heuristic;
+  const hasSlotSignal = hasCutoffSlotSignal(question);
 
   const historyText = historyMessages
     .slice(-8)
     .map((item, index) => `${index + 1}. ${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
     .join("\n");
+  const slotSummaryParts: string[] = [];
+  if (historyContext.slots.year) slotSummaryParts.push(`학년도 ${historyContext.slots.year}`);
+  if (historyContext.slots.university) slotSummaryParts.push(`학교 ${historyContext.slots.university}`);
+  if (historyContext.slots.major) slotSummaryParts.push(`학과 ${historyContext.slots.major}`);
+  if (historyContext.slots.score) slotSummaryParts.push(`점수 ${historyContext.slots.score}`);
+  const slotSummary = slotSummaryParts.length ? slotSummaryParts.join(", ") : "없음";
 
   try {
     const raw = await generateText({
@@ -379,25 +423,34 @@ async function resolveMessageRouteWithAI(params: {
         "- fact_or_emotion: 새로운 사실질문/감정질문",
         "- smalltalk: 인사/가벼운 잡담",
         "원칙: 기존 커트라인 흐름과 무관한 새 질문이면 반드시 fact_or_emotion 또는 smalltalk를 선택한다.",
+        "원칙: 현재 메시지가 학년도/학교명/학과명/점수 같은 슬롯만 보강하면 cutoff_continue를 우선한다.",
         "출력은 JSON만 허용. 코드블록 금지.",
-        'JSON 스키마: {"route":"cutoff_start|cutoff_continue|fact_or_emotion|smalltalk"}',
+        'JSON 스키마: {"route":"cutoff_start|cutoff_continue|fact_or_emotion|smalltalk","confidence":0.0}',
       ].join("\n"),
       userPrompt: [
         "최근 대화:",
         historyText || "없음",
+        `현재 컷 수집 상태 활성화: ${historyContext.active ? "yes" : "no"}`,
+        `현재 컷 슬롯 요약: ${slotSummary}`,
         "",
         `현재 사용자 메시지: ${question}`,
       ].join("\n"),
       temperature: 0,
-      maxOutputTokens: 80,
+      maxOutputTokens: 120,
     });
 
     const ai = parseMessageRouteAiResult(raw) ?? createDefaultMessageRouteAiResult();
+    if (ai.confidence !== null && ai.confidence < 0.55) {
+      return heuristic;
+    }
 
     if (ai.route === "cutoff_continue" && !historyContext.active) {
       return currentIsCutoff || likelyCutoffStart ? "cutoff_start" : "fact_or_emotion";
     }
     if (ai.route === "cutoff_start" && historyContext.active && currentIsContinuation && !currentIsCutoff) {
+      return "cutoff_continue";
+    }
+    if (historyContext.active && hasSlotSignal && (ai.route === "fact_or_emotion" || ai.route === "smalltalk")) {
       return "cutoff_continue";
     }
     return ai.route;
@@ -442,6 +495,17 @@ function isGeneralConversationQuestion(question: string): boolean {
   return false;
 }
 
+function isStudyCoachingQuestion(question: string): boolean {
+  const text = question.toLowerCase().trim();
+  if (!text) return false;
+
+  const studyHits = countKeywordHits(text, STUDY_COACHING_KEYWORDS);
+  const coachingMarkerHits = countKeywordHits(text, COACHING_REQUEST_MARKERS);
+  if (studyHits >= 1 && coachingMarkerHits >= 1) return true;
+
+  return /(공부|학습|루틴|계획|복습).*(어떻게|방법|해야|할까|추천)/.test(text);
+}
+
 function normalizeIntentLabel(raw: string): IntentRoute | null {
   const value = raw.toLowerCase();
   if (value.includes("mixed") || value.includes("혼합") || value.includes("둘")) return "mixed";
@@ -482,8 +546,18 @@ function normalizeToken(value: string): string {
     .trim();
 }
 
+function normalizeCutoffInput(question: string): string {
+  return question
+    .replace(/힉고/gi, "학과")
+    .replace(/학고/gi, "학과")
+    .replace(/힉과/gi, "학과")
+    .replace(/학콰/gi, "학과")
+    .replace(/학가/gi, "학과")
+    .replace(/소프트\s+웨어/gi, "소프트웨어");
+}
+
 function isCutoffQuestion(question: string): boolean {
-  const normalized = normalizeToken(question);
+  const normalized = normalizeToken(normalizeCutoffInput(question));
   if (!normalized) return false;
   const keywordHits = CUTOFF_CHAT_KEYWORDS.reduce(
     (count, keyword) => count + (normalized.includes(normalizeToken(keyword)) ? 1 : 0),
@@ -494,7 +568,7 @@ function isCutoffQuestion(question: string): boolean {
 }
 
 function parseYearFromQuestion(question: string): number | null {
-  const match = question.match(/\b(20\d{2})\s*(?:학년도|년도|년)?/);
+  const match = normalizeCutoffInput(question).match(/\b(20\d{2})\s*(?:학년도|년도|년)?/);
   if (!match?.[1]) return null;
   const year = Number(match[1]);
   if (!Number.isFinite(year) || year < 2000 || year > 2100) return null;
@@ -502,7 +576,7 @@ function parseYearFromQuestion(question: string): number | null {
 }
 
 function parseScoreFromQuestion(question: string): string {
-  const normalized = question.replace(/,/g, "");
+  const normalized = normalizeCutoffInput(question).replace(/,/g, "");
   const pointMatch = normalized.match(/(\d+(?:\.\d+)?)\s*점/);
   if (pointMatch?.[1]) return pointMatch[1];
 
@@ -516,16 +590,17 @@ function parseScoreFromQuestion(question: string): string {
 }
 
 function parseUniversityFromQuestion(question: string): string {
-  const normalized = normalizeToken(question);
+  const normalizedQuestion = normalizeCutoffInput(question);
+  const normalized = normalizeToken(normalizedQuestion);
   const foundAlias = UNIVERSITY_ALIASES.find((row) => normalized.includes(normalizeToken(row.alias)));
   if (foundAlias) return foundAlias.name;
 
-  const universityMatch = question.match(/([가-힣A-Za-z0-9]+(?:대학교|대학|대))/);
+  const universityMatch = normalizedQuestion.match(/([가-힣A-Za-z0-9]+(?:대학교|대학|대))/);
   return universityMatch?.[1]?.trim() ?? "";
 }
 
 function parseMajorFromQuestion(question: string): string {
-  const majorMatch = question.match(/([가-힣A-Za-z0-9]+(?:학과|학부))/);
+  const majorMatch = normalizeCutoffInput(question).match(/([가-힣A-Za-z0-9]+(?:학과|학부|전공))/);
   return majorMatch?.[1]?.trim() ?? "";
 }
 
@@ -545,6 +620,11 @@ function mergeCutoffChatParams(base: CutoffChatParams, incoming: CutoffChatParam
     major: incoming.major || base.major,
     score: incoming.score || base.score,
   };
+}
+
+function hasCutoffSlotSignal(question: string): boolean {
+  const slots = extractCutoffChatParams(question);
+  return Boolean(slots.year || slots.university || slots.major || slots.score);
 }
 
 function isCutoffContinuationQuestion(question: string): boolean {
@@ -595,7 +675,7 @@ function buildCutoffSlotPrompt(slots: CutoffChatParams): string {
   if (!slots.year) missingLabels.push("학년도");
   if (!slots.university) missingLabels.push("학교명");
   if (!slots.major) missingLabels.push("학과명");
-  if (!slots.score) missingLabels.push("점수(또는 틀린 개수)");
+  if (!slots.score) missingLabels.push("점수");
 
   if (!missingLabels.length) return "컷 분석 정보를 확인하고 있어.";
 
@@ -758,9 +838,6 @@ function buildAdviceReferenceText(adviceSnippets: CoachingAdviceSnippet[]): stri
 }
 
 async function classifyIntent(question: string): Promise<IntentRoute> {
-  const heuristic = classifyIntentHeuristics(question);
-  if (heuristic) return heuristic;
-
   try {
     const classifier = await generateText({
       systemPrompt:
@@ -776,9 +853,11 @@ async function classifyIntent(question: string): Promise<IntentRoute> {
       temperature: 0,
       maxOutputTokens: 8,
     });
-    return normalizeIntentLabel(classifier) ?? "fact";
+    const intent = normalizeIntentLabel(classifier);
+    if (intent) return intent;
+    return classifyIntentHeuristics(question) ?? "fact";
   } catch {
-    return "fact";
+    return classifyIntentHeuristics(question) ?? "fact";
   }
 }
 
@@ -947,7 +1026,7 @@ async function runChatWorkflow(params: {
     if (!cutoff.year) missing.push("학년도");
     if (!cutoff.university) missing.push("학교명");
     if (!cutoff.major) missing.push("학과명");
-    if (!cutoff.score) missing.push("점수(또는 틀린 개수)");
+    if (!cutoff.score) missing.push("점수");
 
     if (missing.length > 0) {
       const answer = buildCutoffSlotPrompt(cutoff);
@@ -1305,7 +1384,8 @@ async function runChatWorkflow(params: {
   }));
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
-  const useGeneralCoachingFallback = intent === "fact" && !hasEnoughContext && isGeneralChat;
+  const useGeneralCoachingFallback =
+    intent === "fact" && !hasEnoughContext && (isGeneralChat || isStudyCoachingQuestion(question));
   const questionWithHistory = buildQuestionWithHistory(question, historyMessages);
 
   const generationStarted = Date.now();

@@ -3,7 +3,6 @@ import Foundation
 
 private enum DataCenterTab: String, CaseIterable {
     case ranking = "강사 랭킹"
-    case cutoff = "최신 커트라인"
     case aiCutoff = "AI 커트라인 분석"
 }
 
@@ -72,12 +71,6 @@ struct RankingView: View {
                                 .fontWeight(currentTab == .ranking ? .bold : .medium)
                                 .foregroundColor(currentTab == .ranking ? DesignSystem.primary : .gray)
                         }
-                        Button(action: { currentTab = .cutoff }) {
-                            Text(DataCenterTab.cutoff.rawValue)
-                                .font(.subheadline)
-                                .fontWeight(currentTab == .cutoff ? .bold : .medium)
-                                .foregroundColor(currentTab == .cutoff ? DesignSystem.primary : .gray)
-                        }
                         Button(action: { currentTab = .aiCutoff }) {
                             Text(DataCenterTab.aiCutoff.rawValue)
                                 .font(.subheadline)
@@ -100,9 +93,7 @@ struct RankingView: View {
                         .font(.footnote)
                         .padding()
                 } else {
-                    if currentTab == .cutoff {
-                        cutoffList
-                    } else if currentTab == .aiCutoff {
+                    if currentTab == .aiCutoff {
                         cutoffAnalysisView
                     } else {
                         rankingList
@@ -263,27 +254,16 @@ struct RankingView: View {
                 .padding(.horizontal, DesignSystem.padding)
 
             VStack(spacing: 10) {
-                HStack(spacing: 10) {
-                    TextField("학년도 (예: 2026)", text: $analysisYear)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.numberPad)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 11)
-                        .background(Color(.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                TextField("학년도", text: $analysisYear)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.numberPad)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                    TextField("점수 / 틀린 개수", text: $analysisScore)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.decimalPad)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 11)
-                        .background(Color(.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-
-                TextField("학교명 (예: 성균관대학교)", text: $analysisUniversity)
+                TextField("학교명", text: $analysisUniversity)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .padding(.horizontal, 12)
@@ -291,9 +271,18 @@ struct RankingView: View {
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                TextField("학과명 (예: 소프트웨어학과)", text: $analysisMajor)
+                TextField("학과명", text: $analysisMajor)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                TextField("점수", text: $analysisScore)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.decimalPad)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 11)
                     .background(Color(.systemBackground))
@@ -364,7 +353,7 @@ struct RankingView: View {
         let scoreText = analysisScore.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let year = Int(yearText), year >= 2000, year <= 2100 else {
-            analysisMessage = "학년도는 4자리 숫자로 입력해 주세요. (예: 2026)"
+            analysisMessage = "학년도는 4자리 숫자로 입력해 주세요."
             return
         }
         guard !majorText.isEmpty else {
@@ -376,7 +365,7 @@ struct RankingView: View {
             return
         }
         guard parseNumber(scoreText) != nil else {
-            analysisMessage = "점수(또는 틀린 개수)를 숫자로 입력해 주세요."
+            analysisMessage = "점수를 숫자로 입력해 주세요."
             return
         }
 
@@ -434,7 +423,6 @@ struct RankingView: View {
         let normalized = value
             .replacingOccurrences(of: ",", with: "")
             .replacingOccurrences(of: "점", with: "")
-            .replacingOccurrences(of: "개", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return Double(normalized)
     }
