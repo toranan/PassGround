@@ -224,10 +224,187 @@ type CutoffFlowState = {
   slots: CutoffChatParams;
 };
 
-type CutoffFlowAiResult = {
+type CutoffHistoryContext = {
   active: boolean;
   slots: CutoffChatParams;
 };
+
+type MessageRouteDecision =
+  | "cutoff_start"
+  | "cutoff_continue"
+  | "fact_or_emotion"
+  | "smalltalk";
+
+type CutoffFlowParams = {
+  question: string;
+  routeDecision: MessageRouteDecision;
+  historyContext: CutoffHistoryContext;
+};
+
+type MessageRouteAiResult = {
+  route: MessageRouteDecision;
+};
+
+function createEmptyCutoffParams(): CutoffChatParams {
+  return {
+    year: null,
+    university: "",
+    major: "",
+    score: "",
+  };
+}
+
+function createInactiveCutoffFlow(): CutoffFlowState {
+  return {
+    active: false,
+    slots: createEmptyCutoffParams(),
+  };
+}
+
+function createDefaultMessageRouteAiResult(): MessageRouteAiResult {
+  return {
+    route: "fact_or_emotion",
+  };
+}
+
+function createDefaultMessageRouteDecision(): MessageRouteDecision {
+  return "fact_or_emotion";
+}
+
+function createCutoffFlowState(params: CutoffFlowParams): CutoffFlowState {
+  const { question, routeDecision, historyContext } = params;
+  if (routeDecision !== "cutoff_start" && routeDecision !== "cutoff_continue") {
+    return createInactiveCutoffFlow();
+  }
+
+  return {
+    active: true,
+    slots: mergeCutoffChatParams(historyContext.slots, extractCutoffChatParams(question)),
+  };
+}
+
+function parseMessageRouteDecisionLabel(value: string): MessageRouteDecision | null {
+  const normalized = value.toLowerCase().trim();
+  if (
+    normalized !== "cutoff_start" &&
+    normalized !== "cutoff_continue" &&
+    normalized !== "fact_or_emotion" &&
+    normalized !== "smalltalk"
+  ) {
+    return null;
+  }
+  return normalized;
+}
+
+function parseMessageRouteAiResult(raw: string): MessageRouteAiResult | null {
+  const direct = raw.trim();
+  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!jsonCandidate) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonCandidate);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object") return null;
+  const row = parsed as Record<string, unknown>;
+  const routeRaw = normalizeText(row.route, 40);
+  const route = parseMessageRouteDecisionLabel(routeRaw);
+  if (!route) return null;
+
+  return { route };
+}
+
+function classifyMessageRouteHeuristic(question: string, historyContext: CutoffHistoryContext): MessageRouteDecision {
+  const currentIsCutoff = isCutoffQuestion(question);
+  const currentIsContinuation = isCutoffContinuationQuestion(question);
+  const likelyCutoffStart = isLikelyCutoffStartQuestion(question);
+
+  if (currentIsCutoff) return historyContext.active ? "cutoff_continue" : "cutoff_start";
+  if (likelyCutoffStart) return historyContext.active ? "cutoff_continue" : "cutoff_start";
+  if (historyContext.active && currentIsContinuation) return "cutoff_continue";
+  if (isGeneralConversationQuestion(question)) return "smalltalk";
+  return createDefaultMessageRouteDecision();
+}
+
+function deriveCutoffHistoryContext(historyMessages: ChatHistoryMessage[]): CutoffHistoryContext {
+  const userHistory = historyMessages.filter((message) => message.role === "user").map((message) => message.text);
+  let slots = createEmptyCutoffParams();
+  let sawCutoffContext = false;
+  let turnsSinceCutoff = Number.POSITIVE_INFINITY;
+
+  for (const text of userHistory) {
+    const looksCutoff = isCutoffQuestion(text) || (sawCutoffContext && isCutoffContinuationQuestion(text));
+    if (looksCutoff) {
+      sawCutoffContext = true;
+      turnsSinceCutoff = 0;
+      slots = mergeCutoffChatParams(slots, extractCutoffChatParams(text));
+      continue;
+    }
+    if (sawCutoffContext) turnsSinceCutoff += 1;
+  }
+
+  return {
+    active: sawCutoffContext && turnsSinceCutoff <= 2,
+    slots,
+  };
+}
+
+async function resolveMessageRouteWithAI(params: {
+  question: string;
+  historyMessages: ChatHistoryMessage[];
+  historyContext: CutoffHistoryContext;
+}): Promise<MessageRouteDecision> {
+  const { question, historyMessages, historyContext } = params;
+  const heuristic = classifyMessageRouteHeuristic(question, historyContext);
+  const currentIsCutoff = isCutoffQuestion(question);
+  const currentIsContinuation = isCutoffContinuationQuestion(question);
+  const likelyCutoffStart = isLikelyCutoffStartQuestion(question);
+  const shouldTryAi = historyContext.active || currentIsCutoff || currentIsContinuation || likelyCutoffStart;
+  if (!shouldTryAi) return heuristic;
+
+  const historyText = historyMessages
+    .slice(-8)
+    .map((item, index) => `${index + 1}. ${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
+    .join("\n");
+
+  try {
+    const raw = await generateText({
+      systemPrompt: [
+        "너는 메시지 라우터다.",
+        "현재 사용자 메시지를 아래 route 중 하나로만 분류한다.",
+        "- cutoff_start: 커트라인/합격점 분석을 새로 시작",
+        "- cutoff_continue: 직전 커트라인 흐름을 이어서 슬롯 보완/질문",
+        "- fact_or_emotion: 새로운 사실질문/감정질문",
+        "- smalltalk: 인사/가벼운 잡담",
+        "원칙: 기존 커트라인 흐름과 무관한 새 질문이면 반드시 fact_or_emotion 또는 smalltalk를 선택한다.",
+        "출력은 JSON만 허용. 코드블록 금지.",
+        'JSON 스키마: {"route":"cutoff_start|cutoff_continue|fact_or_emotion|smalltalk"}',
+      ].join("\n"),
+      userPrompt: [
+        "최근 대화:",
+        historyText || "없음",
+        "",
+        `현재 사용자 메시지: ${question}`,
+      ].join("\n"),
+      temperature: 0,
+      maxOutputTokens: 80,
+    });
+
+    const ai = parseMessageRouteAiResult(raw) ?? createDefaultMessageRouteAiResult();
+
+    if (ai.route === "cutoff_continue" && !historyContext.active) {
+      return currentIsCutoff || likelyCutoffStart ? "cutoff_start" : "fact_or_emotion";
+    }
+    if (ai.route === "cutoff_start" && historyContext.active && currentIsContinuation && !currentIsCutoff) {
+      return "cutoff_continue";
+    }
+    return ai.route;
+  } catch {
+    return heuristic;
+  }
+}
 
 function resolveExam(value: string): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
@@ -398,126 +575,12 @@ function isCutoffContinuationQuestion(question: string): boolean {
   return false;
 }
 
-function deriveCutoffFlowState(question: string, historyMessages: ChatHistoryMessage[]): CutoffFlowState {
-  const userHistory = historyMessages.filter((message) => message.role === "user").map((message) => message.text);
-  let slots: CutoffChatParams = {
-    year: null,
-    university: "",
-    major: "",
-    score: "",
-  };
-  let sawCutoffContext = false;
-
-  for (const text of userHistory) {
-    const looksCutoff = isCutoffQuestion(text) || (sawCutoffContext && isCutoffContinuationQuestion(text));
-    if (!looksCutoff) continue;
-    sawCutoffContext = true;
-    slots = mergeCutoffChatParams(slots, extractCutoffChatParams(text));
-  }
-
-  const currentIsCutoff = isCutoffQuestion(question);
-  const currentIsContinuation = isCutoffContinuationQuestion(question);
-  const active = currentIsCutoff || (sawCutoffContext && currentIsContinuation);
-
-  if (active) {
-    slots = mergeCutoffChatParams(slots, extractCutoffChatParams(question));
-  }
-
-  return { active, slots };
-}
-
-function sanitizeCutoffYear(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    const rounded = Math.round(value);
-    return rounded >= 2000 && rounded <= 2100 ? rounded : null;
-  }
-  if (typeof value !== "string") return null;
-  const matched = value.match(/20\d{2}/)?.[0];
-  if (!matched) return null;
-  const year = Number(matched);
-  return Number.isFinite(year) && year >= 2000 && year <= 2100 ? year : null;
-}
-
-function parseCutoffFlowAiResult(raw: string): CutoffFlowAiResult | null {
-  const direct = raw.trim();
-  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
-  if (!jsonCandidate) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonCandidate);
-  } catch {
-    return null;
-  }
-  if (!parsed || typeof parsed !== "object") return null;
-  const row = parsed as Record<string, unknown>;
-
-  const activeRaw = normalizeText(row.activeFlow ?? row.active, 20).toLowerCase();
-  const active = activeRaw === "cutoff" || activeRaw === "true" || activeRaw === "1";
-  const year = sanitizeCutoffYear(row.year);
-  const university = normalizeText(row.university, 120);
-  const major = normalizeText(row.major, 120);
-  const score = normalizeText(row.score, 80);
-
-  return {
-    active,
-    slots: { year, university, major, score },
-  };
-}
-
-async function resolveCutoffFlowStateWithAI(params: {
-  question: string;
-  historyMessages: ChatHistoryMessage[];
-  heuristic: CutoffFlowState;
-}): Promise<CutoffFlowState> {
-  const { question, historyMessages, heuristic } = params;
-  const shouldTryAi = heuristic.active || isCutoffQuestion(question);
-  if (!shouldTryAi) return heuristic;
-
-  const historyText = historyMessages
-    .slice(-8)
-    .map((item, index) => `${index + 1}. ${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
-    .join("\n");
-
-  try {
-    const raw = await generateText({
-      systemPrompt: [
-        "너는 대화 상태 추적기다.",
-        "목표: 현재 메시지가 '커트라인 분석 흐름'을 계속하는지 판단하고 슬롯을 추출한다.",
-        "출력은 JSON만 허용한다. 코드블록 금지.",
-        "JSON 스키마:",
-        "{",
-        '  "activeFlow": "cutoff|none",',
-        '  "year": 2027 | null,',
-        '  "university": "성균관대학교" | "",',
-        '  "major": "소프트웨어학과" | "",',
-        '  "score": "150" | ""',
-        "}",
-      ].join("\n"),
-      userPrompt: [
-        "최근 대화:",
-        historyText || "없음",
-        "",
-        `현재 사용자 메시지: ${question}`,
-      ].join("\n"),
-      temperature: 0,
-      maxOutputTokens: 180,
-    });
-
-    const ai = parseCutoffFlowAiResult(raw);
-    if (!ai) return heuristic;
-
-    const mergedSlots = mergeCutoffChatParams(heuristic.slots, ai.slots);
-    const explicitCurrentCutoff = isCutoffQuestion(question) || (heuristic.active && isCutoffContinuationQuestion(question));
-    const active = explicitCurrentCutoff || (heuristic.active && ai.active);
-
-    return {
-      active,
-      slots: mergedSlots,
-    };
-  } catch {
-    return heuristic;
-  }
+function isLikelyCutoffStartQuestion(question: string): boolean {
+  const hasScore = Boolean(parseScoreFromQuestion(question));
+  const hasYear = Boolean(parseYearFromQuestion(question));
+  const hasUniversity = Boolean(parseUniversityFromQuestion(question));
+  const hasMajor = Boolean(parseMajorFromQuestion(question));
+  return hasScore && (hasUniversity || hasMajor || hasYear);
 }
 
 function buildCutoffSlotPrompt(slots: CutoffChatParams): string {
@@ -812,15 +875,20 @@ async function runChatWorkflow(params: {
   const minSimilarity =
     typeof body.minSimilarity === "number" ? Math.max(0, Math.min(1, body.minSimilarity)) : 0.7;
   const matchCount = typeof body.matchCount === "number" ? Math.max(1, Math.min(12, Math.floor(body.matchCount))) : 6;
-  const intent = await classifyIntent(question);
-  const isGeneralChat = isGeneralConversationQuestion(question);
   const historyMessages = normalizeHistoryMessages(body.messages);
-  const heuristicCutoffFlow = deriveCutoffFlowState(question, historyMessages);
-  const cutoffFlow = await resolveCutoffFlowStateWithAI({
+  const cutoffHistoryContext = deriveCutoffHistoryContext(historyMessages);
+  const messageRoute = await resolveMessageRouteWithAI({
     question,
     historyMessages,
-    heuristic: heuristicCutoffFlow,
+    historyContext: cutoffHistoryContext,
   });
+  const cutoffFlow = createCutoffFlowState({
+    question,
+    routeDecision: messageRoute,
+    historyContext: cutoffHistoryContext,
+  });
+  const isGeneralChat = messageRoute === "smalltalk" || isGeneralConversationQuestion(question);
+  const intent = cutoffFlow.active ? "fact" : await classifyIntent(question);
   const useCache =
     shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
