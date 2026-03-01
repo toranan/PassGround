@@ -717,7 +717,7 @@ struct PostDetailView: View {
                                 .foregroundStyle(.primary)
                                 .lineSpacing(2)
                                 .fixedSize(horizontal: false, vertical: true)
-                                .padding(.top, -1)
+                                .padding(.top, -1.5)
 
                             HStack(alignment: .center, spacing: 12) {
                                 Text(node.item.timeLabel)

@@ -279,6 +279,13 @@ export default function AdminPage() {
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
   const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
+  const [knowledgeInfoForm, setKnowledgeInfoForm] = useState({
+    admissionYear: String(new Date().getFullYear()),
+    university: "",
+    majorTrack: "",
+    sourceLabel: "",
+    rawText: "",
+  });
   const [knowledgePdfFile, setKnowledgePdfFile] = useState<File | null>(null);
   const [knowledgePdfNote, setKnowledgePdfNote] = useState("");
   const [knowledgePdfTags, setKnowledgePdfTags] = useState("");
@@ -989,6 +996,81 @@ export default function AdminPage() {
       setMessage("AI 지식 초안을 만들었습니다. 내용 확인 후 승인 반영해 주세요.");
     } catch {
       setMessage("AI 지식 초안 생성 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateKnowledgeFromInfoTab = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const admissionYear = knowledgeInfoForm.admissionYear.trim();
+    const university = knowledgeInfoForm.university.trim();
+    const majorTrack = knowledgeInfoForm.majorTrack.trim();
+    const sourceLabel = knowledgeInfoForm.sourceLabel.trim();
+    const rawText = knowledgeInfoForm.rawText.trim();
+
+    if (!rawText) {
+      setMessage("붙여넣을 정보 본문을 입력해 주세요.");
+      return;
+    }
+    if (admissionYear && !/^\d{4}$/.test(admissionYear)) {
+      setMessage("학년도는 4자리 숫자(예: 2026)로 입력해 주세요.");
+      return;
+    }
+
+    const metadataLines = [
+      admissionYear ? `학년도: ${admissionYear}` : "",
+      university ? `학교: ${university}` : "",
+      majorTrack ? `학과/전형: ${majorTrack}` : "",
+      sourceLabel ? `출처: ${sourceLabel}` : "",
+    ].filter(Boolean);
+
+    const mergedRawInput = [
+      metadataLines.length ? `[메타데이터]\n${metadataLines.join("\n")}` : "",
+      `[원문]\n${rawText}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const tagSet = new Set<string>(["편입", "전형정보"]);
+    if (admissionYear) {
+      tagSet.add(admissionYear);
+      tagSet.add(`${admissionYear}학년도`);
+    }
+    if (university) tagSet.add(university);
+    if (majorTrack) tagSet.add(majorTrack);
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          rawInput: mergedRawInput,
+          tags: [...tagSet],
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "정보 넣기 초안 생성에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setKnowledgeInfoForm((prev) => ({
+        ...prev,
+        rawText: "",
+      }));
+      setMessage("정보 넣기 초안 생성 완료. 아래 검수 대기에서 확인 후 승인 반영해 주세요.");
+    } catch {
+      setMessage("정보 넣기 처리 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -1731,6 +1813,63 @@ export default function AdminPage() {
                         등록된 최신뉴스가 없습니다.
                       </p>
                     )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">정보넣기 탭 (RAG용 장문 입력)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-xs text-muted-foreground">
+                      학교/학과/학년도 정보를 함께 넣으면 `pending` 초안으로 저장돼. 아래 AI 지식 검수에서 확인 후 승인하면 챗봇 RAG에 반영돼.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                      <Input
+                        placeholder="학년도 (예: 2026)"
+                        value={knowledgeInfoForm.admissionYear}
+                        onChange={(e) =>
+                          setKnowledgeInfoForm((prev) => ({ ...prev, admissionYear: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="학교명 (예: 성균관대학교)"
+                        value={knowledgeInfoForm.university}
+                        onChange={(e) =>
+                          setKnowledgeInfoForm((prev) => ({ ...prev, university: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="학과/전형 (선택)"
+                        value={knowledgeInfoForm.majorTrack}
+                        onChange={(e) =>
+                          setKnowledgeInfoForm((prev) => ({ ...prev, majorTrack: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="출처 메모 (선택)"
+                        value={knowledgeInfoForm.sourceLabel}
+                        onChange={(e) =>
+                          setKnowledgeInfoForm((prev) => ({ ...prev, sourceLabel: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <textarea
+                      className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder="예: 2026학년도 성균관대학교 편입학 주요 일정/전형 변경/경쟁률/예상 커트라인 정보를 여기에 그대로 붙여넣어 주세요."
+                      value={knowledgeInfoForm.rawText}
+                      onChange={(e) =>
+                        setKnowledgeInfoForm((prev) => ({ ...prev, rawText: e.target.value }))
+                      }
+                    />
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        본문 길이: {knowledgeInfoForm.rawText.trim().length.toLocaleString()}자 (권장 12,000자 이하)
+                      </p>
+                      <Button onClick={handleCreateKnowledgeFromInfoTab} disabled={submitting}>
+                        {submitting ? "처리 중..." : "정보 넣고 초안 생성"}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
 

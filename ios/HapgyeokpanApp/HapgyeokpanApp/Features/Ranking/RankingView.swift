@@ -7,7 +7,7 @@ struct RankingView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let api = APIClient()
-    private let showCutoffTab = false
+    private let showCutoffTab = true
 
     @State private var exam: ExamSlug = .transfer
     @State private var currentTab: String = "강사 랭킹"
