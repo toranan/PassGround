@@ -177,6 +177,53 @@ const GENERAL_CHAT_KEYWORDS = [
   "잡담",
 ];
 
+const CUTOFF_CHAT_KEYWORDS = [
+  "커트라인",
+  "컷",
+  "합격점",
+  "합격권",
+  "추합",
+  "불합격",
+  "영수합",
+  "점이면",
+  "점수",
+];
+
+const UNIVERSITY_ALIASES: Array<{ alias: string; name: string }> = [
+  { alias: "성균관대", name: "성균관대학교" },
+  { alias: "성대", name: "성균관대학교" },
+  { alias: "연세대", name: "연세대학교" },
+  { alias: "연대", name: "연세대학교" },
+  { alias: "고려대", name: "고려대학교" },
+  { alias: "고대", name: "고려대학교" },
+  { alias: "중앙대", name: "중앙대학교" },
+  { alias: "중대", name: "중앙대학교" },
+  { alias: "한양대", name: "한양대학교" },
+  { alias: "경희대", name: "경희대학교" },
+  { alias: "한국외대", name: "한국외국어대학교" },
+  { alias: "외대", name: "한국외국어대학교" },
+  { alias: "시립대", name: "서울시립대학교" },
+  { alias: "건국대", name: "건국대학교" },
+  { alias: "동국대", name: "동국대학교" },
+  { alias: "홍익대", name: "홍익대학교" },
+  { alias: "국민대", name: "국민대학교" },
+  { alias: "숭실대", name: "숭실대학교" },
+  { alias: "아주대", name: "아주대학교" },
+  { alias: "인하대", name: "인하대학교" },
+];
+
+type CutoffChatParams = {
+  year: number | null;
+  university: string;
+  major: string;
+  score: string;
+};
+
+type CutoffFlowState = {
+  active: boolean;
+  slots: CutoffChatParams;
+};
+
 function resolveExam(value: string): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
   return null;
@@ -244,6 +291,143 @@ function tokenizeQuestion(text: string): string[] {
     .map((token) => token.trim())
     .filter((token) => token.length >= 2);
   return [...new Set(tokens)].slice(0, 24);
+}
+
+function normalizeToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]/g, "")
+    .trim();
+}
+
+function isCutoffQuestion(question: string): boolean {
+  const normalized = normalizeToken(question);
+  if (!normalized) return false;
+  const keywordHits = CUTOFF_CHAT_KEYWORDS.reduce(
+    (count, keyword) => count + (normalized.includes(normalizeToken(keyword)) ? 1 : 0),
+    0
+  );
+  if (keywordHits >= 1) return true;
+  return /(\d+(?:\.\d+)?)\s*점/.test(question) && (normalized.includes("합격") || normalized.includes("컷"));
+}
+
+function parseYearFromQuestion(question: string): number | null {
+  const match = question.match(/\b(20\d{2})\s*(?:학년도|년도|년)?/);
+  if (!match?.[1]) return null;
+  const year = Number(match[1]);
+  if (!Number.isFinite(year) || year < 2000 || year > 2100) return null;
+  return Math.round(year);
+}
+
+function parseScoreFromQuestion(question: string): string {
+  const normalized = question.replace(/,/g, "");
+  const pointMatch = normalized.match(/(\d+(?:\.\d+)?)\s*점/);
+  if (pointMatch?.[1]) return pointMatch[1];
+
+  const sumMatch = normalized.match(/(?:영수합|총점|합산)\s*(\d+(?:\.\d+)?)/);
+  if (sumMatch?.[1]) return sumMatch[1];
+
+  const followupScoreMatch = normalized.match(/(?:^|[^0-9])(1?\d{2}(?:\.\d+)?)\s*(?:이면|면|어때|가능|될까|인가)/);
+  if (followupScoreMatch?.[1]) return followupScoreMatch[1];
+
+  return "";
+}
+
+function parseUniversityFromQuestion(question: string): string {
+  const normalized = normalizeToken(question);
+  const foundAlias = UNIVERSITY_ALIASES.find((row) => normalized.includes(normalizeToken(row.alias)));
+  if (foundAlias) return foundAlias.name;
+
+  const universityMatch = question.match(/([가-힣A-Za-z0-9]+(?:대학교|대학|대))/);
+  return universityMatch?.[1]?.trim() ?? "";
+}
+
+function parseMajorFromQuestion(question: string): string {
+  const majorMatch = question.match(/([가-힣A-Za-z0-9]+(?:학과|학부))/);
+  return majorMatch?.[1]?.trim() ?? "";
+}
+
+function extractCutoffChatParams(question: string): CutoffChatParams {
+  return {
+    year: parseYearFromQuestion(question),
+    university: parseUniversityFromQuestion(question),
+    major: parseMajorFromQuestion(question),
+    score: parseScoreFromQuestion(question),
+  };
+}
+
+function mergeCutoffChatParams(base: CutoffChatParams, incoming: CutoffChatParams): CutoffChatParams {
+  return {
+    year: incoming.year ?? base.year,
+    university: incoming.university || base.university,
+    major: incoming.major || base.major,
+    score: incoming.score || base.score,
+  };
+}
+
+function isCutoffContinuationQuestion(question: string): boolean {
+  const normalized = normalizeToken(question);
+  if (!normalized) return false;
+
+  const followupMarkers = [
+    "그럼",
+    "그러면",
+    "이면",
+    "면",
+    "어때",
+    "가능",
+    "될까",
+    "맞아",
+    "이점수",
+    "이정도",
+    "추합권",
+    "합격권",
+    "불합격",
+  ];
+
+  const hasMarker = followupMarkers.some((marker) => normalized.includes(normalizeToken(marker)));
+  if (hasMarker && question.length <= 40) return true;
+
+  const score = parseScoreFromQuestion(question);
+  if (score && question.length <= 32) return true;
+  return false;
+}
+
+function deriveCutoffFlowState(question: string, historyMessages: ChatHistoryMessage[]): CutoffFlowState {
+  const userHistory = historyMessages.filter((message) => message.role === "user").map((message) => message.text);
+  let slots: CutoffChatParams = {
+    year: null,
+    university: "",
+    major: "",
+    score: "",
+  };
+  let sawCutoffContext = false;
+
+  for (const text of userHistory) {
+    const looksCutoff = isCutoffQuestion(text) || (sawCutoffContext && isCutoffContinuationQuestion(text));
+    if (!looksCutoff) continue;
+    sawCutoffContext = true;
+    slots = mergeCutoffChatParams(slots, extractCutoffChatParams(text));
+  }
+
+  const currentIsCutoff = isCutoffQuestion(question);
+  const currentIsContinuation = isCutoffContinuationQuestion(question);
+  const active = currentIsCutoff || (sawCutoffContext && currentIsContinuation);
+
+  if (active) {
+    slots = mergeCutoffChatParams(slots, extractCutoffChatParams(question));
+  }
+
+  return { active, slots };
+}
+
+function splitForStream(text: string, chunkSize = 80): string[] {
+  if (!text) return [];
+  const chunks: string[] = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize));
+  }
+  return chunks;
 }
 
 function compactText(value: string, maxLength: number): string {
@@ -458,15 +642,6 @@ function composeMixedAnswer(factAnswer: string, emotionAnswer: string): string {
   return [`정보 답변:\n${factAnswer}`, `코칭:\n${emotionAnswer}`].join("\n\n");
 }
 
-function splitForStream(text: string, chunkSize = 80): string[] {
-  if (!text) return [];
-  const chunks: string[] = [];
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
-
 function toSseEvent(event: string, data: unknown): Uint8Array {
   const encoder = new TextEncoder();
   return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -504,6 +679,7 @@ async function runChatWorkflow(params: {
   const intent = await classifyIntent(question);
   const isGeneralChat = isGeneralConversationQuestion(question);
   const historyMessages = normalizeHistoryMessages(body.messages);
+  const cutoffFlow = deriveCutoffFlowState(question, historyMessages);
   const useCache =
     shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
@@ -555,6 +731,201 @@ async function runChatWorkflow(params: {
       // Fail-open: observability insert errors should not block chat answers.
     }
   };
+
+  if (cutoffFlow.active && intent !== "emotion") {
+    const cutoff = cutoffFlow.slots;
+    const missing: string[] = [];
+    if (!cutoff.year) missing.push("학년도");
+    if (!cutoff.university) missing.push("학교명");
+    if (!cutoff.major) missing.push("학과명");
+    if (!cutoff.score) missing.push("점수(또는 틀린 개수)");
+
+    if (missing.length > 0) {
+      const answer =
+        missing.length === 1 && missing[0] === "학년도"
+          ? "질문 고마워. 정확한 안내를 위해 학년도를 먼저 알려줘.\n예: 2027학년도 성균관대학교 소프트웨어학과 영수합 150점"
+          : [
+              "정확한 컷 분석을 위해 입력 정보가 더 필요해.",
+              `누락된 항목: ${missing.join(", ")}`,
+              "예시: 2027학년도 성균관대학교 소프트웨어학과 영수합 150점",
+            ].join("\n");
+
+      stream?.onMeta({ intent, route: "fallback", cache: cacheStatus, mode: "cutoff_input" });
+      if (stream) {
+        for (const chunk of splitForStream(answer)) {
+          stream.onDelta(chunk);
+        }
+      }
+
+      await recordObservation({
+        route: "fallback",
+        status: "ok",
+        matchedContextCount: 0,
+        hasEnoughContext: false,
+        answerLength: answer.length,
+      });
+
+      return {
+        ok: true,
+        exam,
+        intent,
+        route: "fallback",
+        answer,
+        needsQuestionSubmission: false,
+        contexts: [],
+        cache: cacheStatus,
+        traceId,
+        metrics: {
+          totalMs: Date.now() - startedAt,
+          cacheMs,
+          embeddingMs,
+          retrievalMs,
+          generationMs,
+        },
+      };
+    }
+
+    const retrievalPrompt = [
+      `${cutoff.year}학년도`,
+      cutoff.university,
+      cutoff.major,
+      `사용자 점수: ${cutoff.score}`,
+      "편입 커트라인",
+      "최초합",
+      "추합",
+      "경쟁률",
+    ].join(" ");
+
+    const embeddingStarted = Date.now();
+    const queryEmbedding = await createEmbedding(retrievalPrompt);
+    embeddingMs = Date.now() - embeddingStarted;
+
+    const retrievalStarted = Date.now();
+    const { data: matched, error: matchError } = await admin.rpc("match_ai_knowledge_chunks", {
+      query_embedding: queryEmbedding,
+      query_exam: exam,
+      match_count: 12,
+      min_similarity: 0.45,
+    });
+    retrievalMs = Date.now() - retrievalStarted;
+
+    if (matchError) {
+      await recordObservation({
+        route: "fallback",
+        status: "error",
+        matchedContextCount: 0,
+        hasEnoughContext: false,
+        answerLength: 0,
+        errorMessage: matchError.message,
+      });
+      throw new ChatHttpError(400, matchError.message);
+    }
+
+    const yearToken = String(cutoff.year);
+    const uniToken = normalizeToken(cutoff.university);
+    const majorToken = normalizeToken(cutoff.major);
+    const matchedRows = ((matched as MatchedChunkRow[] | null) ?? []).filter((row) => {
+      const normalizedChunk = normalizeToken(row.chunk_text);
+      return normalizedChunk.includes(yearToken) && normalizedChunk.includes(uniToken) && normalizedChunk.includes(majorToken);
+    });
+
+    const responseContexts = matchedRows.map((ctx) => ({
+      id: ctx.id,
+      knowledgeItemId: ctx.knowledge_item_id,
+      similarity: Number(ctx.similarity.toFixed(4)),
+      preview: ctx.chunk_text.slice(0, 180),
+    }));
+    const topChunkIds = matchedRows.map((ctx) => ctx.id);
+    const topKnowledgeIds = [...new Set(matchedRows.map((ctx) => ctx.knowledge_item_id))];
+    const hasEnoughContext = matchedRows.length > 0;
+
+    const route: FinalRoute = hasEnoughContext ? "grounded" : "fallback";
+    let answer = "";
+
+    if (!hasEnoughContext) {
+      answer = [
+        `${cutoff.year}학년도 ${cutoff.university} ${cutoff.major} 기준으로 확인했는데,`,
+        "현재 저장된 근거에서 일치하는 컷 정보를 찾지 못했어.",
+        "질문하기로 남겨주면 우선 확인해서 반영해둘게.",
+      ].join("\n");
+    } else {
+      const generationStarted = Date.now();
+      answer = await generateText({
+        systemPrompt: [
+          "너는 편입 커트라인 분석 도우미다.",
+          "감성 위로나 동기부여 문장은 금지한다.",
+          "반드시 제공된 근거 안에서만 판단한다.",
+          "근거가 애매하면 단정하지 말고 보수적으로 안내한다.",
+          "문체는 친절한 반말로, 과장 없이 명확하게 쓴다.",
+        ].join("\n"),
+        userPrompt: [
+          `질문: ${question}`,
+          `분석 기준: ${cutoff.year}학년도 ${cutoff.university} ${cutoff.major}, 입력 점수 ${cutoff.score}`,
+          "",
+          "근거:",
+          matchedRows
+            .slice(0, 6)
+            .map((ctx, index) => `근거 ${index + 1} (유사도 ${ctx.similarity.toFixed(3)}): ${ctx.chunk_text}`)
+            .join("\n\n"),
+          "",
+          "출력 규칙:",
+          "- 첫 문장에 반드시 학년도/학교/학과를 명시",
+          "- 합격권/추합권/불합격권 중 하나로 분류",
+          "- 이유 2~3줄 + 다음 액션 1줄",
+        ].join("\n"),
+        temperature: 0,
+        maxOutputTokens: 420,
+      });
+      generationMs = Date.now() - generationStarted;
+    }
+
+    stream?.onMeta({ intent, route, cache: cacheStatus, mode: "cutoff" });
+    if (stream) {
+      for (const chunk of splitForStream(answer)) {
+        stream.onDelta(chunk);
+      }
+    }
+
+    try {
+      await admin.from("ai_chat_logs").insert({
+        exam_slug: exam,
+        question,
+        answer,
+        route,
+        top_chunk_ids: topChunkIds,
+        top_knowledge_item_ids: topKnowledgeIds,
+      });
+    } catch {
+      // Fail-open: logging errors should not block chat answers.
+    }
+
+    await recordObservation({
+      route,
+      status: "ok",
+      matchedContextCount: matchedRows.length,
+      hasEnoughContext,
+      answerLength: answer.length,
+    });
+
+    return {
+      ok: true,
+      exam,
+      intent,
+      route,
+      answer,
+      needsQuestionSubmission: route === "fallback",
+      contexts: responseContexts,
+      cache: cacheStatus,
+      traceId,
+      metrics: {
+        totalMs: Date.now() - startedAt,
+        cacheMs,
+        embeddingMs,
+        retrievalMs,
+        generationMs,
+      },
+    };
+  }
 
   if (intent === "emotion") {
     const adviceSnippets = await getAdviceSnippets();
