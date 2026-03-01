@@ -13,7 +13,6 @@ private struct CutoffAnalysisResult {
     let basisLabel: String
     let detail: String
     let targetGuide: String
-    let references: [String]
 }
 
 struct RankingView: View {
@@ -345,19 +344,6 @@ struct RankingView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
 
-                    if !result.references.isEmpty {
-                        Divider()
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("참고 데이터")
-                                .font(.caption.bold())
-                                .foregroundColor(.secondary)
-                            ForEach(result.references, id: \.self) { line in
-                                Text("• \(line)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
                 }
                 .padding(14)
                 .background(DesignSystem.cardBackground)
@@ -378,19 +364,19 @@ struct RankingView: View {
         let scoreText = analysisScore.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let year = Int(yearText), year >= 2000, year <= 2100 else {
-            analysisMessage = "학년도는 4자리 숫자로 입력해줘. (예: 2026)"
+            analysisMessage = "학년도는 4자리 숫자로 입력해 주세요. (예: 2026)"
             return
         }
         guard !majorText.isEmpty else {
-            analysisMessage = "학과명을 입력해줘."
+            analysisMessage = "학과명을 입력해 주세요."
             return
         }
         guard !universityText.isEmpty else {
-            analysisMessage = "학교명을 입력해줘."
+            analysisMessage = "학교명을 입력해 주세요."
             return
         }
         guard parseNumber(scoreText) != nil else {
-            analysisMessage = "점수(또는 틀린 개수)를 숫자로 입력해줘."
+            analysisMessage = "점수(또는 틀린 개수)를 숫자로 입력해 주세요."
             return
         }
 
@@ -415,19 +401,16 @@ struct RankingView: View {
                 let verdict = response.label?.isEmpty == false ? response.label! : verdictText(for: status)
                 let detail = response.detail?.isEmpty == false
                     ? response.detail!
-                    : (response.summary?.isEmpty == false ? response.summary! : "RAG 근거를 기준으로 결과를 정리했어.")
+                    : (response.summary?.isEmpty == false ? response.summary! : "RAG 근거를 기준으로 결과를 정리했습니다.")
                 let guide = response.targetGuide?.isEmpty == false
                     ? response.targetGuide!
-                    : "부족한 영역을 보강해서 다시 점검해보자."
-                let references = (response.basis ?? []).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-
+                    : "부족한 영역을 보강한 뒤 다시 점검하시길 권장합니다."
                 analysisResult = CutoffAnalysisResult(
                     verdict: verdict,
                     verdictColor: verdictColor(for: status),
                     basisLabel: "RAG 근거 기반",
                     detail: detail,
-                    targetGuide: guide,
-                    references: references
+                    targetGuide: guide
                 )
                 analysisMessage = response.summary ?? ""
             } else {
@@ -438,7 +421,7 @@ struct RankingView: View {
                     : "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다."
             }
         } catch {
-            let fallback = "분석 요청에 실패했어. 잠시 후 다시 시도해줘."
+            let fallback = "분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요."
             if let localized = (error as? LocalizedError)?.errorDescription, !localized.isEmpty {
                 analysisMessage = localized
             } else {

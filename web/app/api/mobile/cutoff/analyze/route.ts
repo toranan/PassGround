@@ -160,6 +160,23 @@ function compactSentence(value: string, maxLength: number): string {
   return normalized.slice(0, maxLength).trim();
 }
 
+function toFormalSentence(value: string, fallback: string): string {
+  const compact = compactSentence(value, 900) || fallback;
+  const trimmed = compact.replace(/[.!?]+$/g, "").trim();
+  if (!trimmed) return fallback;
+  if (/(습니다|입니다|됩니다|없습니다|필요합니다|권장합니다|어렵습니다|부족합니다|겠습니다|드립니다)$/u.test(trimmed)) {
+    return `${trimmed}.`;
+  }
+  return `${trimmed}입니다.`;
+}
+
+function withContextPrefix(text: string, contextPrefix: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return contextPrefix;
+  if (trimmed.includes(contextPrefix)) return trimmed;
+  return `${contextPrefix} ${trimmed}`;
+}
+
 function parseModelResult(raw: string): ParsedModelResult | null {
   const direct = raw.trim();
   const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
@@ -200,20 +217,32 @@ function parseModelResult(raw: string): ParsedModelResult | null {
 
 function buildUnavailablePayload(params: {
   traceId: string;
+  contextPrefix?: string;
   detail?: string;
   basis?: string[];
   evidenceCount?: number;
 }) {
+  const prefix = params.contextPrefix?.trim() || "";
+  const summaryBase = prefix
+    ? `${prefix} 아직 해당 정보가 존재하지 않습니다`
+    : "아직 해당 정보가 존재하지 않습니다";
+  const detailBase =
+    params.detail ??
+    (prefix
+      ? `${prefix} 아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다`
+      : "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다");
+
   return {
     ok: true,
     source: "rag",
     found: false,
     status: "unknown",
     label: "정보부족",
-    summary: "아직 해당 정보가 존재하지않습니다.",
-    detail:
-      params.detail ??
-      "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다.",
+    summary: toFormalSentence(summaryBase, "아직 해당 정보가 존재하지 않습니다."),
+    detail: toFormalSentence(
+      detailBase,
+      "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다."
+    ),
     targetGuide: "질문하기 버튼으로 접수해주시면 확인 후 반영하겠습니다.",
     basis: params.basis ?? [],
     message: "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다.",
@@ -238,6 +267,7 @@ export async function POST(request: Request) {
   const university = normalizeText(body.university, 120);
   const major = normalizeText(body.major, 120);
   const score = normalizeText(body.score, 80);
+  const contextPrefix = `${year ?? ""}학년도 ${university} ${major} 기준으로`;
 
   if (!year) {
     return NextResponse.json({ error: "학년도(year)는 4자리 숫자여야 합니다.", traceId }, { status: 400 });
@@ -279,7 +309,7 @@ export async function POST(request: Request) {
 
     const rows = ((data as MatchedChunkRow[] | null) ?? []).filter((row) => Boolean(row?.chunk_text?.trim()));
     if (!rows.length) {
-      return withNoStore(NextResponse.json(buildUnavailablePayload({ traceId })));
+      return withNoStore(NextResponse.json(buildUnavailablePayload({ traceId, contextPrefix })));
     }
 
     const yearToken = String(year);
@@ -314,7 +344,7 @@ export async function POST(request: Request) {
       .slice(0, 6);
 
     if (!candidates.length) {
-      return withNoStore(NextResponse.json(buildUnavailablePayload({ traceId })));
+      return withNoStore(NextResponse.json(buildUnavailablePayload({ traceId, contextPrefix })));
     }
 
     const knowledgeItemIds = Array.from(new Set(candidates.map((row) => row.knowledge_item_id)));
@@ -339,6 +369,7 @@ export async function POST(request: Request) {
         NextResponse.json(
           buildUnavailablePayload({
             traceId,
+            contextPrefix,
             detail: "입력한 조건과 일치하는 커트라인 근거가 아직 충분하지 않습니다.",
             evidenceCount: 0,
           })
@@ -356,7 +387,8 @@ export async function POST(request: Request) {
         "너는 편입 커트라인 분석기다.",
         "반드시 제공된 근거 텍스트 안에서만 판단해라.",
         "감성 위로, 동기부여, 친근한 말투를 사용하지 마라.",
-        "문체는 간결하고 딱딱한 안내문 형태로 작성해라.",
+        "문체는 정중한 안내체(합니다/입니다)로 작성해라.",
+        "요약과 상세 첫 문장에는 반드시 학년도/학교명/학과명을 명시해라.",
         "근거가 부족하거나 서로 충돌하면 status를 unknown으로 내려라.",
         "출력은 JSON만 허용한다. 코드블록/설명문 금지.",
         "JSON 스키마:",
@@ -389,12 +421,26 @@ export async function POST(request: Request) {
       parsed = {
         status: guessedStatus,
         label: mapStatusLabel(guessedStatus),
-        summary: compactSentence(modelRaw, 120) || "근거를 충분히 구조화하지 못했습니다.",
+        summary: compactSentence(modelRaw, 120) || "근거를 충분히 구조화하지 못했습니다",
         detail: compactSentence(modelRaw, 520),
         targetGuide: "입력 조건을 더 구체화하면 정확도를 높일 수 있습니다.",
         basis: contextLines.slice(0, 3).map((line) => compactSentence(line, 140)),
       };
     }
+
+    const resolvedLabel = parsed.label || mapStatusLabel(parsed.status);
+    const summary = toFormalSentence(
+      withContextPrefix(parsed.summary, contextPrefix),
+      `${contextPrefix} 현재 입력 점수는 ${resolvedLabel}으로 판단됩니다.`
+    );
+    const detail = toFormalSentence(
+      withContextPrefix(parsed.detail, contextPrefix),
+      `${contextPrefix} 조회된 근거를 기준으로 ${resolvedLabel}으로 판단됩니다.`
+    );
+    const targetGuide = toFormalSentence(
+      parsed.targetGuide,
+      "입력 조건을 더 구체화하면 정확도를 높일 수 있습니다."
+    );
 
     const found = parsed.status !== "unknown";
     if (!found) {
@@ -402,7 +448,8 @@ export async function POST(request: Request) {
         NextResponse.json(
           buildUnavailablePayload({
             traceId,
-            detail: parsed.detail || parsed.summary,
+            contextPrefix,
+            detail: detail || summary,
             basis: parsed.basis,
             evidenceCount: scopedCandidates.length,
           })
@@ -416,10 +463,10 @@ export async function POST(request: Request) {
         source: "rag",
         found: true,
         status: parsed.status,
-        label: parsed.label || mapStatusLabel(parsed.status),
-        summary: parsed.summary,
-        detail: parsed.detail,
-        targetGuide: parsed.targetGuide,
+        label: resolvedLabel,
+        summary,
+        detail,
+        targetGuide,
         basis: parsed.basis,
         evidenceCount: scopedCandidates.length,
         traceId,
