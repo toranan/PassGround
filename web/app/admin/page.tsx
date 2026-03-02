@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
-import { supabase } from "@/lib/supabase";
 
 type User = {
   id?: string;
@@ -961,21 +960,43 @@ export default function AdminPage() {
         }),
       });
       const signPayload = (await signRes.json().catch(() => null)) as
-        | { ok?: boolean; bucket?: string; path?: string; token?: string; publicUrl?: string; filename?: string; error?: string }
+        | {
+            ok?: boolean;
+            bucket?: string;
+            path?: string;
+            token?: string;
+            signedUrl?: string;
+            publicUrl?: string;
+            filename?: string;
+            error?: string;
+          }
         | null;
-      if (!signRes.ok || !signPayload?.ok || !signPayload.bucket || !signPayload.path || !signPayload.token || !signPayload.publicUrl) {
+      if (
+        !signRes.ok ||
+        !signPayload?.ok ||
+        !signPayload.bucket ||
+        !signPayload.path ||
+        !signPayload.token ||
+        !signPayload.signedUrl ||
+        !signPayload.publicUrl
+      ) {
         setMessage(signPayload?.error ?? "첨부 파일 업로드 URL 발급에 실패했습니다.");
         return;
       }
 
-      const upload = await supabase.storage
-        .from(signPayload.bucket)
-        .uploadToSignedUrl(signPayload.path, signPayload.token, file, {
-          upsert: false,
-          contentType: file.type || "application/octet-stream",
-        });
-      if (upload.error) {
-        setMessage(upload.error.message || "첨부 파일 업로드에 실패했습니다.");
+      const uploadFormData = new FormData();
+      uploadFormData.append("cacheControl", "3600");
+      uploadFormData.append("", file);
+      const uploadRes = await fetch(signPayload.signedUrl, {
+        method: "PUT",
+        headers: {
+          "x-upsert": "false",
+        },
+        body: uploadFormData,
+      });
+      if (!uploadRes.ok) {
+        const uploadText = await uploadRes.text().catch(() => "");
+        setMessage(uploadText || "첨부 파일 업로드에 실패했습니다.");
         return;
       }
 

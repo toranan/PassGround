@@ -129,6 +129,7 @@ export async function POST(request: Request) {
     ok: true,
     bucket: "attachments",
     path,
+    signedUrl: data.signedUrl,
     token: data.token,
     publicUrl: publicUrlData.publicUrl,
     filename,
