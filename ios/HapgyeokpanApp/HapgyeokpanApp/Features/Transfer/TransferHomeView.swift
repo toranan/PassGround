@@ -2,6 +2,18 @@ import SwiftUI
 
 private let homePrimary = Color(red: 79/255, green: 70/255, blue: 229/255)
 
+private struct HomeBannerDdayInfo {
+    let targetLabel: String
+    let ddayLabel: String
+    let subtitle: String
+
+    static let `default` = HomeBannerDdayInfo(
+        targetLabel: "목표대학 미설정",
+        ddayLabel: "D-day",
+        subtitle: "마이에서 목표대학을 설정하면 대학별 일정 기준 D-day를 보여줘"
+    )
+}
+
 struct TransferHomeView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var communityStore: CommunityStore
@@ -22,6 +34,7 @@ struct TransferHomeView: View {
     @State private var prefetchedPostIDs: Set<String> = []
     @State private var unreadCount = 0
     @State private var loadRevision = 0
+    @State private var bannerDdayInfo = HomeBannerDdayInfo.default
 
 
     var body: some View {
@@ -92,15 +105,34 @@ struct TransferHomeView: View {
             guard !didBootstrap else { return }
             didBootstrap = true
             let fresh = applyCachedSnapshotIfAvailable()
+            bannerDdayInfo = await loadBannerDdayInfo(
+                allowNetworkFetch: true,
+                cachePolicy: .useProtocolCachePolicy,
+                cacheBust: nil
+            )
             if !fresh {
                 await load(forceRefresh: true)
             }
         }
         .onAppear {
+            Task {
+                bannerDdayInfo = await loadBannerDdayInfo(
+                    allowNetworkFetch: false,
+                    cachePolicy: .useProtocolCachePolicy,
+                    cacheBust: nil
+                )
+            }
             refreshIfStale()
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
+                Task {
+                    bannerDdayInfo = await loadBannerDdayInfo(
+                        allowNetworkFetch: false,
+                        cachePolicy: .useProtocolCachePolicy,
+                        cacheBust: nil
+                    )
+                }
                 refreshIfStale()
             }
         }
@@ -110,16 +142,18 @@ struct TransferHomeView: View {
     }
 
     private var bannerSection: some View {
-        // 프리미엄/광고 배너 예시
         ZStack(alignment: .leading) {
             Color.black
 
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("2026 편입 합격의 기준이 되다")
+                    Text(bannerDdayInfo.targetLabel)
                         .font(.headline)
                         .foregroundStyle(.white)
-                    Text("합격판 프리미엄 모의지원 출시")
+                    Text(bannerDdayInfo.ddayLabel)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(bannerDdayInfo.subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                 }
@@ -247,6 +281,7 @@ struct TransferHomeView: View {
             let resolvedLatestNewsPosts: [HomeFeedPost]
             let resolvedRealtimePosts: [HomeFeedPost]
             let resolvedLatestPosts: [HomeFeedPost]
+            let resolvedBannerInfo: HomeBannerDdayInfo
 
             do {
                 let response = try await api.fetchHomeFeed(
@@ -258,18 +293,29 @@ struct TransferHomeView: View {
                 resolvedLatestNewsPosts = communityStore.mergeLikeOverrides(feedItems: response.latestNewsPosts)
                 resolvedRealtimePosts = communityStore.mergeLikeOverrides(feedItems: response.realtimePosts)
                 resolvedLatestPosts = communityStore.mergeLikeOverrides(feedItems: response.latestPosts)
+                resolvedBannerInfo = await loadBannerDdayInfo(
+                    allowNetworkFetch: false,
+                    cachePolicy: cachePolicy,
+                    cacheBust: cacheBust
+                )
             } catch {
                 guard shouldFallbackToLegacyHomeAPI(error) else { throw error }
                 let legacy = try await loadLegacyHomeFeed(cachePolicy: cachePolicy)
                 resolvedLatestNewsPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestNewsPosts)
                 resolvedRealtimePosts = communityStore.mergeLikeOverrides(feedItems: legacy.realtimePosts)
                 resolvedLatestPosts = communityStore.mergeLikeOverrides(feedItems: legacy.latestPosts)
+                resolvedBannerInfo = await loadBannerDdayInfo(
+                    allowNetworkFetch: false,
+                    cachePolicy: cachePolicy,
+                    cacheBust: cacheBust
+                )
             }
 
             guard requestRevision == loadRevision else { return }
             latestNewsPosts = resolvedLatestNewsPosts
             realtimePosts = resolvedRealtimePosts
             latestPosts = resolvedLatestPosts
+            bannerDdayInfo = resolvedBannerInfo
             communityStore.saveHomeSnapshot(
                 exam: exam,
                 realtimePosts: realtimePosts,
@@ -283,6 +329,121 @@ struct TransferHomeView: View {
             }
             guard requestRevision == loadRevision else { return }
             errorMessage = Self.readableErrorMessage(error, baseURL: config.baseURL)
+        }
+    }
+
+    private func loadBannerDdayInfo(
+        allowNetworkFetch: Bool,
+        cachePolicy: URLRequest.CachePolicy,
+        cacheBust: String?
+    ) async -> HomeBannerDdayInfo {
+        let schedules = await loadScheduleItemsForBanner(
+            allowNetworkFetch: allowNetworkFetch,
+            cachePolicy: cachePolicy,
+            cacheBust: cacheBust
+        )
+        let targetUniversity = loadTargetUniversityForBanner()
+        return resolveBannerDdayInfo(
+            targetUniversity: targetUniversity,
+            schedules: schedules
+        )
+    }
+
+    private func loadScheduleItemsForBanner(
+        allowNetworkFetch: Bool,
+        cachePolicy: URLRequest.CachePolicy,
+        cacheBust: String?
+    ) async -> [ExamScheduleItem] {
+        if !allowNetworkFetch {
+            return communityStore.scheduleSnapshot(exam: exam)?.schedules ?? []
+        }
+        do {
+            let response = try await api.fetchSchedules(
+                baseURL: config.baseURL,
+                exam: exam,
+                cachePolicy: cachePolicy,
+                cacheBust: cacheBust
+            )
+            communityStore.saveScheduleSnapshot(exam: exam, schedules: response.schedules)
+            return response.schedules
+        } catch {
+            if let snapshot = communityStore.scheduleSnapshot(exam: exam) {
+                return snapshot.schedules
+            }
+            return []
+        }
+    }
+
+    private func loadTargetUniversityForBanner() -> String? {
+        session.user?.targetUniversity?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func resolveBannerDdayInfo(
+        targetUniversity: String?,
+        schedules: [ExamScheduleItem]
+    ) -> HomeBannerDdayInfo {
+        let trimmedTarget = targetUniversity?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let now = Date()
+        let today = Calendar.current.startOfDay(for: now)
+
+        let matchedSchedules = schedules
+            .filter { schedule in
+                guard !trimmedTarget.isEmpty else { return false }
+                return scheduleMatchesTarget(schedule, target: trimmedTarget)
+            }
+            .sorted { Self.parseDate($0.startsAt) < Self.parseDate($1.startsAt) }
+
+        let nextMatched = matchedSchedules.first(where: { Self.parseDate($0.startsAt) >= now })
+        let targetDate = nextMatched.map { Self.parseDate($0.startsAt) } ?? Self.defaultReferenceDate(from: now)
+
+        let diffDays = Calendar.current.dateComponents([.day], from: today, to: Calendar.current.startOfDay(for: targetDate)).day ?? 0
+        let ddayLabel: String = {
+            if diffDays == 0 { return "D-day" }
+            if diffDays > 0 { return "D-\(diffDays)" }
+            return "D+\(abs(diffDays))"
+        }()
+
+        if let nextMatched {
+            let targetLabel = trimmedTarget.isEmpty ? "목표대학 미설정" : "\(trimmedTarget) 기준"
+            let subtitle = "\(nextMatched.title) · \(Self.formatDateLabel(nextMatched.startsAt))"
+            return HomeBannerDdayInfo(
+                targetLabel: targetLabel,
+                ddayLabel: ddayLabel,
+                subtitle: subtitle
+            )
+        }
+
+        let defaultDateLabel = Self.formatDateLabel(Self.defaultReferenceDate(from: now))
+        if trimmedTarget.isEmpty {
+            return HomeBannerDdayInfo(
+                targetLabel: "목표대학 미설정",
+                ddayLabel: ddayLabel,
+                subtitle: "기본 기준일 \(defaultDateLabel) (마이에서 목표대학 설정 가능)"
+            )
+        }
+
+        return HomeBannerDdayInfo(
+            targetLabel: "\(trimmedTarget) 기준",
+            ddayLabel: ddayLabel,
+            subtitle: "대학별 일정 미등록 · 기본 기준일 \(defaultDateLabel)"
+        )
+    }
+
+    private func scheduleMatchesTarget(_ schedule: ExamScheduleItem, target: String) -> Bool {
+        let normalizedTarget = target.replacingOccurrences(of: " ", with: "")
+        if normalizedTarget.isEmpty { return false }
+
+        let fields: [String] = [
+            schedule.university ?? "",
+            schedule.title,
+            schedule.location ?? "",
+            schedule.organizer ?? "",
+            schedule.note ?? ""
+        ]
+
+        return fields.contains { field in
+            let normalizedField = field.replacingOccurrences(of: " ", with: "")
+            return normalizedField.localizedCaseInsensitiveContains(normalizedTarget)
         }
     }
 
@@ -444,8 +605,8 @@ struct TransferHomeView: View {
     private func fallbackBoards(for exam: ExamSlug) -> [BoardInfo] {
         _ = exam
         return [
-            BoardInfo(id: "transfer-qa", slug: "qa", name: "학습법공유", description: "대학/전형/학습 전략 질문과 답변", preview: []),
-            BoardInfo(id: "transfer-study-qa", slug: "study-qa", name: "학습질문", description: "영어/수학/논술 과목별 공부법 질문과 답변", preview: []),
+            BoardInfo(id: "transfer-qa", slug: "qa", name: "합격전략", description: "대학/전형/학습 전략 질문과 답변", preview: []),
+            BoardInfo(id: "transfer-study-qa", slug: "study-qa", name: "학습질문", description: "과목별 공부법과 자유로운학습질문 공간", preview: []),
             BoardInfo(id: "transfer-admit", slug: "admit-review", name: "합격수기", description: "합격생 인증 기반 수기와 노하우", preview: [])
         ]
     }
@@ -478,6 +639,38 @@ struct TransferHomeView: View {
         if let date = iso.date(from: value) { return date }
 
         return .distantPast
+    }
+
+    nonisolated private static func defaultReferenceDate(from now: Date) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? .current
+
+        let currentYear = calendar.component(.year, from: now)
+        var components = DateComponents()
+        components.year = currentYear
+        components.month = 1
+        components.day = 10
+        components.hour = 9
+        components.minute = 0
+
+        let thisYear = calendar.date(from: components) ?? now
+        if thisYear >= now {
+            return thisYear
+        }
+        components.year = currentYear + 1
+        return calendar.date(from: components) ?? thisYear
+    }
+
+    nonisolated private static func formatDateLabel(_ value: String?) -> String {
+        let date = parseDate(value)
+        return formatDateLabel(date)
+    }
+
+    nonisolated private static func formatDateLabel(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter.string(from: date)
     }
 
     private static func readableErrorMessage(_ error: Error, baseURL: URL) -> String {

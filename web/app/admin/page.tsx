@@ -69,6 +69,7 @@ type AdminCutoffResponse = {
 type ScheduleItem = {
   id: string;
   examSlug: string;
+  university: string | null;
   title: string;
   category: string;
   startsAt: string;
@@ -369,6 +370,7 @@ export default function AdminPage() {
     memo: "",
   });
   const [scheduleForm, setScheduleForm] = useState({
+    university: "",
     title: "",
     category: "원서접수",
     startsAt: toLocalDateTimeInput(new Date()),
@@ -933,6 +935,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify({
           exam,
+          university: scheduleForm.university,
           title: scheduleForm.title,
           category: scheduleForm.category,
           startsAt: startsAtIso,
@@ -952,6 +955,7 @@ export default function AdminPage() {
       setSchedules(payload.schedules ?? []);
       setScheduleForm((prev) => ({
         ...prev,
+        university: "",
         title: "",
         endsAt: "",
         location: "",
@@ -2011,6 +2015,13 @@ export default function AdminPage() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                       <Input
+                        placeholder="대상 대학명 (선택)"
+                        value={scheduleForm.university}
+                        onChange={(e) =>
+                          setScheduleForm((prev) => ({ ...prev, university: e.target.value }))
+                        }
+                      />
+                      <Input
                         placeholder="일정 제목"
                         value={scheduleForm.title}
                         onChange={(e) =>
@@ -2086,6 +2097,9 @@ export default function AdminPage() {
                               <p className="text-sm font-semibold">
                                 {item.title}
                               </p>
+                              {item.university ? (
+                                <p className="text-xs text-muted-foreground mt-1">대상대학: {item.university}</p>
+                              ) : null}
                               <p className="text-xs text-primary mt-1">
                                 {item.category} · {formatDateLabel(item.startsAt)}
                                 {item.endsAt ? ` ~ ${formatDateLabel(item.endsAt)}` : ""}

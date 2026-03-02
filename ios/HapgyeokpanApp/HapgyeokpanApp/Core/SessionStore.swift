@@ -83,6 +83,16 @@ final class SessionStore: ObservableObject {
         requiresNicknameSetup = false
     }
 
+    func updateUser(_ updatedUser: SessionUser) {
+        user = updatedUser
+        Self.encode(updatedUser, key: Keys.user)
+        requiresNicknameSetup = Self.shouldRequireNicknameSetup(
+            for: updatedUser,
+            onboardedUserIDs: nicknameOnboardedUserIDs,
+            requiredUserIDs: nicknameSetupRequiredUserIDs
+        )
+    }
+
     func clear() {
         user = nil
         tokens = nil

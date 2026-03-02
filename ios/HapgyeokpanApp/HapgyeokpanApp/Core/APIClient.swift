@@ -596,7 +596,12 @@ final class APIClient {
         )
     }
 
-    func fetchPoints(baseURL: URL, userId: String?, nickname: String?) async throws -> PointResponse {
+    func fetchPoints(
+        baseURL: URL,
+        userId: String?,
+        nickname: String?,
+        includeLedger: Bool = true
+    ) async throws -> PointResponse {
         var query: [URLQueryItem] = []
         if let userId, !userId.isEmpty {
             query.append(URLQueryItem(name: "userId", value: userId))
@@ -604,15 +609,48 @@ final class APIClient {
         if let nickname, !nickname.isEmpty {
             query.append(URLQueryItem(name: "nickname", value: nickname))
         }
+        query.append(URLQueryItem(name: "includeLedger", value: includeLedger ? "true" : "false"))
 
         return try await request(baseURL: baseURL, path: "api/points/me", query: query)
     }
 
     func updateNickname(baseURL: URL, accessToken: String, userId: String, nickname: String) async throws -> SessionUser {
+        try await updateProfile(
+            baseURL: baseURL,
+            accessToken: accessToken,
+            userId: userId,
+            nickname: nickname,
+            targetUniversity: nil
+        )
+    }
+
+    func updateTargetUniversity(
+        baseURL: URL,
+        accessToken: String,
+        userId: String,
+        targetUniversity: String?
+    ) async throws -> SessionUser {
+        try await updateProfile(
+            baseURL: baseURL,
+            accessToken: accessToken,
+            userId: userId,
+            nickname: nil,
+            targetUniversity: targetUniversity
+        )
+    }
+
+    private func updateProfile(
+        baseURL: URL,
+        accessToken: String,
+        userId: String,
+        nickname: String?,
+        targetUniversity: String?
+    ) async throws -> SessionUser {
         struct Body: Encodable {
             let accessToken: String
             let userId: String
-            let nickname: String
+            let nickname: String?
+            let targetUniversity: String?
         }
 
         struct Response: Codable {
@@ -624,7 +662,12 @@ final class APIClient {
             baseURL: baseURL,
             path: "api/profile/update",
             method: "POST",
-            body: Body(accessToken: accessToken, userId: userId, nickname: nickname)
+            body: Body(
+                accessToken: accessToken,
+                userId: userId,
+                nickname: nickname,
+                targetUniversity: targetUniversity
+            )
         )
 
         return response.user

@@ -20,19 +20,22 @@ struct SessionUser: Codable {
     let email: String
     let username: String
     let nickname: String
+    let targetUniversity: String?
 
     enum CodingKeys: String, CodingKey {
         case id
         case email
         case username
         case nickname
+        case targetUniversity
     }
 
-    init(id: String, email: String, username: String, nickname: String) {
+    init(id: String, email: String, username: String, nickname: String, targetUniversity: String? = nil) {
         self.id = id
         self.email = email
         self.username = username
         self.nickname = nickname
+        self.targetUniversity = targetUniversity
     }
 
     init(from decoder: Decoder) throws {
@@ -41,6 +44,7 @@ struct SessionUser: Codable {
         username = try container.decode(String.self, forKey: .username)
         nickname = try container.decode(String.self, forKey: .nickname)
         email = try container.decodeIfPresent(String.self, forKey: .email) ?? ""
+        targetUniversity = try container.decodeIfPresent(String.self, forKey: .targetUniversity)
     }
 }
 
@@ -299,6 +303,7 @@ struct PointResponse: Codable {
     let ownerName: String
     let points: Int
     let verificationLevel: String
+    let targetUniversity: String?
     let ledger: [LedgerItem]
 }
 
@@ -410,6 +415,7 @@ struct ScheduleResponse: Codable {
 struct ExamScheduleItem: Codable, Identifiable, Equatable {
     let id: String
     let examSlug: String
+    let university: String?
     let title: String
     let category: String
     let startsAt: String
@@ -423,6 +429,7 @@ struct ExamScheduleItem: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id
         case examSlug = "exam_slug"
+        case university
         case title
         case category
         case startsAt = "starts_at"

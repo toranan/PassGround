@@ -7,6 +7,7 @@ type Exam = "transfer" | "cpa";
 type ScheduleRow = {
   id: string;
   exam_slug: string;
+  university: string | null;
   title: string;
   category: string;
   starts_at: string;
@@ -22,6 +23,7 @@ const SCHEDULE_FALLBACK: ScheduleRow[] = [
   {
     id: "seed-transfer-1",
     exam_slug: "transfer",
+    university: null,
     title: "편입 원서접수 시작",
     category: "원서접수",
     starts_at: "2026-11-30T00:00:00+09:00",
@@ -35,6 +37,7 @@ const SCHEDULE_FALLBACK: ScheduleRow[] = [
   {
     id: "seed-transfer-2",
     exam_slug: "transfer",
+    university: null,
     title: "편입 필기시험 기간",
     category: "시험",
     starts_at: "2026-12-20T09:00:00+09:00",
@@ -48,6 +51,7 @@ const SCHEDULE_FALLBACK: ScheduleRow[] = [
   {
     id: "seed-transfer-3",
     exam_slug: "transfer",
+    university: null,
     title: "편입 최종합격 발표",
     category: "발표",
     starts_at: "2027-02-15T10:00:00+09:00",
@@ -59,6 +63,11 @@ const SCHEDULE_FALLBACK: ScheduleRow[] = [
     note: "등록 마감일이 빠르므로 합격 확인 후 바로 등록 일정을 체크하세요.",
   },
 ];
+
+function isMissingColumn(error: { message?: string | null } | null, column: string): boolean {
+  if (!error) return false;
+  return (error.message ?? "").toLowerCase().includes(column.toLowerCase());
+}
 
 function parseExam(value: string | null): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
@@ -81,16 +90,34 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseServer();
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("exam_schedules")
-    .select("id,exam_slug,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
+    .select("id,exam_slug,university,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
     .eq("exam_slug", exam)
     .eq("is_official", true)
     .order("starts_at", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(200);
 
-  if (error || !data?.length) {
+  let rows = primary.data as ScheduleRow[] | null;
+  let queryError = primary.error;
+  if (primary.error && isMissingColumn(primary.error, "university")) {
+    const fallback = await supabase
+      .from("exam_schedules")
+      .select("id,exam_slug,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
+      .eq("exam_slug", exam)
+      .eq("is_official", true)
+      .order("starts_at", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(200);
+    queryError = fallback.error;
+    rows = ((fallback.data as Omit<ScheduleRow, "university">[] | null) ?? []).map((row) => ({
+      ...row,
+      university: null,
+    }));
+  }
+
+  if (queryError || !rows?.length) {
     const fallback = SCHEDULE_FALLBACK.filter((item) => item.exam_slug === exam);
     return withCache(
       NextResponse.json({
@@ -101,16 +128,17 @@ export async function GET(request: Request) {
     );
   }
 
-  const rows = (data as ScheduleRow[]).map((item) => ({
+  const mappedRows = (rows as ScheduleRow[]).map((item) => ({
     ...item,
     is_official: item.is_official ?? true,
+    university: item.university ?? null,
   }));
 
   return withCache(
     NextResponse.json({
       ok: true,
       source: "db",
-      schedules: rows,
+      schedules: mappedRows,
     })
   );
 }

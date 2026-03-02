@@ -1,5 +1,14 @@
 import SwiftUI
 
+private let targetUniversityOptions: [String] = [
+    "연세대학교", "고려대학교", "서강대학교", "성균관대학교", "한양대학교", "중앙대학교", "경희대학교",
+    "한국외국어대학교", "서울시립대학교", "건국대학교", "동국대학교", "홍익대학교", "이화여자대학교",
+    "숙명여자대학교", "국민대학교", "숭실대학교", "세종대학교", "단국대학교", "아주대학교", "인하대학교",
+    "광운대학교", "명지대학교", "상명대학교", "가톨릭대학교", "경기대학교", "한국항공대학교",
+    "서울과학기술대학교", "한성대학교", "서울여자대학교", "덕성여자대학교", "동덕여자대학교",
+    "삼육대학교", "가천대학교"
+]
+
 struct MyPageView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
@@ -9,8 +18,10 @@ struct MyPageView: View {
 
     @State private var pointsData: PointResponse?
     @State private var nicknameInput = ""
+    @State private var targetUniversityInput = ""
     @State private var message = ""
     @State private var loading = false
+    @State private var savingTargetUniversity = false
 
     @State private var adminState: AdminMeResponse?
     @State private var unreadNotificationCount = 0
@@ -128,6 +139,9 @@ struct MyPageView: View {
                     Text(session.user?.email ?? "-")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Text("목표대학: \((pointsData?.targetUniversity?.isEmpty == false ? pointsData?.targetUniversity : "미설정") ?? "미설정")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 Spacer()
             }
@@ -235,7 +249,56 @@ struct MyPageView: View {
                 }
                 .padding(.horizontal, DesignSystem.padding)
                 .padding(.vertical, 12)
-                
+
+                Divider().padding(.leading, DesignSystem.padding + 32)
+
+                HStack {
+                    Image(systemName: "target")
+                        .frame(width: 24)
+                        .foregroundColor(.gray)
+                    Text("목표대학")
+                        .font(.subheadline)
+                    Spacer()
+                    Menu {
+                        Button("미설정") {
+                            targetUniversityInput = ""
+                        }
+                        ForEach(targetUniversityOptions, id: \.self) { university in
+                            Button(university) {
+                                targetUniversityInput = university
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(targetUniversityInput.isEmpty ? "선택하기" : targetUniversityInput)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .foregroundColor(.primary)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                    }
+
+                    Button(action: { Task { await saveTargetUniversity() } }) {
+                        Text(savingTargetUniversity ? "저장 중..." : "저장")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(DesignSystem.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(DesignSystem.primary.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .disabled(savingTargetUniversity)
+                }
+                .padding(.horizontal, DesignSystem.padding)
+                .padding(.vertical, 12)
+
                 Divider().padding(.leading, DesignSystem.padding + 32)
                 
                 NavigationLink(destination: VerificationView()) {
@@ -291,7 +354,8 @@ struct MyPageView: View {
             async let pointsTask = api.fetchPoints(
                 baseURL: config.baseURL,
                 userId: session.user?.id,
-                nickname: session.displayName
+                nickname: session.displayName,
+                includeLedger: true
             )
             async let adminTask = api.fetchAdminMe(
                 baseURL: config.baseURL,
@@ -299,6 +363,7 @@ struct MyPageView: View {
             )
 
             pointsData = try await pointsTask
+            targetUniversityInput = pointsData?.targetUniversity ?? ""
             adminState = try? await adminTask
             await refreshUnreadNotificationCount()
         } catch {
@@ -386,6 +451,27 @@ struct MyPageView: View {
             )
             session.completeNicknameSetup(updatedUser: updatedUser)
             message = "닉네임 저장 완료"
+            await refreshData()
+        } catch {
+            message = error.localizedDescription
+        }
+    }
+
+    private func saveTargetUniversity() async {
+        guard let user = session.user else { return }
+        savingTargetUniversity = true
+        defer { savingTargetUniversity = false }
+
+        do {
+            let selected = targetUniversityInput.trimmingCharacters(in: .whitespacesAndNewlines)
+            let updatedUser = try await api.updateTargetUniversity(
+                baseURL: config.baseURL,
+                accessToken: session.accessToken,
+                userId: user.id,
+                targetUniversity: selected.isEmpty ? "" : selected
+            )
+            session.updateUser(updatedUser)
+            message = selected.isEmpty ? "목표대학 설정을 해제했어." : "목표대학을 저장했어."
             await refreshData()
         } catch {
             message = error.localizedDescription

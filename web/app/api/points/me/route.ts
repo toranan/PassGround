@@ -7,6 +7,7 @@ type ProfileRow = {
   display_name: string | null;
   points: number | null;
   verification_level: string | null;
+  target_university?: string | null;
 };
 
 type LedgerRow = {
@@ -40,6 +41,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const nickname = searchParams.get("nickname")?.trim() ?? "";
     const userId = searchParams.get("userId")?.trim() ?? "";
+    const includeLedger = (searchParams.get("includeLedger") ?? "true").trim().toLowerCase() !== "false";
 
     if (!nickname && !userId) {
       return NextResponse.json({ error: "nickname 또는 userId가 필요합니다." }, { status: 400 });
@@ -48,40 +50,79 @@ export async function GET(request: Request) {
     const admin = getSupabaseAdmin();
 
     let profile: ProfileRow | null = null;
+    let targetUniversity: string | null = null;
+
+    async function fetchProfileById(id: string) {
+      const primary = await admin
+        .from("profiles")
+        .select("id,username,display_name,points,verification_level,target_university")
+        .eq("id", id)
+        .maybeSingle<ProfileRow>();
+
+      if (!primary.error) return primary;
+      if (!primary.error.message?.toLowerCase().includes("target_university")) return primary;
+
+      const fallback = await admin
+        .from("profiles")
+        .select("id,username,display_name,points,verification_level")
+        .eq("id", id)
+        .maybeSingle<ProfileRow>();
+      if (!fallback.error && fallback.data) {
+        return {
+          data: { ...fallback.data, target_university: null },
+          error: null,
+        };
+      }
+      return fallback;
+    }
+
+    async function fetchProfileByField(field: "display_name" | "username", value: string) {
+      const primary = await admin
+        .from("profiles")
+        .select("id,username,display_name,points,verification_level,target_university")
+        .eq(field, value)
+        .limit(1)
+        .maybeSingle<ProfileRow>();
+
+      if (!primary.error) return primary;
+      if (!primary.error.message?.toLowerCase().includes("target_university")) return primary;
+
+      const fallback = await admin
+        .from("profiles")
+        .select("id,username,display_name,points,verification_level")
+        .eq(field, value)
+        .limit(1)
+        .maybeSingle<ProfileRow>();
+      if (!fallback.error && fallback.data) {
+        return {
+          data: { ...fallback.data, target_university: null },
+          error: null,
+        };
+      }
+      return fallback;
+    }
 
     if (userId && isValidUUID(userId)) {
-      const { data } = await admin
-        .from("profiles")
-        .select("id,username,display_name,points,verification_level")
-        .eq("id", userId)
-        .maybeSingle<ProfileRow>();
+      const { data } = await fetchProfileById(userId);
       profile = data;
     }
 
     if (!profile && nickname) {
-      const { data } = await admin
-        .from("profiles")
-        .select("id,username,display_name,points,verification_level")
-        .eq("display_name", nickname)
-        .limit(1)
-        .maybeSingle<ProfileRow>();
+      const { data } = await fetchProfileByField("display_name", nickname);
       profile = data;
     }
 
     if (!profile && nickname) {
-      const { data } = await admin
-        .from("profiles")
-        .select("id,username,display_name,points,verification_level")
-        .eq("username", nickname)
-        .limit(1)
-        .maybeSingle<ProfileRow>();
+      const { data } = await fetchProfileByField("username", nickname);
       profile = data;
     }
+
+    targetUniversity = profile?.target_university?.trim() || null;
 
     const ownerName = profile?.display_name || profile?.username || nickname;
     const ledgerRows: LedgerRow[] = [];
 
-    if (profile?.id) {
+    if (includeLedger && profile?.id) {
       const { data } = await admin
         .from("point_ledger")
         .select("id,receiver_name,source,amount,meta,created_at")
@@ -93,7 +134,7 @@ export async function GET(request: Request) {
       }
     }
 
-    if (ownerName) {
+    if (includeLedger && ownerName) {
       const { data } = await admin
         .from("point_ledger")
         .select("id,receiver_name,source,amount,meta,created_at")
@@ -105,11 +146,15 @@ export async function GET(request: Request) {
       }
     }
 
-    const mergedLedger = Array.from(new Map(ledgerRows.map((row) => [row.id, row])).values())
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 30);
+    const mergedLedger = includeLedger
+      ? Array.from(new Map(ledgerRows.map((row) => [row.id, row])).values())
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 30)
+      : [];
 
-    const computedPoint = mergedLedger.reduce((acc, row) => acc + row.amount, 0);
+    const computedPoint = includeLedger
+      ? mergedLedger.reduce((acc, row) => acc + row.amount, 0)
+      : 0;
     const points = profile?.points ?? computedPoint;
 
     return NextResponse.json({
@@ -117,6 +162,7 @@ export async function GET(request: Request) {
       ownerName,
       points,
       verificationLevel: mapVerificationLevel(profile?.verification_level ?? null),
+      targetUniversity,
       ledger: mergedLedger,
     });
   } catch (error) {

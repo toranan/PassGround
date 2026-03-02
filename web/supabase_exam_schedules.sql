@@ -16,6 +16,7 @@ $$;
 create table if not exists public.exam_schedules (
   id uuid primary key default gen_random_uuid(),
   exam_slug text not null,
+  university text,
   title text not null,
   category text not null default '원서접수',
   starts_at timestamptz not null,
@@ -31,6 +32,9 @@ create table if not exists public.exam_schedules (
   constraint exam_schedules_time_check check (ends_at is null or ends_at >= starts_at),
   constraint exam_schedules_unique unique (exam_slug, title, starts_at)
 );
+
+alter table public.exam_schedules
+  add column if not exists university text;
 
 create index if not exists exam_schedules_exam_starts_idx
   on public.exam_schedules (exam_slug, starts_at asc);
@@ -72,11 +76,12 @@ using (public.is_admin());
 -- =============================================================
 -- Add new rows:
 insert into public.exam_schedules (
-  exam_slug, title, category, starts_at, ends_at, location, organizer, link_url, is_official, note
+  exam_slug, university, title, category, starts_at, ends_at, location, organizer, link_url, is_official, note
 )
 values
   (
     'transfer',
+    null,
     '2027학년도 편입 원서접수',
     '원서접수',
     '2026-11-30 00:00:00+09',
@@ -89,6 +94,7 @@ values
   ),
   (
     'transfer',
+    null,
     '2027학년도 편입 필기시험',
     '시험',
     '2026-12-20 09:00:00+09',

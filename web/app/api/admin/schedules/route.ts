@@ -8,6 +8,7 @@ type Exam = "transfer" | "cpa";
 type ScheduleRow = {
   id: string;
   exam_slug: string;
+  university: string | null;
   title: string;
   category: string;
   starts_at: string;
@@ -18,6 +19,11 @@ type ScheduleRow = {
   is_official: boolean | null;
   note: string | null;
 };
+
+function isMissingColumn(error: { message?: string | null } | null, column: string): boolean {
+  if (!error) return false;
+  return (error.message ?? "").toLowerCase().includes(column.toLowerCase());
+}
 
 function resolveExam(value: string): Exam | null {
   if (value === "transfer" || value === "cpa") return value;
@@ -71,21 +77,37 @@ async function ensureAdmin(request: Request) {
 
 async function loadSchedules(exam: Exam) {
   const admin = getSupabaseAdmin();
-  const { data, error } = await admin
+  const primary = await admin
     .from("exam_schedules")
-    .select("id,exam_slug,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
+    .select("id,exam_slug,university,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
     .eq("exam_slug", exam)
     .order("starts_at", { ascending: true })
     .order("created_at", { ascending: true });
 
-  if (error) {
-    return { error: error.message };
+  let rows = primary.data as ScheduleRow[] | null;
+  if (primary.error && isMissingColumn(primary.error, "university")) {
+    const fallback = await admin
+      .from("exam_schedules")
+      .select("id,exam_slug,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
+      .eq("exam_slug", exam)
+      .order("starts_at", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (fallback.error) {
+      return { error: fallback.error.message };
+    }
+    rows = ((fallback.data as Omit<ScheduleRow, "university">[] | null) ?? []).map((row) => ({
+      ...row,
+      university: null,
+    }));
+  } else if (primary.error) {
+    return { error: primary.error.message };
   }
 
   return {
-    schedules: (data ?? []).map((row: ScheduleRow) => ({
+    schedules: (rows ?? []).map((row: ScheduleRow) => ({
       id: row.id,
       examSlug: row.exam_slug,
+      university: row.university,
       title: row.title,
       category: row.category,
       startsAt: row.starts_at,
@@ -138,6 +160,7 @@ export async function POST(request: Request) {
   const id = normalizeText(body.id, 80);
   const title = normalizeText(body.title, 80);
   const category = normalizeText(body.category, 30) || "일정";
+  const university = normalizeText(body.university, 40) || null;
   const startsAt = parseDateTime(body.startsAt);
   const endsAt = parseDateTime(body.endsAt);
   const location = normalizeText(body.location, 120) || null;
@@ -163,6 +186,7 @@ export async function POST(request: Request) {
       .update({
         title,
         category,
+        university,
         starts_at: startsAt,
         ends_at: endsAt,
         location,
@@ -175,11 +199,18 @@ export async function POST(request: Request) {
       .eq("exam_slug", exam);
 
     if (error) {
+      if (university && isMissingColumn(error, "university")) {
+        return NextResponse.json(
+          { error: "DB 컬럼이 아직 없어 대학별 일정 저장이 불가합니다. SQL 마이그레이션을 먼저 적용해 주세요." },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
   } else {
     const { error } = await admin.from("exam_schedules").insert({
       exam_slug: exam,
+      university,
       title,
       category,
       starts_at: startsAt,
@@ -192,6 +223,12 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      if (university && isMissingColumn(error, "university")) {
+        return NextResponse.json(
+          { error: "DB 컬럼이 아직 없어 대학별 일정 저장이 불가합니다. SQL 마이그레이션을 먼저 적용해 주세요." },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
   }

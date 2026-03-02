@@ -319,7 +319,8 @@ alter table public.profiles
   add column if not exists points int not null default 0,
   add column if not exists verification_level text not null default 'none',
   add column if not exists verified_at timestamptz,
-  add column if not exists verification_note text;
+  add column if not exists verification_note text,
+  add column if not exists target_university text;
 
 do $$
 begin
