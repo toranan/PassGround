@@ -279,6 +279,7 @@ export default function AdminPage() {
     content: "",
     linkUrl: "",
   });
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
   const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
@@ -874,12 +875,13 @@ export default function AdminPage() {
     setMessage("");
     try {
       const res = await fetch("/api/admin/news", {
-        method: "POST",
+        method: editingNewsId ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          id: editingNewsId,
           exam,
           title,
           content,
@@ -891,18 +893,40 @@ export default function AdminPage() {
       });
       const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
       if (!res.ok || !payload || !("ok" in payload)) {
-        setMessage((payload && "error" in payload && payload.error) || "최신뉴스 저장에 실패했습니다.");
+        setMessage(
+          (payload && "error" in payload && payload.error) ||
+            (editingNewsId ? "최신뉴스 수정에 실패했습니다." : "최신뉴스 저장에 실패했습니다.")
+        );
         return;
       }
       setNews(payload.news ?? []);
       setNewsForm({ title: "", content: "", linkUrl: "" });
       setNewsAttachment(null);
-      setMessage("최신뉴스가 저장되었습니다.");
+      setEditingNewsId(null);
+      setMessage(editingNewsId ? "최신뉴스가 수정되었습니다." : "최신뉴스가 저장되었습니다.");
     } catch {
-      setMessage("최신뉴스 저장 중 오류가 발생했습니다.");
+      setMessage(editingNewsId ? "최신뉴스 수정 중 오류가 발생했습니다." : "최신뉴스 저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStartEditNews = (item: NewsItem) => {
+    setEditingNewsId(item.id);
+    setNewsForm({
+      title: item.title ?? "",
+      content: item.content ?? "",
+      linkUrl: item.linkUrl ?? "",
+    });
+    setNewsAttachment(item.attachments?.[0] ?? null);
+    setMessage("수정 모드로 불러왔습니다. 내용 수정 후 저장을 눌러주세요.");
+  };
+
+  const handleCancelEditNews = () => {
+    setEditingNewsId(null);
+    setNewsForm({ title: "", content: "", linkUrl: "" });
+    setNewsAttachment(null);
+    setMessage("최신뉴스 수정 모드를 취소했습니다.");
   };
 
   const handleUploadNewsAttachment = async (file: File | null) => {
@@ -1871,9 +1895,22 @@ export default function AdminPage() {
                         ) : null}
                       </div>
                       <div>
-                        <Button onClick={handleSaveNews} disabled={submitting}>
-                          {submitting ? "저장 중..." : "최신뉴스 업로드"}
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button onClick={handleSaveNews} disabled={submitting}>
+                            {submitting
+                              ? (editingNewsId ? "수정 저장 중..." : "저장 중...")
+                              : (editingNewsId ? "최신뉴스 수정 저장" : "최신뉴스 업로드")}
+                          </Button>
+                          {editingNewsId ? (
+                            <Button
+                              variant="outline"
+                              onClick={handleCancelEditNews}
+                              disabled={submitting}
+                            >
+                              수정 취소
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
 
@@ -1918,14 +1955,24 @@ export default function AdminPage() {
                               ) : null}
                               <p className="text-xs text-primary mt-1">{formatDateLabel(item.createdAt)}</p>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => void handleDeleteNews(item.id)}
-                              disabled={submitting}
-                            >
-                              삭제
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStartEditNews(item)}
+                                disabled={submitting}
+                              >
+                                수정
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void handleDeleteNews(item.id)}
+                                disabled={submitting}
+                              >
+                                삭제
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>

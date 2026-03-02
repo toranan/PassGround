@@ -233,6 +233,82 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, ...result });
 }
 
+export async function PATCH(request: Request) {
+  const auth = await ensureAdmin(request);
+  if (!auth.ok) return auth.response;
+
+  const bodyRaw = await request.json().catch(() => ({}));
+  const body: Record<string, unknown> = typeof bodyRaw === "object" && bodyRaw !== null ? bodyRaw : {};
+  const exam = resolveExam(normalizeText(body.exam, 20) || "transfer");
+  const examError = validateExam(exam);
+  if (examError) return examError;
+
+  const id = normalizeText(body.id, 80);
+  const title = normalizeText(body.title, 120);
+  const rawContent = normalizeText(body.content, 6000);
+  const linkUrl = normalizeHttpUrl(body.linkUrl);
+  const rawAttachments: unknown[] = Array.isArray(body.attachments) ? body.attachments : [];
+  const requestedAttachments: NewsAttachment[] = rawAttachments
+    .map((item: unknown) => {
+      if (!item || typeof item !== "object") return null;
+      const candidate = item as { url?: unknown; filename?: unknown };
+      const url = normalizeHttpUrl(candidate.url);
+      if (!url) return null;
+      const filename = normalizeText(candidate.filename, 200);
+      return {
+        url,
+        filename: filename || "첨부파일",
+      };
+    })
+    .filter((value): value is NewsAttachment => value !== null)
+    .slice(0, 10);
+
+  if (!id) {
+    return NextResponse.json({ error: "수정할 뉴스 id가 필요합니다." }, { status: 400 });
+  }
+  if (!title) {
+    return NextResponse.json({ error: "뉴스 제목은 필수입니다." }, { status: 400 });
+  }
+  if (typeof body.linkUrl === "string" && body.linkUrl.trim() && !linkUrl) {
+    return NextResponse.json({ error: "linkUrl 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  const content = buildNewsContent({
+    body: rawContent,
+    linkUrl,
+    attachments: requestedAttachments,
+  });
+  if (!content) {
+    return NextResponse.json({ error: "뉴스 내용 또는 링크는 필수입니다." }, { status: 400 });
+  }
+
+  const board = await ensureNewsBoard(exam as Exam);
+  if ("error" in board) {
+    return NextResponse.json({ error: board.error }, { status: 400 });
+  }
+
+  const admin = getSupabaseAdmin();
+  const { error } = await admin
+    .from("posts")
+    .update({
+      title,
+      content,
+    })
+    .eq("id", id)
+    .eq("board_id", board.boardId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  const result = await loadNews(board.boardId);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, ...result });
+}
+
 export async function DELETE(request: Request) {
   const auth = await ensureAdmin(request);
   if (!auth.ok) return auth.response;
