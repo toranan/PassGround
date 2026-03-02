@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
+import { supabase } from "@/lib/supabase";
 
 type User = {
   id?: string;
@@ -932,29 +933,55 @@ export default function AdminPage() {
   const handleUploadNewsAttachment = async (file: File | null) => {
     if (!file) return;
 
+    const maxSize = 15 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setMessage("파일 크기는 15MB 이하여야 해.");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setMessage("로그인 후 다시 시도해줘.");
+      return;
+    }
+
     setUploadingNewsAttachment(true);
     setMessage("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("usage", "post");
-
-      const res = await fetch("/api/upload", {
+      const signRes = await fetch("/api/admin/news/upload-url", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          mimeType: file.type || "application/octet-stream",
+          size: file.size,
+        }),
       });
-      const payload = (await res.json().catch(() => null)) as
-        | { ok?: boolean; url?: string; filename?: string; error?: string }
+      const signPayload = (await signRes.json().catch(() => null)) as
+        | { ok?: boolean; bucket?: string; path?: string; token?: string; publicUrl?: string; filename?: string; error?: string }
         | null;
+      if (!signRes.ok || !signPayload?.ok || !signPayload.bucket || !signPayload.path || !signPayload.token || !signPayload.publicUrl) {
+        setMessage(signPayload?.error ?? "첨부 파일 업로드 URL 발급에 실패했습니다.");
+        return;
+      }
 
-      if (!res.ok || !payload?.ok || !payload.url) {
-        setMessage(payload?.error ?? "첨부 파일 업로드에 실패했습니다.");
+      const upload = await supabase.storage
+        .from(signPayload.bucket)
+        .uploadToSignedUrl(signPayload.path, signPayload.token, file, {
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
+        });
+      if (upload.error) {
+        setMessage(upload.error.message || "첨부 파일 업로드에 실패했습니다.");
         return;
       }
 
       setNewsAttachment({
-        url: payload.url,
-        filename: payload.filename || file.name,
+        url: signPayload.publicUrl,
+        filename: signPayload.filename || file.name,
       });
       setMessage("첨부 파일 업로드가 완료되었습니다.");
     } catch {
