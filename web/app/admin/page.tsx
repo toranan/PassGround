@@ -177,6 +177,8 @@ type AdminSubmittedQuestionsResponse = {
 type VerificationRequestItem = {
   id: string;
   profileId: string | null;
+  accountUsername: string | null;
+  accountDisplayName: string | null;
   requesterName: string;
   examSlug: string;
   verificationType: string;
@@ -193,6 +195,16 @@ type AdminVerificationResponse = {
   items: VerificationRequestItem[];
   error?: string;
 };
+
+type AdminTab = "verification" | "community" | "cutoff" | "content" | "ai";
+
+const ADMIN_TAB_OPTIONS: Array<{ value: AdminTab; label: string }> = [
+  { value: "verification", label: "인증 검수" },
+  { value: "community", label: "커뮤니티" },
+  { value: "cutoff", label: "커트라인" },
+  { value: "content", label: "뉴스·일정" },
+  { value: "ai", label: "AI 지식" },
+];
 
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
@@ -315,6 +327,7 @@ export default function AdminPage() {
   );
 
   const [exam, setExam] = useState<"transfer" | "cpa">("transfer");
+  const [adminTab, setAdminTab] = useState<AdminTab>("verification");
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [adminState, setAdminState] = useState<AdminMeResponse | null>(null);
   const [loadingRankings, setLoadingRankings] = useState(false);
@@ -1763,6 +1776,20 @@ export default function AdminPage() {
                   </Button>
                 </div>
 
+                <div className="flex flex-wrap gap-2">
+                  {ADMIN_TAB_OPTIONS.map((tab) => (
+                    <Button
+                      key={tab.value}
+                      variant={adminTab === tab.value ? "default" : "outline"}
+                      onClick={() => setAdminTab(tab.value)}
+                    >
+                      {tab.label}
+                    </Button>
+                  ))}
+                </div>
+
+                {adminTab === "community" ? (
+                <>
                 <Card className="border-none shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">강사 추가</CardTitle>
@@ -1842,7 +1869,10 @@ export default function AdminPage() {
                     )}
                   </CardContent>
                 </Card>
+                </>
+                ) : null}
 
+                {adminTab === "cutoff" ? (
                 <Card className="border-none shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">편입 합격 커트라인 관리</CardTitle>
@@ -1970,7 +2000,10 @@ export default function AdminPage() {
                     )}
                   </CardContent>
                 </Card>
+                ) : null}
 
+                {adminTab === "content" ? (
+                <>
                 <Card className="border-none shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">주요 일정 관리</CardTitle>
@@ -2248,7 +2281,10 @@ export default function AdminPage() {
                     )}
                   </CardContent>
                 </Card>
+                </>
+                ) : null}
 
+                {adminTab === "verification" ? (
                 <Card className="border-none shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">합격증 인증 검수</CardTitle>
@@ -2278,6 +2314,12 @@ export default function AdminPage() {
                                 <p className="text-sm font-semibold">{item.requesterName}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {item.examSlug} · {item.verificationType} · {formatDateLabel(item.createdAt)}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  계정: {item.accountUsername ? `@${item.accountUsername}` : "-"} · 닉네임: {item.accountDisplayName ?? "-"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  userId: {item.profileId ?? "-"}
                                 </p>
                                 {item.userMemo ? (
                                   <p className="text-xs text-muted-foreground mt-1">{item.userMemo}</p>
@@ -2353,7 +2395,10 @@ export default function AdminPage() {
                     )}
                   </CardContent>
                 </Card>
+                ) : null}
 
+                {adminTab === "ai" ? (
+                <>
                 <Card className="border-none shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-lg">정보넣기 탭 (RAG용 장문 입력)</CardTitle>
@@ -2708,6 +2753,8 @@ export default function AdminPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </>
+                ) : null}
               </>
             )}
 

@@ -17,6 +17,73 @@ type VerificationRequestRow = {
   created_at: string;
 };
 
+type ProfileRow = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+};
+
+type VerificationItem = {
+  id: string;
+  profileId: string | null;
+  accountUsername: string | null;
+  accountDisplayName: string | null;
+  requesterName: string;
+  examSlug: string;
+  verificationType: string;
+  evidenceUrl: string;
+  userMemo: string | null;
+  verifiedUniversity: string | null;
+  status: ReviewStatus;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+async function toVerificationItems(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  rows: VerificationRequestRow[]
+): Promise<VerificationItem[]> {
+  const profileIds = Array.from(
+    new Set(
+      rows
+        .map((row) => (typeof row.profile_id === "string" ? row.profile_id.trim() : ""))
+        .filter((value): value is string => value.length > 0)
+    )
+  );
+
+  const profileById = new Map<string, ProfileRow>();
+  if (profileIds.length > 0) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id,username,display_name")
+      .in("id", profileIds);
+
+    (profiles as ProfileRow[] | null | undefined)?.forEach((profile) => {
+      profileById.set(profile.id, profile);
+    });
+  }
+
+  return rows.map((row) => {
+    const parsed = parseMemo(row.memo);
+    const profile = row.profile_id ? profileById.get(row.profile_id) : undefined;
+    return {
+      id: row.id,
+      profileId: row.profile_id,
+      accountUsername: profile?.username?.trim() || null,
+      accountDisplayName: profile?.display_name?.trim() || null,
+      requesterName: row.requester_name,
+      examSlug: row.exam_slug,
+      verificationType: row.verification_type,
+      evidenceUrl: row.evidence_url,
+      userMemo: parsed.userMemo,
+      verifiedUniversity: parsed.verifiedUniversity,
+      status: row.status,
+      reviewedAt: row.reviewed_at,
+      createdAt: row.created_at,
+    };
+  });
+}
+
 function parseMemo(memo: string | null): { userMemo: string | null; verifiedUniversity: string | null } {
   if (!memo) return { userMemo: null, verifiedUniversity: null };
   try {
@@ -101,22 +168,7 @@ export async function GET(request: Request) {
   }
 
   const rows = (data as VerificationRequestRow[] | null) ?? [];
-  const items = rows.map((row) => {
-    const parsed = parseMemo(row.memo);
-    return {
-      id: row.id,
-      profileId: row.profile_id,
-      requesterName: row.requester_name,
-      examSlug: row.exam_slug,
-      verificationType: row.verification_type,
-      evidenceUrl: row.evidence_url,
-      userMemo: parsed.userMemo,
-      verifiedUniversity: parsed.verifiedUniversity,
-      status: row.status,
-      reviewedAt: row.reviewed_at,
-      createdAt: row.created_at,
-    };
-  });
+  const items = await toVerificationItems(admin, rows);
 
   return NextResponse.json({
     ok: true,
@@ -202,22 +254,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: refreshedError.message }, { status: 400 });
   }
 
-  const items = ((refreshed as VerificationRequestRow[] | null) ?? []).map((row) => {
-    const parsed = parseMemo(row.memo);
-    return {
-      id: row.id,
-      profileId: row.profile_id,
-      requesterName: row.requester_name,
-      examSlug: row.exam_slug,
-      verificationType: row.verification_type,
-      evidenceUrl: row.evidence_url,
-      userMemo: parsed.userMemo,
-      verifiedUniversity: parsed.verifiedUniversity,
-      status: row.status,
-      reviewedAt: row.reviewed_at,
-      createdAt: row.created_at,
-    };
-  });
+  const items = await toVerificationItems(admin, (refreshed as VerificationRequestRow[] | null) ?? []);
 
   return NextResponse.json({ ok: true, items });
 }
