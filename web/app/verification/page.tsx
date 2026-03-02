@@ -234,7 +234,7 @@ export default function VerificationPage() {
                         </Button>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">JPG/PNG/GIF/WEBP, 최대 5MB</p>
+                      <p className="text-sm text-muted-foreground">JPG/PNG/GIF/WEBP, 최대 15MB</p>
                     )}
 
                     <Button

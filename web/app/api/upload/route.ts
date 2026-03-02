@@ -64,9 +64,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "지원하지 않는 파일 형식입니다." }, { status: 400 });
     }
 
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 15 * 1024 * 1024;
     if (file.size > maxSize) {
-      return NextResponse.json({ error: "파일 크기는 5MB 이하여야 합니다." }, { status: 400 });
+      return NextResponse.json({ error: "파일 크기는 15MB 이하여야 합니다." }, { status: 400 });
     }
 
     const admin = getSupabaseAdmin();
