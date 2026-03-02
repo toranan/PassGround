@@ -123,6 +123,9 @@ type AdminKnowledgeResponse = {
   ok: boolean;
   pending: KnowledgeItem[];
   approved: KnowledgeItem[];
+  bulkInsertedCount?: number;
+  directInserted?: boolean;
+  ragSyncError?: string | null;
   error?: string;
 };
 
@@ -279,6 +282,10 @@ export default function AdminPage() {
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
   const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
+  const [knowledgeBulkRawInput, setKnowledgeBulkRawInput] = useState("");
+  const [knowledgeDirectInput, setKnowledgeDirectInput] = useState("");
+  const [knowledgeDirectTitle, setKnowledgeDirectTitle] = useState("");
+  const [knowledgeDirectTags, setKnowledgeDirectTags] = useState("");
   const [knowledgeInfoForm, setKnowledgeInfoForm] = useState({
     admissionYear: String(new Date().getFullYear()),
     university: "",
@@ -1071,6 +1078,120 @@ export default function AdminPage() {
       setMessage("정보 넣기 초안 생성 완료. 아래 검수 대기에서 확인 후 승인 반영해 주세요.");
     } catch {
       setMessage("정보 넣기 처리 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateKnowledgeBulkQA = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const bulkText = knowledgeBulkRawInput.trim();
+    if (!bulkText) {
+      setMessage("Q/A 본문을 먼저 붙여넣어 주세요.");
+      return;
+    }
+
+    const admissionYear = knowledgeInfoForm.admissionYear.trim();
+    const university = knowledgeInfoForm.university.trim();
+    const majorTrack = knowledgeInfoForm.majorTrack.trim();
+    const tagSet = new Set<string>(["편입", "전형정보", "FAQ"]);
+    if (admissionYear) {
+      tagSet.add(admissionYear);
+      tagSet.add(`${admissionYear}학년도`);
+    }
+    if (university) tagSet.add(university);
+    if (majorTrack) tagSet.add(majorTrack);
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          bulkRawInput: bulkText,
+          tags: [...tagSet],
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "Q/A 일괄 초안 생성에 실패했습니다.");
+        return;
+      }
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setKnowledgeBulkRawInput("");
+      const inserted = typeof payload.bulkInsertedCount === "number" ? payload.bulkInsertedCount : 0;
+      setMessage(`Q/A 본문 ${inserted}개를 초안으로 저장했습니다. 아래에서 검수 후 승인 반영하세요.`);
+    } catch {
+      setMessage("Q/A 일괄 처리 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDirectIngestKnowledge = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const rawText = knowledgeDirectInput.trim();
+    if (!rawText) {
+      setMessage("직접 반영할 본문을 입력해 주세요.");
+      return;
+    }
+
+    const admissionYear = knowledgeInfoForm.admissionYear.trim();
+    const university = knowledgeInfoForm.university.trim();
+    const majorTrack = knowledgeInfoForm.majorTrack.trim();
+    const tagSet = new Set<string>(parseTagsInput(knowledgeDirectTags));
+    tagSet.add("편입");
+    if (admissionYear) {
+      tagSet.add(admissionYear);
+      tagSet.add(`${admissionYear}학년도`);
+    }
+    if (university) tagSet.add(university);
+    if (majorTrack) tagSet.add(majorTrack);
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          exam,
+          directRawInput: rawText,
+          directTitle: knowledgeDirectTitle.trim(),
+          tags: [...tagSet],
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "원문 즉시 반영에 실패했습니다.");
+        return;
+      }
+
+      setKnowledgePending(payload.pending ?? []);
+      setKnowledgeApproved(payload.approved ?? []);
+      setKnowledgeDirectInput("");
+      setKnowledgeDirectTitle("");
+      setKnowledgeDirectTags("");
+      if (payload.ragSyncError) {
+        setMessage(`원문은 저장됐지만 색인 동기화 경고가 있어: ${payload.ragSyncError}`);
+      } else {
+        setMessage("원문을 승인 상태로 즉시 반영하고 색인까지 완료했습니다.");
+      }
+    } catch {
+      setMessage("원문 즉시 반영 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -1869,6 +1990,57 @@ export default function AdminPage() {
                       <Button onClick={handleCreateKnowledgeFromInfoTab} disabled={submitting}>
                         {submitting ? "처리 중..." : "정보 넣고 초안 생성"}
                       </Button>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Q/A 본문을 한 번에 붙여넣어 pending 초안을 여러 개 생성합니다.
+                        형식: `Q01. 질문` + `A01. 답변`
+                      </p>
+                      <textarea
+                        className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder={"Q01. 질문\nA01. 답변\n\nQ02. 질문\nA02. 답변"}
+                        value={knowledgeBulkRawInput}
+                        onChange={(e) => setKnowledgeBulkRawInput(e.target.value)}
+                      />
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          본문 길이: {knowledgeBulkRawInput.trim().length.toLocaleString()}자
+                        </p>
+                        <Button onClick={handleCreateKnowledgeBulkQA} disabled={submitting}>
+                          {submitting ? "처리 중..." : "Q/A 일괄 초안 생성"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        범용 본문 직투입: Q/A 형식이 아니어도 그대로 승인 반영 + 즉시 색인합니다.
+                      </p>
+                      <Input
+                        placeholder="제목(선택) - 비워두면 본문 첫 줄로 자동 생성"
+                        value={knowledgeDirectTitle}
+                        onChange={(e) => setKnowledgeDirectTitle(e.target.value)}
+                      />
+                      <Input
+                        placeholder="추가 태그(선택, 쉼표 구분)"
+                        value={knowledgeDirectTags}
+                        onChange={(e) => setKnowledgeDirectTags(e.target.value)}
+                      />
+                      <textarea
+                        className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="RAG에 바로 반영할 본문을 그대로 붙여넣어 주세요."
+                        value={knowledgeDirectInput}
+                        onChange={(e) => setKnowledgeDirectInput(e.target.value)}
+                      />
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          본문 길이: {knowledgeDirectInput.trim().length.toLocaleString()}자
+                        </p>
+                        <Button onClick={handleDirectIngestKnowledge} disabled={submitting}>
+                          {submitting ? "처리 중..." : "원문 바로 반영(승인+색인)"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

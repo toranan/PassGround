@@ -59,6 +59,55 @@ function buildSuggestedQuestion(rawInput: string): string {
   return `${candidate}?`.slice(0, 120);
 }
 
+type ParsedBulkQAItem = {
+  rawInput: string;
+  question: string;
+  answer: string;
+};
+
+function buildSuggestedTitle(rawInput: string): string {
+  const firstLine = rawInput
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean);
+  if (!firstLine) return "RAG 본문";
+  return firstLine.replace(/\s+/g, " ").slice(0, 120);
+}
+
+function normalizeQuestionLine(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim().slice(0, 120);
+  if (!normalized) return "";
+  return /[?？]$/.test(normalized) ? normalized : `${normalized}?`.slice(0, 120);
+}
+
+function normalizeAnswerBody(value: string): string {
+  return value.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 6000);
+}
+
+function parseBulkQAItems(raw: string): ParsedBulkQAItem[] {
+  const source = raw.replace(/\r\n/g, "\n").trim();
+  if (!source) return [];
+
+  const regex = /Q\s*\d+\.\s*([\s\S]*?)\n\s*A\s*\d+\.\s*([\s\S]*?)(?=\n\s*Q\s*\d+\.|$)/gi;
+  const parsed: ParsedBulkQAItem[] = [];
+
+  for (const match of source.matchAll(regex)) {
+    const questionRaw = (match[1] ?? "").trim();
+    const answerRaw = (match[2] ?? "").trim();
+    const question = normalizeQuestionLine(questionRaw);
+    const answer = normalizeAnswerBody(answerRaw);
+    if (!question || !answer) continue;
+
+    parsed.push({
+      rawInput: `Q. ${questionRaw}\nA. ${answerRaw}`.slice(0, 12000),
+      question,
+      answer,
+    });
+  }
+
+  return parsed;
+}
+
 function parseRefinedDraft(raw: string): { question: string; answer: string } | null {
   const text = raw.replace(/\r\n/g, "\n").trim();
   if (!text) return null;
@@ -199,6 +248,101 @@ export async function POST(request: Request) {
   const examError = validateExam(exam);
   if (examError) return examError;
 
+  const directRawInput = normalizeText(body.directRawInput, 120000);
+  if (directRawInput) {
+    const manualTags = normalizeTags(body.tags);
+    const directTitle = normalizeText(body.directTitle, 120);
+    const question = directTitle || buildSuggestedTitle(directRawInput);
+    const answer = directRawInput.slice(0, 60000);
+    const inferredTags = inferKnowledgeTags([directRawInput, question, answer].join("\n"));
+    const tags = mergeKnowledgeTags(manualTags, inferredTags);
+    const approvedAt = new Date().toISOString();
+
+    const admin = getSupabaseAdmin();
+    const { data: inserted, error } = await admin
+      .from("ai_knowledge_items")
+      .insert({
+        exam_slug: exam,
+        raw_input: directRawInput,
+        question,
+        answer,
+        tags,
+        status: "approved",
+        created_by: auth.user.id,
+        approved_by: auth.user.id,
+        approved_at: approvedAt,
+      })
+      .select("id,question,answer,raw_input,tags")
+      .single();
+
+    if (error || !inserted) {
+      return NextResponse.json({ error: error?.message ?? "원문 직투입 저장에 실패했습니다." }, { status: 400 });
+    }
+
+    let ragSyncError: string | null = null;
+    try {
+      await upsertKnowledgeChunksForApprovedItem({
+        admin,
+        exam: exam as Exam,
+        item: {
+          id: inserted.id,
+          question: inserted.question ?? "",
+          answer: inserted.answer ?? "",
+          raw_input: inserted.raw_input ?? "",
+          tags: Array.isArray(inserted.tags) ? inserted.tags : [],
+        },
+      });
+    } catch (syncError) {
+      ragSyncError = syncError instanceof Error ? syncError.message : "증분 색인 동기화에 실패했습니다.";
+    }
+
+    const result = await loadKnowledge(exam as Exam);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true, directInserted: true, ragSyncError, ...result });
+  }
+
+  const bulkRawInput = normalizeText(body.bulkRawInput, 180000);
+  const manualTags = normalizeTags(body.tags);
+  if (bulkRawInput) {
+    const qaItems = parseBulkQAItems(bulkRawInput);
+    if (!qaItems.length) {
+      return NextResponse.json(
+        { error: "Q/A 본문 형식을 인식하지 못했습니다. 'Q01. ... A01. ...' 형식으로 넣어주세요." },
+        { status: 400 }
+      );
+    }
+
+    const admin = getSupabaseAdmin();
+    const rows = qaItems.map((item) => {
+      const inferredTags = inferKnowledgeTags([item.rawInput, item.question, item.answer].join("\n"));
+      const tags = mergeKnowledgeTags(manualTags, inferredTags);
+      return {
+        exam_slug: exam,
+        raw_input: item.rawInput,
+        question: item.question,
+        answer: item.answer,
+        tags,
+        status: "pending" as const,
+        created_by: auth.user.id,
+      };
+    });
+
+    const { error } = await admin.from("ai_knowledge_items").insert(rows);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    const result = await loadKnowledge(exam as Exam);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true, bulkInsertedCount: rows.length, ...result });
+  }
+
   const rawInput = normalizeText(body.rawInput, 12000);
   const providedQuestion = normalizeText(body.question, 120);
   const providedAnswer = normalizeText(body.answer, 6000);
@@ -207,7 +351,6 @@ export async function POST(request: Request) {
   const question =
     providedQuestion || refinedDraft?.question || buildSuggestedQuestion(rawInput);
   const answer = providedAnswer || refinedDraft?.answer || rawInput;
-  const manualTags = normalizeTags(body.tags);
   const inferredTags = inferKnowledgeTags([rawInput, question, answer].filter(Boolean).join("\n"));
   const tags = mergeKnowledgeTags(manualTags, inferredTags);
 
