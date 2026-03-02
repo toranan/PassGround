@@ -596,6 +596,7 @@ final class CommunityStore: ObservableObject {
             title: post.title,
             content: post.content,
             authorName: post.authorName,
+            verificationLevel: post.verificationLevel,
             commentCount: resolvedCommentCount,
             likeCount: resolvedLikeCount,
             viewCount: post.viewCount,

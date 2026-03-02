@@ -49,6 +49,7 @@ function formatRelativeTime(dateString: string | null): string {
 }
 
 function verificationLabel(level: string | null | undefined): string | null {
+  if (!level || level === "none") return null;
   switch (level) {
     case "transfer_passer":
       return "편입 합격";
@@ -57,7 +58,7 @@ function verificationLabel(level: string | null | undefined): string | null {
     case "cpa_accountant":
       return "회계사 인증";
     default:
-      return null;
+      return level;
   }
 }
 

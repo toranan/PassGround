@@ -10,6 +10,14 @@ struct BlindPostCell: View {
                 Text(post.authorName.isEmpty ? "익명" : post.authorName)
                     .font(.footnote)
                     .fontWeight(.medium)
+
+                if let badge = post.verificationLevel, badge != "none", !badge.isEmpty {
+                    Text(badge)
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.14), in: Capsule())
+                }
                 
                 Text(post.timeLabel.isEmpty ? "방금 전" : post.timeLabel)
                     .font(.caption)

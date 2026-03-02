@@ -10,6 +10,7 @@ type PostRow = {
   title: string;
   content?: string | null;
   author_name: string | null;
+  author_id?: string | null;
   created_at: string | null;
   view_count?: number | null;
   board_id: string;
@@ -36,6 +37,7 @@ type HomeItem = {
     title: string;
     content: string;
     authorName: string;
+    verificationLevel: string;
     commentCount: number;
     likeCount: number;
     viewCount: number;
@@ -52,6 +54,10 @@ let postStatsAvailable: boolean | null = null;
 function parseExam(value: string | null): "transfer" | "cpa" | null {
   if (value === "transfer" || value === "cpa") return value;
   return null;
+}
+
+function isValidUUID(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
 function formatRelativeTime(value: string | null): string {
@@ -73,6 +79,31 @@ function formatRelativeTime(value: string | null): string {
   if (diffHours < 24) return `${diffHours}시간`;
   if (diffDays < 7) return `${diffDays}일`;
   return date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
+}
+
+function defaultVerificationBadge(level: string | null | undefined): string {
+  switch (level) {
+    case "transfer_passer":
+      return "편입 합격";
+    case "cpa_first_passer":
+      return "CPA 1차 합격";
+    case "cpa_accountant":
+      return "현직 회계사";
+    default:
+      return "none";
+  }
+}
+
+function parseVerifiedUniversityFromMemo(memo: string | null | undefined): string | null {
+  if (!memo) return null;
+  try {
+    const parsed = JSON.parse(memo) as { verifiedUniversity?: unknown };
+    if (typeof parsed.verifiedUniversity !== "string") return null;
+    const value = parsed.verifiedUniversity.trim();
+    return value || null;
+  } catch {
+    return null;
+  }
 }
 
 function isMissingRelation(error: { code?: string | null; message?: string | null } | null, relation: string): boolean {
@@ -170,7 +201,7 @@ export async function GET(request: Request) {
 
   const { data: modernPosts, error: modernError } = await supabase
     .from("posts")
-    .select("id,title,content,author_name,created_at,view_count,board_id")
+    .select("id,title,content,author_name,author_id,created_at,view_count,board_id")
     .in("board_id", boardIds)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
@@ -189,6 +220,7 @@ export async function GET(request: Request) {
 
     postsData = (legacyPosts as PostRow[] | null | undefined)?.map((post) => ({
       ...post,
+      author_id: null,
       view_count: 0,
     })) ?? null;
   }
@@ -246,6 +278,44 @@ export async function GET(request: Request) {
     });
   }
 
+  const postAuthorProfileIds = Array.from(
+    new Set(
+      pageRows
+        .map((post) => (typeof post.author_id === "string" ? post.author_id.trim() : ""))
+        .filter((value): value is string => isValidUUID(value))
+    )
+  );
+
+  const verificationByProfileId = new Map<string, string>();
+  if (postAuthorProfileIds.length > 0) {
+    const { data: profilesById } = await supabase
+      .from("profiles")
+      .select("id,verification_level")
+      .in("id", postAuthorProfileIds);
+
+    (profilesById ?? []).forEach((profile: { id: string; verification_level: string | null }) => {
+      verificationByProfileId.set(profile.id, defaultVerificationBadge(profile.verification_level));
+    });
+
+    const { data: approvedRows } = await admin
+      .from("verification_requests")
+      .select("profile_id,memo,reviewed_at,created_at")
+      .in("profile_id", postAuthorProfileIds)
+      .eq("status", "approved")
+      .order("reviewed_at", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    (approvedRows as { profile_id: string | null; memo: string | null }[] | null | undefined)?.forEach((row) => {
+      const profileId = row.profile_id?.trim() ?? "";
+      if (!profileId || !verificationByProfileId.has(profileId)) return;
+      const current = verificationByProfileId.get(profileId) ?? "none";
+      if (current !== "none" && current.endsWith("합격자")) return;
+      const verifiedUniversity = parseVerifiedUniversityFromMemo(row.memo);
+      if (!verifiedUniversity) return;
+      verificationByProfileId.set(profileId, `${verifiedUniversity} 합격자`);
+    });
+  }
+
   const items: HomeItem[] = pageRows
     .map((post) => {
       const boardMeta = boardMetaById.get(post.board_id);
@@ -270,6 +340,8 @@ export async function GET(request: Request) {
             return normalized.substring(0, 100);
           })(),
           authorName: (post.author_name ?? "익명").trim() || "익명",
+          verificationLevel:
+            (typeof post.author_id === "string" ? verificationByProfileId.get(post.author_id) : undefined) ?? "none",
           commentCount,
           likeCount,
           viewCount,

@@ -174,9 +174,97 @@ type AdminSubmittedQuestionsResponse = {
   error?: string;
 };
 
+type VerificationRequestItem = {
+  id: string;
+  profileId: string | null;
+  requesterName: string;
+  examSlug: string;
+  verificationType: string;
+  evidenceUrl: string;
+  userMemo: string | null;
+  verifiedUniversity: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+type AdminVerificationResponse = {
+  ok: boolean;
+  items: VerificationRequestItem[];
+  error?: string;
+};
+
 function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("access_token") ?? "";
+}
+
+function getRefreshToken(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("refresh_token") ?? "";
+}
+
+function getTokenExpMs(token: string): number | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payload = parts[1];
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    const decoded = window.atob(padded);
+    const parsed = JSON.parse(decoded) as { exp?: unknown };
+    if (typeof parsed.exp !== "number" || !Number.isFinite(parsed.exp)) return null;
+    return parsed.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpiredSoon(token: string, thresholdMs = 60_000): boolean {
+  const expMs = getTokenExpMs(token);
+  if (!expMs) return false;
+  return Date.now() + thresholdMs >= expMs;
+}
+
+async function refreshAccessTokenIfPossible(): Promise<string> {
+  if (typeof window === "undefined") return "";
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return "";
+
+  const res = await fetch("/api/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+  const payload = (await res.json().catch(() => null)) as
+    | {
+        ok?: boolean;
+        user?: { id?: string; email?: string; username?: string; nickname?: string };
+        session?: { access_token?: string; refresh_token?: string };
+      }
+    | null;
+
+  if (!res.ok || !payload?.ok || !payload.session?.access_token) {
+    return "";
+  }
+
+  localStorage.setItem("access_token", payload.session.access_token);
+  if (payload.session.refresh_token) {
+    localStorage.setItem("refresh_token", payload.session.refresh_token);
+  }
+  if (payload.user) {
+    localStorage.setItem("user", JSON.stringify(payload.user));
+  }
+  emitAuthChange();
+  return payload.session.access_token;
+}
+
+async function resolveUsableAccessToken(): Promise<string> {
+  const token = getAccessToken();
+  if (token && !isTokenExpiredSoon(token)) return token;
+  const refreshed = await refreshAccessTokenIfPossible();
+  return refreshed || token;
 }
 
 function toLocalDateTimeInput(date: Date): string {
@@ -245,6 +333,9 @@ export default function AdminPage() {
   const [fallbackLogCount, setFallbackLogCount] = useState(0);
   const [loadingSubmittedQuestions, setLoadingSubmittedQuestions] = useState(false);
   const [submittedQuestions, setSubmittedQuestions] = useState<SubmittedQuestionItem[]>([]);
+  const [loadingVerifications, setLoadingVerifications] = useState(false);
+  const [verificationRequests, setVerificationRequests] = useState<VerificationRequestItem[]>([]);
+  const [verificationUniversityById, setVerificationUniversityById] = useState<Record<string, string>>({});
   const [totalVotes, setTotalVotes] = useState(0);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -327,6 +418,11 @@ export default function AdminPage() {
       (a, b) => new Date(b.approvedAt || b.updatedAt).getTime() - new Date(a.approvedAt || a.updatedAt).getTime()
     );
   }, [knowledgeApproved]);
+  const sortedVerificationRequests = useMemo(() => {
+    return [...verificationRequests].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [verificationRequests]);
 
   const loadAdminMe = async () => {
     const token = getAccessToken();
@@ -566,6 +662,42 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadVerificationRequests = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingVerifications(true);
+    try {
+      const res = await fetch("/api/admin/verification?status=all&limit=120", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminVerificationResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "합격증 인증 목록을 불러오지 못했습니다.");
+        setVerificationRequests([]);
+        return;
+      }
+      setVerificationRequests(payload.items ?? []);
+      setVerificationUniversityById((prev) => {
+        const next = { ...prev };
+        for (const item of payload.items ?? []) {
+          if (!(item.id in next)) {
+            next[item.id] = item.verifiedUniversity ?? "";
+          }
+        }
+        return next;
+      });
+    } catch {
+      setMessage("합격증 인증 목록을 불러오지 못했습니다.");
+      setVerificationRequests([]);
+    } finally {
+      setLoadingVerifications(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadAdminMe();
   }, [user?.id]);
@@ -580,9 +712,10 @@ export default function AdminPage() {
         loadKnowledge(),
         loadUnansweredQuestions(),
         loadSubmittedQuestions(),
+        loadVerificationRequests(),
       ]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions, loadSubmittedQuestions]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions, loadSubmittedQuestions, loadVerificationRequests]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -851,7 +984,7 @@ export default function AdminPage() {
   };
 
   const handleSaveNews = async () => {
-    const token = getAccessToken();
+    let token = await resolveUsableAccessToken();
     if (!token) return;
 
     const title = newsForm.title.trim();
@@ -874,7 +1007,7 @@ export default function AdminPage() {
     setSubmitting(true);
     setMessage("");
     try {
-      const res = await fetch("/api/admin/news", {
+      let res = await fetch("/api/admin/news", {
         method: editingNewsId ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
@@ -891,6 +1024,29 @@ export default function AdminPage() {
             : [],
         }),
       });
+      if (res.status === 401) {
+        const refreshed = await refreshAccessTokenIfPossible();
+        if (refreshed) {
+          token = refreshed;
+          res = await fetch("/api/admin/news", {
+            method: editingNewsId ? "PATCH" : "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              id: editingNewsId,
+              exam,
+              title,
+              content,
+              linkUrl,
+              attachments: newsAttachment
+                ? [{ url: newsAttachment.url, filename: newsAttachment.filename }]
+                : [],
+            }),
+          });
+        }
+      }
       const payload = (await res.json().catch(() => null)) as AdminNewsResponse | { error?: string } | null;
       if (!res.ok || !payload || !("ok" in payload)) {
         setMessage(
@@ -938,7 +1094,7 @@ export default function AdminPage() {
       return;
     }
 
-    const token = getAccessToken();
+    let token = await resolveUsableAccessToken();
     if (!token) {
       setMessage("로그인 후 다시 시도해줘.");
       return;
@@ -947,7 +1103,7 @@ export default function AdminPage() {
     setUploadingNewsAttachment(true);
     setMessage("");
     try {
-      const signRes = await fetch("/api/admin/news/upload-url", {
+      let signRes = await fetch("/api/admin/news/upload-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -959,6 +1115,24 @@ export default function AdminPage() {
           size: file.size,
         }),
       });
+      if (signRes.status === 401) {
+        const refreshed = await refreshAccessTokenIfPossible();
+        if (refreshed) {
+          token = refreshed;
+          signRes = await fetch("/api/admin/news/upload-url", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              mimeType: file.type || "application/octet-stream",
+              size: file.size,
+            }),
+          });
+        }
+      }
       const signPayload = (await signRes.json().catch(() => null)) as
         | {
             ok?: boolean;
@@ -1036,6 +1210,49 @@ export default function AdminPage() {
       setMessage("최신뉴스가 삭제되었습니다.");
     } catch {
       setMessage("최신뉴스 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReviewVerification = async (item: VerificationRequestItem, status: "approved" | "rejected") => {
+    const token = await resolveUsableAccessToken();
+    if (!token) return;
+
+    const universityInput = (verificationUniversityById[item.id] ?? "").trim();
+    if (status === "approved" && universityInput.length < 2) {
+      setMessage("승인하려면 합격 대학명을 입력해줘.");
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/verification", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: item.id,
+          status,
+          verifiedUniversity: status === "approved" ? universityInput : "",
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as AdminVerificationResponse | { error?: string } | null;
+      if (!res.ok || !payload || !("ok" in payload)) {
+        setMessage((payload && "error" in payload && payload.error) || "인증 검수 처리에 실패했습니다.");
+        return;
+      }
+      setVerificationRequests(payload.items ?? []);
+      setMessage(
+        status === "approved"
+          ? `${universityInput} 합격자로 인증 승인했어.`
+          : "인증 요청을 거절 처리했어."
+      );
+    } catch {
+      setMessage("인증 검수 처리 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -2028,6 +2245,111 @@ export default function AdminPage() {
                       <p className="text-sm text-muted-foreground">
                         등록된 최신뉴스가 없습니다.
                       </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">합격증 인증 검수</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => void loadVerificationRequests()}
+                        disabled={loadingVerifications || submitting}
+                      >
+                        {loadingVerifications ? "불러오는 중..." : "인증 신청 새로고침"}
+                      </Button>
+                    </div>
+
+                    {loadingVerifications ? (
+                      <p className="text-sm text-muted-foreground">합격증 인증 목록 불러오는 중...</p>
+                    ) : sortedVerificationRequests.length ? (
+                      <div className="space-y-2">
+                        {sortedVerificationRequests.map((item) => (
+                          <div
+                            key={item.id}
+                            className="rounded-lg border border-border px-3 py-3 space-y-2"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">{item.requesterName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.examSlug} · {item.verificationType} · {formatDateLabel(item.createdAt)}
+                                </p>
+                                {item.userMemo ? (
+                                  <p className="text-xs text-muted-foreground mt-1">{item.userMemo}</p>
+                                ) : null}
+                                {item.verifiedUniversity ? (
+                                  <p className="text-xs text-primary mt-1">승인 대학: {item.verifiedUniversity}</p>
+                                ) : null}
+                              </div>
+                              <div className="text-xs">
+                                <span
+                                  className={`rounded-full px-2 py-1 ${
+                                    item.status === "pending"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : item.status === "approved"
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {item.status === "pending"
+                                    ? "대기"
+                                    : item.status === "approved"
+                                      ? "승인"
+                                      : "거절"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <a
+                                href={item.evidenceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary underline underline-offset-2"
+                              >
+                                증빙 이미지 열기
+                              </a>
+                              {item.status === "pending" ? (
+                                <>
+                                  <Input
+                                    placeholder="합격 대학명 (예: 동국대)"
+                                    value={verificationUniversityById[item.id] ?? ""}
+                                    onChange={(e) =>
+                                      setVerificationUniversityById((prev) => ({
+                                        ...prev,
+                                        [item.id]: e.target.value,
+                                      }))
+                                    }
+                                    className="max-w-[220px]"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    disabled={submitting}
+                                    onClick={() => void handleReviewVerification(item, "approved")}
+                                  >
+                                    승인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={submitting}
+                                    onClick={() => void handleReviewVerification(item, "rejected")}
+                                  >
+                                    거절
+                                  </Button>
+                                </>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">접수된 합격증 인증 요청이 없습니다.</p>
                     )}
                   </CardContent>
                 </Card>

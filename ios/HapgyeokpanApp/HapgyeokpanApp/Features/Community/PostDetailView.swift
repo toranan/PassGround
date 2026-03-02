@@ -352,6 +352,13 @@ struct PostDetailView: View {
 
             HStack(spacing: 8) {
                 Text(detail.post.authorName)
+                if let badge = detail.post.verificationLevel, badge != "none", !badge.isEmpty {
+                    Text(badge)
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.14), in: Capsule())
+                }
                 Text("·")
                 Text(detail.post.timeLabel)
                 Text("·")
@@ -973,6 +980,7 @@ struct PostDetailView: View {
                 content: response.post.content,
                 authorName: response.post.authorName,
                 authorId: response.post.authorId,
+                verificationLevel: response.post.verificationLevel,
                 createdAt: response.post.createdAt,
                 timeLabel: response.post.timeLabel,
                 viewCount: response.post.viewCount,
@@ -1169,6 +1177,7 @@ struct PostDetailView: View {
                 content: previewContent,
                 authorName: post.authorName,
                 authorId: nil,
+                verificationLevel: post.verificationLevel,
                 createdAt: post.createdAt,
                 timeLabel: post.timeLabel,
                 viewCount: post.viewCount,

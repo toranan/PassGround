@@ -167,6 +167,7 @@ struct PostSummary: Codable, Identifiable {
     let title: String
     let content: String?
     let authorName: String
+    let verificationLevel: String?
     let commentCount: Int
     let likeCount: Int
     let viewCount: Int
@@ -198,6 +199,7 @@ struct PostDetail: Codable {
     let content: String
     let authorName: String
     let authorId: String?
+    let verificationLevel: String?
     let createdAt: String?
     let timeLabel: String
     let viewCount: Int

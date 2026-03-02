@@ -38,7 +38,7 @@ function formatRelativeTime(value: string | null): string {
   return date.toLocaleDateString("ko-KR");
 }
 
-function verificationLabel(level: string | null | undefined): string {
+function defaultVerificationBadge(level: string | null | undefined): string {
   switch (level) {
     case "transfer_passer":
       return "편입 합격";
@@ -48,6 +48,18 @@ function verificationLabel(level: string | null | undefined): string {
       return "현직 회계사";
     default:
       return "none";
+  }
+}
+
+function parseVerifiedUniversityFromMemo(memo: string | null | undefined): string | null {
+  if (!memo) return null;
+  try {
+    const parsed = JSON.parse(memo) as { verifiedUniversity?: unknown };
+    if (typeof parsed.verifiedUniversity !== "string") return null;
+    const value = parsed.verifiedUniversity.trim();
+    return value || null;
+  } catch {
+    return null;
   }
 }
 
@@ -247,23 +259,72 @@ export async function GET(
         .filter((value): value is string => Boolean(value))
     )
   );
+  const authorProfileIds = Array.from(
+    new Set(
+      (commentsData ?? [])
+        .map((comment) => (typeof comment.author_id === "string" ? comment.author_id.trim() : ""))
+        .filter((value): value is string => isValidUUID(value))
+    )
+  );
+  if (postData.author_id && isValidUUID(postData.author_id)) {
+    authorProfileIds.push(postData.author_id);
+  }
 
-  const verificationMap = new Map<string, string>();
-  if (authorNames.length > 0) {
-    const { data: profiles } = await supabase
+  const verificationByProfileId = new Map<string, string>();
+  const verificationByDisplayName = new Map<string, string>();
+
+  const uniqueProfileIds = Array.from(new Set(authorProfileIds));
+  if (uniqueProfileIds.length > 0) {
+    const { data: profilesById } = await supabase
       .from("profiles")
-      .select("display_name,verification_level")
-      .in("display_name", authorNames);
+      .select("id,display_name,verification_level")
+      .in("id", uniqueProfileIds);
 
-    (profiles ?? []).forEach((profile: { display_name: string | null; verification_level: string | null }) => {
+    (profilesById ?? []).forEach((profile: { id: string; display_name: string | null; verification_level: string | null }) => {
+      const fallback = defaultVerificationBadge(profile.verification_level);
+      verificationByProfileId.set(profile.id, fallback);
       if (profile.display_name) {
-        verificationMap.set(profile.display_name, verificationLabel(profile.verification_level));
+        verificationByDisplayName.set(profile.display_name, fallback);
       }
     });
+
+    const { data: approvedRows } = await admin
+      .from("verification_requests")
+      .select("profile_id,memo,reviewed_at,created_at")
+      .in("profile_id", uniqueProfileIds)
+      .eq("status", "approved")
+      .order("reviewed_at", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    (approvedRows as { profile_id: string | null; memo: string | null }[] | null | undefined)?.forEach((row) => {
+      const profileId = row.profile_id?.trim() ?? "";
+      if (!profileId || !verificationByProfileId.has(profileId)) return;
+      const current = verificationByProfileId.get(profileId) ?? "none";
+      if (current !== "none" && current.endsWith("합격자")) return;
+      const verifiedUniversity = parseVerifiedUniversityFromMemo(row.memo);
+      if (!verifiedUniversity) return;
+      verificationByProfileId.set(profileId, `${verifiedUniversity} 합격자`);
+    });
+  }
+
+  if (authorNames.length > 0) {
+    const unresolvedDisplayNames = authorNames.filter((name) => !verificationByDisplayName.has(name));
+    if (unresolvedDisplayNames.length > 0) {
+      const { data: profilesByName } = await supabase
+        .from("profiles")
+        .select("display_name,verification_level")
+        .in("display_name", unresolvedDisplayNames);
+
+      (profilesByName ?? []).forEach((profile: { display_name: string | null; verification_level: string | null }) => {
+        if (!profile.display_name) return;
+        verificationByDisplayName.set(profile.display_name, defaultVerificationBadge(profile.verification_level));
+      });
+    }
   }
 
   const comments = (commentsData ?? []).map((comment: CommentRow) => {
     const commentAuthorName = (comment.author_name ?? "").trim();
+    const commentAuthorId = (comment.author_id ?? "").trim();
     const canDeleteByLegacyName = Boolean(
       !comment.author_id &&
       viewerDisplayName &&
@@ -280,7 +341,10 @@ export async function GET(
       createdAt: comment.created_at,
       timeLabel: formatRelativeTime(comment.created_at),
       parentId: comment.parent_id,
-      verificationLevel: commentAuthorName ? verificationMap.get(commentAuthorName) ?? "none" : "none",
+      verificationLevel:
+        (commentAuthorId && verificationByProfileId.get(commentAuthorId)) ||
+        (commentAuthorName ? verificationByDisplayName.get(commentAuthorName) : undefined) ||
+        "none",
       canDelete: Boolean(
         (requestedUserId && comment.author_id && comment.author_id === requestedUserId) ||
           canDeleteByLegacyName
@@ -317,6 +381,10 @@ export async function GET(
         content: postData.content,
         authorName: postData.author_name ?? "익명",
         authorId: postData.author_id ?? null,
+        verificationLevel:
+          (postData.author_id ? verificationByProfileId.get(postData.author_id) : undefined) ||
+          (postAuthorName ? verificationByDisplayName.get(postAuthorName) : undefined) ||
+          "none",
         createdAt: postData.created_at,
         timeLabel: formatRelativeTime(postData.created_at),
         viewCount: postData.view_count ?? 0,

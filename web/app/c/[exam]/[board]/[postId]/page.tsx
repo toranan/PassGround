@@ -20,6 +20,7 @@ type PostDetailPageProps = {
 type CommentRow = {
   id: string;
   author_name: string;
+  author_id?: string | null;
   content: string;
   created_at: string;
   parent_id: string | null;
@@ -199,6 +200,20 @@ function formatRelativeTime(dateString: string | null): string {
   return date.toLocaleDateString("ko-KR");
 }
 
+function verificationLabel(level: string | null | undefined): string | null {
+  if (!level || level === "none") return null;
+  switch (level) {
+    case "transfer_passer":
+      return "편입 합격";
+    case "cpa_first_passer":
+      return "CPA 1차 합격";
+    case "cpa_accountant":
+      return "회계사 인증";
+    default:
+      return level;
+  }
+}
+
 function isValidUUID(str: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
@@ -230,6 +245,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       title: string;
       content: string;
       author_name: string | null;
+      author_id?: string | null;
       created_at: string | null;
       view_count?: number;
     }
@@ -243,6 +259,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         : (boardData?.name ?? "게시판");
   let likeCount = 0;
   let adoptedCommentId: string | null = null;
+  let postVerificationLevel = "none";
   const isSamplePost = false;
 
   if (boardData?.id && isValidUUID(postId)) {
@@ -264,7 +281,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
     const { data, error: postSelectError } = await supabase
       .from("posts")
-      .select("id,title,content,author_name,created_at,view_count")
+      .select("id,title,content,author_name,author_id,created_at,view_count")
       .eq("id", postId)
       .eq("board_id", boardData.id)
       .maybeSingle();
@@ -281,6 +298,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       postData = legacyData
         ? {
           ...legacyData,
+          author_id: null,
           view_count: 0,
         }
         : null;
@@ -289,16 +307,26 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     if (postData?.id) {
       const { data: comments } = await supabase
         .from("comments")
-        .select("id,author_name,content,created_at,parent_id")
+        .select("id,author_name,author_id,content,created_at,parent_id")
         .eq("post_id", postData.id)
         .order("created_at", { ascending: true });
 
       const rawComments = comments ?? [];
-      const authorNames = Array.from(
-        new Set(rawComments.map((comment) => comment.author_name).filter(Boolean))
+      const authorNames = Array.from(new Set(
+        [postData.author_name, ...rawComments.map((comment) => comment.author_name)]
+          .map((name) => (typeof name === "string" ? name.trim() : ""))
+          .filter((value): value is string => value.length > 0)
+      ));
+      const authorProfileIds = Array.from(
+        new Set(
+          [postData.author_id, ...rawComments.map((comment) => comment.author_id)]
+            .map((authorId) => (typeof authorId === "string" ? authorId.trim() : ""))
+            .filter((value): value is string => isValidUUID(value))
+        )
       );
 
       const verificationMap = new Map<string, string>();
+      const verificationByProfileId = new Map<string, string>();
       if (authorNames.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
@@ -311,15 +339,61 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           }
         });
       }
+      if (authorProfileIds.length > 0) {
+        const { data: profileRows } = await supabase
+          .from("profiles")
+          .select("id,verification_level")
+          .in("id", authorProfileIds);
+
+        (profileRows ?? []).forEach((profile: { id: string; verification_level: string | null }) => {
+          verificationByProfileId.set(profile.id, profile.verification_level ?? "none");
+        });
+
+        const { data: approvedRows } = await admin
+          .from("verification_requests")
+          .select("profile_id,memo,reviewed_at,created_at")
+          .in("profile_id", authorProfileIds)
+          .eq("status", "approved")
+          .order("reviewed_at", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        (approvedRows as { profile_id: string | null; memo: string | null }[] | null | undefined)?.forEach((row) => {
+          const profileId = row.profile_id?.trim() ?? "";
+          if (!profileId || !verificationByProfileId.has(profileId)) return;
+          const parsed = (() => {
+            if (!row.memo) return null;
+            try {
+              const memoObject = JSON.parse(row.memo) as { verifiedUniversity?: unknown };
+              const university = typeof memoObject.verifiedUniversity === "string" ? memoObject.verifiedUniversity.trim() : "";
+              return university || null;
+            } catch {
+              return null;
+            }
+          })();
+          if (!parsed) return;
+          verificationByProfileId.set(profileId, `${parsed} 합격자`);
+        });
+      }
 
       commentsData = rawComments.map((comment) => ({
         id: comment.id,
         author_name: comment.author_name,
+        author_id: comment.author_id ?? null,
         content: comment.content,
         created_at: comment.created_at,
         parent_id: comment.parent_id,
-        verification_level: verificationMap.get(comment.author_name) ?? "none",
+        verification_level:
+          (typeof comment.author_id === "string" ? verificationByProfileId.get(comment.author_id) : undefined) ??
+          verificationMap.get(comment.author_name) ??
+          "none",
       }));
+
+      const postAuthorId = typeof postData.author_id === "string" ? postData.author_id.trim() : "";
+      const postAuthorName = (postData.author_name ?? "").trim();
+      postVerificationLevel =
+        (postAuthorId ? verificationByProfileId.get(postAuthorId) : undefined) ??
+        (postAuthorName ? verificationMap.get(postAuthorName) : undefined) ??
+        "none";
 
       const { count } = await admin
         .from("post_likes")
@@ -344,6 +418,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const comments = commentsData;
   const viewCount = postData.view_count ?? 0;
   const parsedContent = parsePostBodyAndResources(postData.content);
+  const postVerificationBadge = verificationLabel(postVerificationLevel);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -371,7 +446,14 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <div className="font-medium text-gray-900">{postData.author_name ?? "익명"}</div>
+                <div className="font-medium text-gray-900 flex items-center gap-2 flex-wrap">
+                  <span>{postData.author_name ?? "익명"}</span>
+                  {postVerificationBadge && (
+                    <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      {postVerificationBadge}
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-gray-500 flex items-center gap-2">
                   <span>{formatRelativeTime(postData.created_at)}</span>
                   <span>•</span>
