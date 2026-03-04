@@ -336,6 +336,9 @@ export default async function TransferPage() {
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
               최신뉴스, 주요 일정, 실시간 인기글과 최신글을 한눈에 확인하세요.
             </p>
+            <p className="mt-1 max-w-3xl text-xs text-muted-foreground">
+              앱스토어에서도 합격판 앱으로 만나보실 수 있습니다.
+            </p>
           </div>
         </section>
 

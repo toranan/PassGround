@@ -117,7 +117,7 @@ export function Navbar() {
             </>
           ) : (
             <Button size="sm" asChild>
-              <Link href="/signup">회원가입</Link>
+              <Link href="/signup">로그인</Link>
             </Button>
           )}
         </div>
