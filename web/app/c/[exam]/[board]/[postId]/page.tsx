@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
@@ -219,6 +220,46 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+export async function generateMetadata({ params }: PostDetailPageProps): Promise<Metadata> {
+  const { exam, board, postId } = await params;
+  if (!isValidUUID(postId)) return {};
+
+  const supabase = getSupabaseServer();
+
+  const { data: boardData } = await supabase
+    .from("boards")
+    .select("id,name,exams!inner(slug)")
+    .eq("slug", board)
+    .eq("exams.slug", exam)
+    .maybeSingle();
+
+  if (!boardData?.id) return {};
+
+  const { data: postData } = await supabase
+    .from("posts")
+    .select("title,content")
+    .eq("id", postId)
+    .eq("board_id", boardData.id)
+    .maybeSingle();
+
+  if (!postData) return {};
+
+  const rawText = postData.content ? postData.content.replace(/\s+/g, " ").trim() : "";
+  const description = rawText.length > 150 ? `${rawText.slice(0, 150)}...` : rawText;
+  const examSuffix = exam === "transfer" ? "편입 " : "";
+  const title = `${postData.title} | ${examSuffix}${boardData.name} - 합격판`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+    },
+  };
+}
+
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { exam, board, postId } = await params;
 
@@ -253,7 +294,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   let commentsData: CommentRow[] = [];
   const boardName =
     exam === "transfer" && board === "qa"
-      ? "학습법공유"
+      ? "합격전략"
       : exam === "transfer" && board === "study-qa"
         ? "학습질문"
         : (boardData?.name ?? "게시판");
@@ -419,9 +460,31 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const viewCount = postData.view_count ?? 0;
   const parsedContent = parsePostBodyAndResources(postData.content);
   const postVerificationBadge = verificationLabel(postVerificationLevel);
+  const examSuffix = exam === "transfer" ? "편입 " : "";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    headline: postData.title,
+    articleSection: `${examSuffix}${boardName}`,
+    author: {
+      "@type": "Person",
+      name: postData.author_name ?? "익명",
+    },
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/CommentAction",
+      userInteractionCount: comments.length,
+    },
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* SEO JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       <main className="flex-1">

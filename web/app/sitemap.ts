@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_TRANSFER } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const now = new Date();
 
@@ -23,10 +24,41 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const allRoutes = Array.from(new Set([...staticRoutes, ...boardRoutes]));
 
-  return allRoutes.map((route) => ({
+  const sitemapEntries: MetadataRoute.Sitemap = allRoutes.map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: now,
     changeFrequency: "daily",
     priority: route === "/" ? 1 : route.startsWith("/transfer") ? 0.9 : 0.7,
   }));
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: recentPosts } = await supabase
+      .from("posts")
+      .select("id, created_at, boards!inner(slug, exams!inner(slug))")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (recentPosts) {
+      recentPosts.forEach((post: any) => {
+        const examSlug = post.boards?.exams?.slug;
+        const boardSlug = post.boards?.slug;
+        if (examSlug && boardSlug) {
+          if (examSlug === "cpa" && !ENABLE_CPA) return;
+          if (examSlug === "transfer" && !ENABLE_TRANSFER) return;
+
+          sitemapEntries.push({
+            url: `${siteUrl}/c/${examSlug}/${boardSlug}/${post.id}`,
+            lastModified: post.created_at ? new Date(post.created_at) : now,
+            changeFrequency: "weekly",
+            priority: 0.6,
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Failed to fetch posts for sitemap", error);
+  }
+
+  return sitemapEntries;
 }

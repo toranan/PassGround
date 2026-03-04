@@ -256,13 +256,13 @@ async function loadSchedules(): Promise<ScheduleRow[]> {
 
   let rows = primary.data as
     | Array<{
-        id: string;
-        university: string | null;
-        title: string;
-        category: string;
-        starts_at: string;
-        link_url: string | null;
-      }>
+      id: string;
+      university: string | null;
+      title: string;
+      category: string;
+      starts_at: string;
+      link_url: string | null;
+    }>
     | null;
 
   if (primary.error && primary.error.message?.toLowerCase().includes("university")) {
@@ -332,12 +332,12 @@ export default async function TransferPage() {
       <main className="flex-1">
         <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.13),transparent_58%)]">
           <div className="container mx-auto px-4 py-10">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입을 준비하는 학생들을 위한 커뮤니티</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입 합격은 합격판에서! 편입 수험생 필수 커뮤니티</h1>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              최신뉴스, 주요 일정, 실시간 인기글과 최신글을 한눈에 확인하세요.
+              편입 커트라인 예측부터 대학별 편입 합격전략, 실시간 인기글, 최신 편입 뉴스까지 한눈에 확인하세요.
             </p>
             <p className="mt-1 max-w-3xl text-xs text-muted-foreground">
-              앱스토어에서도 합격판 앱으로 만나보실 수 있습니다.
+              앱스토어에서도 편입 전용 합격판 앱 다운로드가 가능합니다.
             </p>
           </div>
         </section>
@@ -346,140 +346,140 @@ export default async function TransferPage() {
           <div className="container mx-auto px-4 space-y-6">
             <TransferHomeBanner />
             <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6">
-            <div className="space-y-4">
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">🔥 실시간 인기글</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {feedRows.realtimePosts.map((row) => (
-                    <Link
-                      key={row.id}
-                      href={`/c/transfer/${row.boardSlug}/${row.id}`}
-                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-2">{row.title}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
-                      </p>
-                    </Link>
-                  ))}
-                  {!feedRows.realtimePosts.length && (
-                    <p className="text-sm text-muted-foreground">실시간 인기글이 아직 없어.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">🕒 최신글</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {feedRows.latestPosts.map((row) => (
-                    <Link
-                      key={row.id}
-                      href={`/c/transfer/${row.boardSlug}/${row.id}`}
-                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-2">{row.title}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount}
-                      </p>
-                    </Link>
-                  ))}
-                  {!feedRows.latestPosts.length && (
-                    <p className="text-sm text-muted-foreground">최신글이 아직 없어.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-4">
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">📰 최신뉴스</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {feedRows.latestNews.map((row) => (
-                    <div key={row.id} className="rounded-lg border border-border p-3 space-y-2">
-                      <Link href={`/c/transfer/${row.boardSlug}/${row.id}`} className="block hover:text-primary transition-colors">
-                        <p className="text-sm font-semibold line-clamp-2">{row.title}</p>
+              <div className="space-y-4">
+                <Card className="border border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">🔥 실시간 인기글</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {feedRows.realtimePosts.map((row) => (
+                      <Link
+                        key={row.id}
+                        href={`/c/transfer/${row.boardSlug}/${row.id}`}
+                        className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
+                      >
+                        <p className="text-sm font-medium line-clamp-2">{row.title}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
+                        </p>
                       </Link>
-                      {row.summary ? <p className="text-xs text-muted-foreground line-clamp-2">{row.summary}</p> : null}
-                      <p className="text-[11px] text-muted-foreground">
-                        {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 조회 {row.viewCount}
-                      </p>
+                    ))}
+                    {!feedRows.realtimePosts.length && (
+                      <p className="text-sm text-muted-foreground">실시간 인기글이 아직 없어.</p>
+                    )}
+                  </CardContent>
+                </Card>
 
-                      {row.linkUrl ? (
-                        <Link href={row.linkUrl} target="_blank" className="block text-xs text-primary hover:underline">
-                          관련 링크 열기
+                <Card className="border border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">🕒 최신글</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {feedRows.latestPosts.map((row) => (
+                      <Link
+                        key={row.id}
+                        href={`/c/transfer/${row.boardSlug}/${row.id}`}
+                        className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
+                      >
+                        <p className="text-sm font-medium line-clamp-2">{row.title}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount}
+                        </p>
+                      </Link>
+                    ))}
+                    {!feedRows.latestPosts.length && (
+                      <p className="text-sm text-muted-foreground">최신글이 아직 없어.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <Card className="border border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">📰 최신뉴스</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {feedRows.latestNews.map((row) => (
+                      <div key={row.id} className="rounded-lg border border-border p-3 space-y-2">
+                        <Link href={`/c/transfer/${row.boardSlug}/${row.id}`} className="block hover:text-primary transition-colors">
+                          <p className="text-sm font-semibold line-clamp-2">{row.title}</p>
                         </Link>
-                      ) : null}
+                        {row.summary ? <p className="text-xs text-muted-foreground line-clamp-2">{row.summary}</p> : null}
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 조회 {row.viewCount}
+                        </p>
 
-                      {row.attachments.length > 0 ? (
-                        <div className="space-y-1">
-                          {row.attachments.slice(0, 2).map((attachment, index) => (
-                            <Link
-                              key={`${attachment.url}-${index}`}
-                              href={attachment.url}
-                              target="_blank"
-                              className="block text-xs text-primary hover:underline"
-                            >
-                              📎 {attachment.filename}
-                            </Link>
-                          ))}
-                        </div>
-                      ) : null}
+                        {row.linkUrl ? (
+                          <Link href={row.linkUrl} target="_blank" className="block text-xs text-primary hover:underline">
+                            관련 링크 열기
+                          </Link>
+                        ) : null}
+
+                        {row.attachments.length > 0 ? (
+                          <div className="space-y-1">
+                            {row.attachments.slice(0, 2).map((attachment, index) => (
+                              <Link
+                                key={`${attachment.url}-${index}`}
+                                href={attachment.url}
+                                target="_blank"
+                                className="block text-xs text-primary hover:underline"
+                              >
+                                📎 {attachment.filename}
+                              </Link>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                    {!feedRows.latestNews.length && (
+                      <p className="text-sm text-muted-foreground">최신뉴스가 아직 없어.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">📅 주요 일정</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {schedules.map((schedule) => (
+                      <div key={schedule.id} className="rounded-lg border border-border p-3">
+                        <p className="text-sm font-medium">{schedule.title}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatScheduleDate(schedule.startsAt)} · {schedule.category}
+                          {schedule.university ? ` · ${schedule.university}` : ""}
+                        </p>
+                        {schedule.linkUrl ? (
+                          <Link href={schedule.linkUrl} target="_blank" className="mt-1 block text-xs text-primary hover:underline">
+                            일정 링크 열기
+                          </Link>
+                        ) : null}
+                      </div>
+                    ))}
+                    {!schedules.length && <p className="text-sm text-muted-foreground">등록된 일정이 아직 없어.</p>}
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">인증/질문 접수</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm text-muted-foreground">
+                    <p>합격 인증을 하면 게시글/댓글에 대학 합격자 배지가 노출돼.</p>
+                    <p>AI가 정보 부족으로 답하면 질문하기로 접수해서 운영팀이 반영해.</p>
+                    <div className="pt-1 flex flex-wrap gap-2">
+                      <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                        <Link href="/verification">인증 신청</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="outline">
+                        <Link href="/mypage">마이페이지</Link>
+                      </Button>
                     </div>
-                  ))}
-                  {!feedRows.latestNews.length && (
-                    <p className="text-sm text-muted-foreground">최신뉴스가 아직 없어.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">📅 주요 일정</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {schedules.map((schedule) => (
-                    <div key={schedule.id} className="rounded-lg border border-border p-3">
-                      <p className="text-sm font-medium">{schedule.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatScheduleDate(schedule.startsAt)} · {schedule.category}
-                        {schedule.university ? ` · ${schedule.university}` : ""}
-                      </p>
-                      {schedule.linkUrl ? (
-                        <Link href={schedule.linkUrl} target="_blank" className="mt-1 block text-xs text-primary hover:underline">
-                          일정 링크 열기
-                        </Link>
-                      ) : null}
-                    </div>
-                  ))}
-                  {!schedules.length && <p className="text-sm text-muted-foreground">등록된 일정이 아직 없어.</p>}
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">인증/질문 접수</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>합격 인증을 하면 게시글/댓글에 대학 합격자 배지가 노출돼.</p>
-                  <p>AI가 정보 부족으로 답하면 질문하기로 접수해서 운영팀이 반영해.</p>
-                  <div className="pt-1 flex flex-wrap gap-2">
-                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
-                      <Link href="/verification">인증 신청</Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href="/mypage">마이페이지</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
           </div>
         </section>
       </main>
