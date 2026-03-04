@@ -26,6 +26,7 @@ struct BoardPostsView: View {
     @State private var lastAutoRefreshAt = Date.distantPast
     @State private var prefetchedPostIDs: Set<String> = []
     @State private var loadRevision = 0
+    @State private var showLoginPrompt = false
     private let pageSize = 20
 
     private var filteredPosts: [PostSummary] {
@@ -155,6 +156,10 @@ struct BoardPostsView: View {
 
             if writable {
                 Button {
+                    guard session.isLoggedIn else {
+                        showLoginPrompt = true
+                        return
+                    }
                     showComposer = true
                 } label: {
                     Label("글쓰기", systemImage: "square.and.pencil")
@@ -175,6 +180,12 @@ struct BoardPostsView: View {
             NavigationStack {
                 PostComposerView(exam: exam, boardSlug: board.slug)
             }
+        }
+        .sheet(isPresented: $showLoginPrompt) {
+            CommunityLoginPromptSheet(
+                title: "로그인이 필요해",
+                message: "글쓰기는 로그인 후 가능해. 아래에서 바로 로그인해줘."
+            )
         }
     }
 
@@ -328,6 +339,124 @@ struct BoardPostsView: View {
 
     private func isCancellation(_ error: Error) -> Bool {
         APIClient.isCancellationError(error)
+    }
+}
+
+struct CommunityLoginPromptSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var config: AppConfig
+    @EnvironmentObject private var session: SessionStore
+
+    private let api = APIClient()
+    private let oauth = OAuthCoordinator()
+
+    let title: String
+    let message: String
+
+    @State private var socialLoginProvider: String?
+    @State private var loginErrorMessage = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    socialLoginButton(provider: "kakao", title: "카카오", icon: "message.fill")
+                        .tint(Color(red: 254 / 255, green: 229 / 255, blue: 0 / 255))
+                        .foregroundStyle(Color.black.opacity(0.85))
+                    socialLoginButton(provider: "apple", title: "Apple", icon: "applelogo")
+                        .tint(.black)
+                        .foregroundStyle(.white)
+                    socialLoginButton(provider: "google", title: "구글", icon: "globe")
+                        .tint(.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundStyle(.black)
+                }
+
+                if !loginErrorMessage.isEmpty {
+                    Text(loginErrorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+            .padding(16)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("닫기") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.height(220)])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func socialLoginButton(provider: String, title: String, icon: String) -> some View {
+        Button {
+            Task { await login(provider: provider) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(socialLoginProvider == provider ? "로그인 중..." : title)
+                    .lineLimit(1)
+            }
+            .font(.caption.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
+        .disabled(socialLoginProvider != nil)
+    }
+
+    @MainActor
+    private func login(provider: String) async {
+        guard socialLoginProvider == nil else { return }
+        socialLoginProvider = provider
+        loginErrorMessage = ""
+        defer { socialLoginProvider = nil }
+
+        do {
+            let authResponse = try await resolveAuthResponse(provider: provider)
+            session.save(user: authResponse.user, tokens: authResponse.session)
+            dismiss()
+        } catch {
+            loginErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func resolveAuthResponse(provider: String) async throws -> OAuthExchangeResponse {
+        if provider == "apple" {
+            let native = try await oauth.startAppleNative()
+            return try await api.finalizeAppleNative(
+                baseURL: config.baseURL,
+                idToken: native.idToken,
+                rawNonce: native.rawNonce,
+                authorizationCode: native.authorizationCode
+            )
+        }
+
+        let result = try await oauth.start(provider: provider, baseURL: config.baseURL)
+        switch result {
+        case .pkcePayload(let response):
+            return response
+        case .implicitTokens(let access, let refresh):
+            return try await api.finalizeOAuth(
+                baseURL: config.baseURL,
+                accessToken: access,
+                refreshToken: refresh
+            )
+        }
     }
 }
 

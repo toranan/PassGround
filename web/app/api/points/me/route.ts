@@ -36,6 +36,47 @@ function mapVerificationLevel(level: string | null): string {
   }
 }
 
+function parseVerifiedUniversityFromMemo(memo: string | null | undefined): string | null {
+  if (!memo) return null;
+  try {
+    const parsed = JSON.parse(memo) as { verifiedUniversity?: unknown };
+    if (typeof parsed.verifiedUniversity !== "string") return null;
+    const value = parsed.verifiedUniversity.trim();
+    return value || null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveTransferPasserLabel(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  profileId: string
+): Promise<string> {
+  const fallback = "편입 합격자";
+  const { data: latestApproved, error } = await admin
+    .from("verification_requests")
+    .select("memo")
+    .eq("profile_id", profileId)
+    .eq("verification_type", "transfer_passer")
+    .eq("status", "approved")
+    .order("reviewed_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ memo: string | null }>();
+
+  if (error) {
+    const code = (error as { code?: string | null }).code ?? "";
+    const message = (error.message ?? "").toLowerCase();
+    if (code === "42P01" || message.includes('relation "verification_requests" does not exist')) {
+      return fallback;
+    }
+    return fallback;
+  }
+
+  const verifiedUniversity = parseVerifiedUniversityFromMemo(latestApproved?.memo);
+  return verifiedUniversity ? `${verifiedUniversity} 합격자` : fallback;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -156,12 +197,15 @@ export async function GET(request: Request) {
       ? mergedLedger.reduce((acc, row) => acc + row.amount, 0)
       : 0;
     const points = profile?.points ?? computedPoint;
+    const verificationLevel = profile?.verification_level === "transfer_passer" && profile?.id
+      ? await resolveTransferPasserLabel(admin, profile.id)
+      : mapVerificationLevel(profile?.verification_level ?? null);
 
     return NextResponse.json({
       ok: true,
       ownerName,
       points,
-      verificationLevel: mapVerificationLevel(profile?.verification_level ?? null),
+      verificationLevel,
       targetUniversity,
       ledger: mergedLedger,
     });

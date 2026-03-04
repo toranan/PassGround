@@ -68,6 +68,16 @@ function resolveOAuthScopes(provider: SupportedOAuthProvider): string | undefine
   return undefined;
 }
 
+function resolveOAuthQueryParams(provider: SupportedOAuthProvider): Record<string, string> | undefined {
+  if (provider === "google") {
+    // Force Google account picker to avoid silent auto-login via remembered browser session.
+    return {
+      prompt: "select_account",
+    };
+  }
+  return undefined;
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const appOrigin = getAppOrigin(request);
@@ -127,11 +137,13 @@ export async function GET(request: Request) {
 
   const oauthProvider: SupportedOAuthProvider = provider;
   const scopes = resolveOAuthScopes(oauthProvider);
+  const queryParams = resolveOAuthQueryParams(oauthProvider);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: oauthProvider,
     options: {
       redirectTo: callbackUrl.toString(),
       ...(scopes ? { scopes } : {}),
+      ...(queryParams ? { queryParams } : {}),
     },
   });
 

@@ -24,22 +24,7 @@ final class OAuthCoordinator: NSObject {
 
     func start(provider: String, baseURL: URL) async throws -> OAuthCoordinateResult {
         let authURL = try buildStartURL(provider: provider, baseURL: baseURL)
-
-        let callbackURL: URL
-        if provider == "kakao" {
-            if Self.isKakaoTalkInstalled() {
-                do {
-                    callbackURL = try await startWithExternalBrowser(authURL)
-                } catch {
-                    // Fallback to web auth if app-first flow fails.
-                    callbackURL = try await startWithASWebAuthenticationSession(authURL)
-                }
-            } else {
-                callbackURL = try await startWithASWebAuthenticationSession(authURL)
-            }
-        } else {
-            callbackURL = try await startWithASWebAuthenticationSession(authURL)
-        }
+        let callbackURL = try await startWithASWebAuthenticationSession(authURL)
 
         return try parseCallback(callbackURL)
     }
@@ -164,8 +149,8 @@ final class OAuthCoordinator: NSObject {
                 continuation.resume(returning: callbackURL)
             }
 
-            // Keep browser session cookies for social providers like Kakao.
-            authSession.prefersEphemeralWebBrowserSession = false
+            // Use ephemeral session to reduce silent auto-login from remembered cookies.
+            authSession.prefersEphemeralWebBrowserSession = true
             authSession.presentationContextProvider = self
             self.session = authSession
             authSession.start()

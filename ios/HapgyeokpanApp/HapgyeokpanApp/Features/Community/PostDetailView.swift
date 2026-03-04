@@ -167,6 +167,7 @@ struct PostDetailView: View {
     @State private var showEditPostSheet = false
     @State private var showDeletePostAlert = false
     @State private var showDeleteCommentAlert = false
+    @State private var showLoginPrompt = false
     @State private var pendingDeleteCommentID: String?
     @State private var successToastText: String?
     @State private var successToastTask: Task<Void, Never>?
@@ -320,6 +321,12 @@ struct PostDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showLoginPrompt) {
+            CommunityLoginPromptSheet(
+                title: "로그인이 필요해",
+                message: "커뮤니티 기능은 로그인 후 사용할 수 있어. 아래에서 바로 로그인해줘."
+            )
+        }
         .alert("게시글 삭제", isPresented: $showDeletePostAlert) {
             Button("취소", role: .cancel) {}
             Button("삭제", role: .destructive) {
@@ -398,6 +405,7 @@ struct PostDetailView: View {
                     .foregroundStyle(liked ? commentAccentColor : .secondary)
             }
             .buttonStyle(.plain)
+            .opacity(session.isLoggedIn ? 1 : 0.65)
             Label("\(detail.comments.count)", systemImage: "message")
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
@@ -581,8 +589,14 @@ struct PostDetailView: View {
 
     private var composerSection: some View {
         let trimmedComment = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let canWriteComment = session.isLoggedIn
+        let sendButtonDisabled = commentSubmitInFlight || (canWriteComment && trimmedComment.isEmpty)
         return HStack(spacing: 10) {
             Button {
+                if !canWriteComment {
+                    showLoginPrompt = true
+                    return
+                }
                 commentAnonymous.toggle()
             } label: {
                 HStack(spacing: 4) {
@@ -595,16 +609,30 @@ struct PostDetailView: View {
             }
             .buttonStyle(.plain)
 
-            TextField(
-                replyTargetID == nil ? "댓글을 입력하세요." : "답글을 입력하세요.",
-                text: $commentText,
-                axis: .vertical
-            )
-            .font(.subheadline)
-            .lineLimit(1...3)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled(true)
-            .focused($commentInputFocused)
+            if canWriteComment {
+                TextField(
+                    replyTargetID == nil ? "댓글을 입력하세요." : "답글을 입력하세요.",
+                    text: $commentText,
+                    axis: .vertical
+                )
+                .font(.subheadline)
+                .lineLimit(1...3)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .focused($commentInputFocused)
+            } else {
+                Button {
+                    showLoginPrompt = true
+                } label: {
+                    HStack {
+                        Text("로그인 후 댓글을 작성할 수 있어")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
 
             if replyTargetID != nil {
                 Button("취소") {
@@ -615,6 +643,10 @@ struct PostDetailView: View {
             }
 
             Button {
+                if !canWriteComment {
+                    showLoginPrompt = true
+                    return
+                }
                 Task { await submitComment() }
             } label: {
                 Group {
@@ -629,8 +661,8 @@ struct PostDetailView: View {
                 }
             }
             .buttonStyle(.plain)
-            .disabled(commentSubmitInFlight || trimmedComment.isEmpty)
-            .opacity((commentSubmitInFlight || trimmedComment.isEmpty) ? 0.45 : 1)
+            .disabled(sendButtonDisabled)
+            .opacity(sendButtonDisabled ? 0.45 : 1)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -731,10 +763,23 @@ struct PostDetailView: View {
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                                 
-                                if detail?.isSamplePost == false && detail?.writable == true {
+                                if detail?.isSamplePost == false && detail?.writable == true && session.isLoggedIn {
                                     Button {
                                         replyTargetID = node.item.id
                                         commentInputFocused = true
+                                    } label: {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "bubble.right")
+                                            Text("답글")
+                                        }
+                                    }
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(Color(.systemGray2))
+                                    .buttonStyle(.plain)
+                                }
+                                if detail?.isSamplePost == false && detail?.writable == true && !session.isLoggedIn {
+                                    Button {
+                                        showLoginPrompt = true
                                     } label: {
                                         HStack(spacing: 3) {
                                             Image(systemName: "bubble.right")
@@ -888,7 +933,12 @@ struct PostDetailView: View {
     @MainActor
     private func toggleLike() async {
         guard let userID = session.user?.id else {
-            message = "로그인 후 이용해 주세요."
+            showLoginPrompt = true
+            return
+        }
+        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !accessToken.isEmpty else {
+            message = "로그인이 만료됐어. 마이페이지에서 다시 로그인해줘."
             return
         }
 
@@ -927,6 +977,8 @@ struct PostDetailView: View {
     @MainActor
     private func flushLikeSyncQueue() async {
         guard let userID = session.user?.id else { return }
+        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !accessToken.isEmpty else { return }
         guard !likeSyncInFlight else { return }
         likeSyncInFlight = true
         defer { likeSyncInFlight = false }
@@ -937,7 +989,8 @@ struct PostDetailView: View {
                     baseURL: config.baseURL,
                     postId: pending.postId,
                     userId: userID,
-                    desiredLiked: pending.desiredLiked
+                    desiredLiked: pending.desiredLiked,
+                    accessToken: accessToken
                 )
                 let applied = communityStore.completeLikeSync(
                     postId: pending.postId,
@@ -993,6 +1046,16 @@ struct PostDetailView: View {
 
     @MainActor
     private func submitComment() async {
+        guard let userId = session.user?.id, !userId.isEmpty else {
+            showLoginPrompt = true
+            return
+        }
+        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !accessToken.isEmpty else {
+            message = "로그인이 만료됐어. 마이페이지에서 다시 로그인해줘."
+            return
+        }
+
         let trimmed = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             message = "댓글 내용을 입력해 주세요."
@@ -1010,8 +1073,8 @@ struct PostDetailView: View {
                 parentId: replyTargetID,
                 authorName: commentAnonymous ? "익명" : (session.displayName.isEmpty ? "익명" : session.displayName),
                 content: trimmed,
-                userId: session.user?.id,
-                accessToken: session.accessToken
+                userId: userId,
+                accessToken: accessToken
             )
             commentText = ""
             replyTargetID = nil

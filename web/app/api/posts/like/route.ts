@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
 
 let postStatsAvailable: boolean | null = null;
+const LIKE_REWARD_POINTS = 10;
+const LIKE_REWARD_SOURCE = "좋아요 보상";
+const LIKE_REWARD_EVENT = "reward-post-like";
 
 function isValidUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -19,6 +23,88 @@ function isMissingRelation(error: { code?: string | null; message?: string | nul
   if (error.code === "42P01") return true;
   const message = (error.message ?? "").toLowerCase();
   return message.includes(`relation "${relation.toLowerCase()}" does not exist`);
+}
+
+async function resolveProfileIdByDisplayName(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  displayName: string | null
+): Promise<string | null> {
+  const normalized = (displayName ?? "").trim();
+  if (!normalized || normalized === "익명") return null;
+  const { data } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("display_name", normalized)
+    .limit(2);
+  if (!data || data.length !== 1) return null;
+  const candidate = data[0] as { id?: string };
+  return typeof candidate.id === "string" ? candidate.id : null;
+}
+
+async function awardLikeReward(params: {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  postId: string;
+  likerUserId: string;
+  postAuthorId: string | null;
+  postAuthorName: string;
+}) {
+  const { admin, postId, likerUserId, postAuthorId, postAuthorName } = params;
+
+  let receiverProfileId = postAuthorId;
+  if (!receiverProfileId) {
+    receiverProfileId = await resolveProfileIdByDisplayName(admin, postAuthorName);
+  }
+  if (!receiverProfileId) return;
+  if (receiverProfileId === likerUserId) return;
+
+  const rewardMeta = {
+    event: LIKE_REWARD_EVENT,
+    postId,
+    likedBy: likerUserId,
+  };
+
+  const { data: existingReward, error: lookupError } = await admin
+    .from("point_ledger")
+    .select("id")
+    .eq("profile_id", receiverProfileId)
+    .eq("source", LIKE_REWARD_SOURCE)
+    .contains("meta", rewardMeta)
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+
+  if (!lookupError && existingReward?.id) {
+    return;
+  }
+
+  const { error: ledgerError } = await admin.from("point_ledger").insert({
+    profile_id: receiverProfileId,
+    receiver_name: postAuthorName || "익명",
+    source: LIKE_REWARD_SOURCE,
+    amount: LIKE_REWARD_POINTS,
+    meta: rewardMeta,
+  });
+
+  if (ledgerError) {
+    return;
+  }
+
+  const { error: updateError } = await admin.rpc("increment_profile_points", {
+    target_profile_id: receiverProfileId,
+    points_delta: LIKE_REWARD_POINTS,
+  });
+
+  if (updateError) {
+    const { data: currentProfile } = await admin
+      .from("profiles")
+      .select("points")
+      .eq("id", receiverProfileId)
+      .maybeSingle<{ points: number | null }>();
+
+    await admin
+      .from("profiles")
+      .update({ points: (currentProfile?.points ?? 0) + LIKE_REWARD_POINTS })
+      .eq("id", receiverProfileId);
+  }
 }
 
 async function getLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, postId: string): Promise<number> {
@@ -49,24 +135,33 @@ async function getLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, postId: 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const postId = typeof body.postId === "string" ? body.postId.trim() : "";
-  const userId = typeof body.userId === "string" ? body.userId.trim() : "";
+  const requestedUserId = typeof body.userId === "string" ? body.userId.trim() : "";
   const desiredLiked = typeof body.desiredLiked === "boolean" ? body.desiredLiked : null;
 
   if (!isValidUUID(postId)) {
     return NextResponse.json({ error: "게시글 정보가 올바르지 않습니다." }, { status: 400 });
   }
 
-  if (!isValidUUID(userId)) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  const accessToken = getBearerToken(request);
+  if (!accessToken) {
+    return NextResponse.json({ error: "로그인 후 이용할 수 있습니다." }, { status: 401 });
   }
+  const authed = await getUserByAccessToken(accessToken);
+  if (!authed?.id) {
+    return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
+  }
+  if (requestedUserId && isValidUUID(requestedUserId) && requestedUserId !== authed.id) {
+    return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
+  }
+  const userId = authed.id;
 
   const admin = getSupabaseAdmin();
 
   const { data: postData, error: postError } = await admin
     .from("posts")
-    .select("id,board_id")
+    .select("id,board_id,author_id,author_name")
     .eq("id", postId)
-    .maybeSingle<{ id: string; board_id: string | null }>();
+    .maybeSingle<{ id: string; board_id: string | null; author_id: string | null; author_name: string | null }>();
 
   if (postError || !postData?.id || !postData.board_id) {
     return NextResponse.json({ error: "게시글 정보를 확인할 수 없습니다." }, { status: 404 });
@@ -102,6 +197,15 @@ export async function POST(request: Request) {
 
       if (error && !isDuplicateLikeConflict(error)) {
         return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      if (!error) {
+        await awardLikeReward({
+          admin,
+          postId,
+          likerUserId: userId,
+          postAuthorId: postData.author_id ?? null,
+          postAuthorName: (postData.author_name ?? "익명").trim() || "익명",
+        });
       }
       const likeCount = await getLikeCount(admin, postId);
       return NextResponse.json({ ok: true, liked: true, likeCount: likeCount || 1 });
@@ -153,6 +257,14 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  await awardLikeReward({
+    admin,
+    postId,
+    likerUserId: userId,
+    postAuthorId: postData.author_id ?? null,
+    postAuthorName: (postData.author_name ?? "익명").trim() || "익명",
+  });
 
   const likeCount = await getLikeCount(admin, postId);
   return NextResponse.json({ ok: true, liked: true, likeCount: likeCount || 1 });

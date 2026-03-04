@@ -12,7 +12,7 @@ export const EXAM_CATEGORIES: ExamCategory[] = [
     name: "편입",
     slug: "transfer",
     icon: "GraduationCap",
-    description: "합격 가능성 예측, 커트라인, 학습법공유/학습질문 커뮤니티",
+    description: "합격 가능성 예측, 커트라인, 합격전략/학습질문 커뮤니티",
   },
   {
     id: "2",
@@ -59,7 +59,7 @@ export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
       },
       {
         id: "transfer-qa",
-        name: "학습법공유",
+        name: "합격전략",
         slug: "qa",
         description: "대학/전형/학습 전략 질문과 답변",
       },
@@ -67,7 +67,7 @@ export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
         id: "transfer-study-qa",
         name: "학습질문",
         slug: "study-qa",
-        description: "영어/수학/논술 과목별 공부법 질문과 답변",
+        description: "과목별 공부법과 자유로운학습질문 공간",
       },
       {
         id: "transfer-admit",
@@ -137,7 +137,7 @@ export const BOARD_POST_GROUPS: BoardPostGroup[] = [
   {
     examSlug: "transfer",
     boardSlug: "qa",
-    boardName: "학습법공유",
+    boardName: "합격전략",
     posts: [
       {
         id: "transfer-qa-1",
@@ -474,6 +474,12 @@ export type RewardRule = {
 };
 
 export const REWARD_RULES: RewardRule[] = [
+  {
+    id: "reward-post-like",
+    label: "게시글 좋아요",
+    points: 10,
+    description: "내 게시글이 좋아요를 받을 때 지급",
+  },
   {
     id: "reward-adopted",
     label: "채택 답변",
