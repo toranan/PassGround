@@ -87,7 +87,6 @@ export function TransferAiAssistantPanel() {
   }, [messages]);
 
   const canSubmitQuestion = Boolean(lastAssistant?.needsQuestionSubmission);
-  const hasUserMessage = messages.some((message) => message.role === "user");
 
   const scrollToBottom = () => {
     if (!scrollRef.current) return;
@@ -271,30 +270,21 @@ export function TransferAiAssistantPanel() {
 
   return (
     <>
-      <div className="flex h-[72vh] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+      <div className="flex h-[80vh] min-h-[640px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
         <div className="border-b border-border/80 bg-background/90 px-4 py-3">
-          <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
             <div className="h-8 w-8 overflow-hidden rounded-full border border-border bg-white">
               <Image src="/hapgomi.png" alt="합곰이" width={32} height={32} className="h-full w-full object-cover" />
             </div>
-            <div>
-              <p className="text-sm font-semibold">합곰이</p>
-              <p className="text-xs text-muted-foreground">편입 AI 도우미</p>
+            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+              <p className="text-sm font-semibold">편입 AI 도우미</p>
+              <p className="text-xs text-muted-foreground">편하게 질문해 주세요</p>
             </div>
           </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/15 px-4 py-5">
           <div className="mx-auto w-full max-w-3xl space-y-4">
-            {!hasUserMessage ? (
-              <div className="rounded-2xl border border-border bg-background p-6 text-center">
-                <div className="mx-auto h-16 w-16 overflow-hidden rounded-full border border-border bg-white">
-                  <Image src="/hapgomi.png" alt="합곰이" width={64} height={64} className="h-full w-full object-cover" />
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">편입 고민이 있으시면 편하게 질문해 주세요.</p>
-              </div>
-            ) : null}
-
             {messages.map((message) =>
               message.role === "assistant" ? (
                 <div key={message.id} className="mr-auto max-w-[88%] rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-foreground">
@@ -333,9 +323,6 @@ export function TransferAiAssistantPanel() {
                     {submittingQuestion ? "접수 중" : "질문하기"}
                   </Button>
                 ) : null}
-                <Button type="button" variant="ghost" size="sm" asChild>
-                  <Link href="/transfer/data-center?tab=cutoff">커트라인 분석</Link>
-                </Button>
               </div>
             </div>
           </form>
