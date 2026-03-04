@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -87,11 +88,16 @@ export function TransferAiAssistantPanel() {
   }, [messages]);
 
   const canSubmitQuestion = Boolean(lastAssistant?.needsQuestionSubmission);
+  const hasUserMessage = messages.some((message) => message.role === "user");
 
   const scrollToBottom = () => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, pending]);
 
   const openLoginPrompt = () => {
     setShowLoginPrompt(true);
@@ -267,22 +273,47 @@ export function TransferAiAssistantPanel() {
     <>
       <Card className="border border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg">합곰 AI 도우미</CardTitle>
+          <CardTitle className="text-lg">
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 overflow-hidden rounded-full border border-border bg-white">
+                <Image src="/hapgomi.png" alt="합곰이" width={36} height={36} className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <p className="text-base font-semibold leading-tight">합곰이</p>
+                <p className="text-xs font-normal text-muted-foreground">편입 AI 도우미</p>
+              </div>
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div ref={scrollRef} className="max-h-[420px] overflow-y-auto space-y-2 rounded-xl border border-border bg-muted/20 p-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                  message.role === "assistant"
-                    ? "bg-white border border-border text-foreground"
-                    : "ml-auto w-fit max-w-[85%] bg-primary text-primary-foreground"
-                }`}
-              >
-                {message.text || (pending && message.role === "assistant" ? "생각 정리 중..." : "")}
+          <div ref={scrollRef} className="max-h-[460px] overflow-y-auto space-y-3 rounded-xl border border-border bg-muted/20 p-3">
+            {!hasUserMessage ? (
+              <div className="rounded-2xl border border-border bg-white/90 p-4 text-center">
+                <div className="mx-auto h-20 w-20 overflow-hidden rounded-full border border-border bg-white shadow-sm">
+                  <Image src="/hapgomi.png" alt="합곰이" width={80} height={80} className="h-full w-full object-cover" />
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">안녕하세요! 편입 고민이 있으시면 편하게 질문해 주세요.</p>
               </div>
-            ))}
+            ) : null}
+
+            {messages.map((message) =>
+              message.role === "assistant" ? (
+                <div key={message.id} className="flex items-start gap-2">
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-border bg-white">
+                    <Image src="/hapgomi.png" alt="합곰이" width={32} height={32} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="max-w-[88%] rounded-2xl border border-border bg-white px-3 py-2 text-sm whitespace-pre-wrap text-foreground">
+                    {message.text || (pending ? "생각 정리 중..." : "")}
+                  </div>
+                </div>
+              ) : (
+                <div key={message.id} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm whitespace-pre-wrap text-primary-foreground">
+                    {message.text}
+                  </div>
+                </div>
+              )
+            )}
           </div>
 
           <form onSubmit={handleSend} className="space-y-2">
