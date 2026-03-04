@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function TransferCutoffAnalysisPage() {
-  redirect("/transfer/ai?tab=cutoff");
+  redirect("/transfer/data-center?tab=cutoff");
 }

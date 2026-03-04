@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { RouteDropdown } from "@/components/RouteDropdown";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
-import { ENABLE_CPA } from "@/lib/featureFlags";
 import { GraduationCap, LogOut } from "lucide-react";
 
 interface User {
@@ -23,34 +21,12 @@ type AdminMeResponse = {
 
 export function Navbar() {
   const router = useRouter();
-  const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
   const user = useSyncExternalStore(
     subscribeAuthChange,
     () => getUserSnapshot() as User | null,
     () => null
   );
-
-  const serviceValue = useMemo(() => {
-    if (
-      pathname.startsWith("/cpa") ||
-      pathname.startsWith("/community/cpa") ||
-      pathname.startsWith("/c/cpa")
-    ) {
-      return "cpa";
-    }
-    return "transfer";
-  }, [pathname]);
-
-  const serviceOptions = useMemo(() => {
-    const options = [
-      { key: "transfer", label: "편입", href: "/transfer" },
-    ];
-    if (ENABLE_CPA) {
-      options.push({ key: "cpa", label: "CPA", href: "/cpa" });
-    }
-    return options;
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -109,6 +85,9 @@ export function Navbar() {
           <Link href="/community" className="transition-colors hover:text-primary">
             커뮤니티
           </Link>
+          <Link href="/transfer/data-center" className="transition-colors hover:text-primary">
+            데이터센터
+          </Link>
           <Link href="/transfer/ai" className="transition-colors hover:text-primary">
             AI 도우미
           </Link>
@@ -121,13 +100,6 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="hidden md:flex items-center">
-            <RouteDropdown
-              value={serviceValue}
-              options={serviceOptions}
-              ariaLabel="서비스 선택"
-            />
-          </div>
           {user ? (
             <>
               {isAdmin ? (

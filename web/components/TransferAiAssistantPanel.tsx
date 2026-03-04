@@ -304,7 +304,7 @@ export function TransferAiAssistantPanel() {
                 </Button>
               )}
               <Button type="button" variant="ghost" asChild>
-                <Link href="/transfer/ai?tab=cutoff">AI 커트라인 분석</Link>
+                <Link href="/transfer/data-center?tab=cutoff">AI 커트라인 분석</Link>
               </Button>
             </div>
           </form>

@@ -46,7 +46,7 @@ export function TransferCutoffAnalyzerPanel() {
     };
 
     if (!payload.year || !payload.university || !payload.major || !payload.score) {
-      setError("학년도/학교명/학과명/점수를 모두 입력해줘.");
+      setError("학년도/학교명/학과명/점수를 모두 입력해 주세요.");
       return;
     }
 
@@ -68,13 +68,13 @@ export function TransferCutoffAnalyzerPanel() {
         | null;
 
       if (!response.ok || !data || !("ok" in data)) {
-        throw new Error((data && "error" in data && data.error) || "커트라인 분석에 실패했어.");
+        throw new Error((data && "error" in data && data.error) || "커트라인 분석에 실패했습니다.");
       }
 
       setResult(data);
     } catch (caught) {
       setResult(null);
-      setError(caught instanceof Error ? caught.message : "커트라인 분석 중 오류가 발생했어.");
+      setError(caught instanceof Error ? caught.message : "커트라인 분석 중 오류가 발생했습니다.");
     } finally {
       setPending(false);
     }
@@ -116,7 +116,7 @@ export function TransferCutoffAnalyzerPanel() {
             <Button type="submit" disabled={pending} className="bg-primary hover:bg-primary/90">
               {pending ? "분석 중..." : "분석하기"}
             </Button>
-            <p className="text-xs text-muted-foreground">입력 정보가 부족하면 정보없음으로 안내돼.</p>
+            <p className="text-xs text-muted-foreground">입력 정보가 부족하면 정보없음으로 안내됩니다.</p>
           </div>
         </form>
 
