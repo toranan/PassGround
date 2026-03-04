@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ChatRole = "user" | "assistant";
 
@@ -221,6 +220,7 @@ export function TransferAiAssistantPanel() {
 
   const handleSubmitQuestion = async () => {
     if (!canSubmitQuestion || submittingQuestion) return;
+
     const token = localStorage.getItem("access_token") ?? "";
     if (!token) {
       openLoginPrompt();
@@ -271,78 +271,82 @@ export function TransferAiAssistantPanel() {
 
   return (
     <>
-      <Card className="border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 overflow-hidden rounded-full border border-border bg-white">
-                <Image src="/hapgomi.png" alt="합곰이" width={36} height={36} className="h-full w-full object-cover" />
-              </div>
-              <div>
-                <p className="text-base font-semibold leading-tight">합곰이</p>
-                <p className="text-xs font-normal text-muted-foreground">편입 AI 도우미</p>
-              </div>
+      <div className="flex h-[72vh] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+        <div className="border-b border-border/80 bg-background/90 px-4 py-3">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
+            <div className="h-8 w-8 overflow-hidden rounded-full border border-border bg-white">
+              <Image src="/hapgomi.png" alt="합곰이" width={32} height={32} className="h-full w-full object-cover" />
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div ref={scrollRef} className="max-h-[460px] overflow-y-auto space-y-3 rounded-xl border border-border bg-muted/20 p-3">
+            <div>
+              <p className="text-sm font-semibold">합곰이</p>
+              <p className="text-xs text-muted-foreground">편입 AI 도우미</p>
+            </div>
+          </div>
+        </div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/15 px-4 py-5">
+          <div className="mx-auto w-full max-w-3xl space-y-4">
             {!hasUserMessage ? (
-              <div className="rounded-2xl border border-border bg-white/90 p-4 text-center">
-                <div className="mx-auto h-20 w-20 overflow-hidden rounded-full border border-border bg-white shadow-sm">
-                  <Image src="/hapgomi.png" alt="합곰이" width={80} height={80} className="h-full w-full object-cover" />
+              <div className="rounded-2xl border border-border bg-background p-6 text-center">
+                <div className="mx-auto h-16 w-16 overflow-hidden rounded-full border border-border bg-white">
+                  <Image src="/hapgomi.png" alt="합곰이" width={64} height={64} className="h-full w-full object-cover" />
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">안녕하세요! 편입 고민이 있으시면 편하게 질문해 주세요.</p>
+                <p className="mt-3 text-sm text-muted-foreground">편입 고민이 있으시면 편하게 질문해 주세요.</p>
               </div>
             ) : null}
 
             {messages.map((message) =>
               message.role === "assistant" ? (
-                <div key={message.id} className="flex items-start gap-2">
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-border bg-white">
-                    <Image src="/hapgomi.png" alt="합곰이" width={32} height={32} className="h-full w-full object-cover" />
-                  </div>
-                  <div className="max-w-[88%] rounded-2xl border border-border bg-white px-3 py-2 text-sm whitespace-pre-wrap text-foreground">
-                    {message.text || (pending ? "생각 정리 중..." : "")}
-                  </div>
+                <div key={message.id} className="mr-auto max-w-[88%] rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-foreground">
+                  {message.text || (pending ? "생각 정리 중..." : "")}
                 </div>
               ) : (
-                <div key={message.id} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm whitespace-pre-wrap text-primary-foreground">
-                    {message.text}
-                  </div>
+                <div key={message.id} className="ml-auto max-w-[80%] rounded-2xl bg-primary px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-primary-foreground">
+                  {message.text}
                 </div>
               )
             )}
           </div>
+        </div>
 
-          <form onSubmit={handleSend} className="space-y-2">
-            <textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="편입 고민이나 질문을 입력해 주세요"
-              rows={3}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              disabled={pending}
-            />
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button type="submit" disabled={pending || !input.trim()} className="bg-primary hover:bg-primary/90">
-                {pending ? "답변 생성 중..." : "보내기"}
+        <div className="border-t border-border/80 bg-background/95 px-4 py-3">
+          <form onSubmit={handleSend} className="mx-auto w-full max-w-3xl space-y-2">
+            <div className="flex items-end gap-2 rounded-2xl border border-input bg-background px-3 py-2">
+              <textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="질문을 입력하세요"
+                rows={1}
+                className="max-h-36 min-h-10 flex-1 resize-none bg-transparent px-1 py-1 text-sm outline-none"
+                disabled={pending}
+              />
+              <Button type="submit" disabled={pending || !input.trim()} className="h-9 rounded-xl bg-primary px-4 hover:bg-primary/90">
+                {pending ? "생성 중" : "전송"}
               </Button>
-              {canSubmitQuestion && (
-                <Button type="button" variant="outline" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
-                  {submittingQuestion ? "접수 중..." : "질문하기"}
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="text-muted-foreground">근거 기반 답변을 우선 제공하며, 정보 부족 시 질문 접수를 안내합니다.</div>
+              <div className="flex items-center gap-2">
+                {canSubmitQuestion ? (
+                  <Button type="button" variant="outline" size="sm" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
+                    {submittingQuestion ? "접수 중" : "질문하기"}
+                  </Button>
+                ) : null}
+                <Button type="button" variant="ghost" size="sm" asChild>
+                  <Link href="/transfer/data-center?tab=cutoff">커트라인 분석</Link>
                 </Button>
-              )}
-              <Button type="button" variant="ghost" asChild>
-                <Link href="/transfer/data-center?tab=cutoff">AI 커트라인 분석</Link>
-              </Button>
+              </div>
             </div>
           </form>
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        </CardContent>
-      </Card>
+          {error ? (
+            <div className="mx-auto mt-2 w-full max-w-3xl">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          ) : null}
+        </div>
+      </div>
 
       {showLoginPrompt ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4" onClick={() => setShowLoginPrompt(false)}>
