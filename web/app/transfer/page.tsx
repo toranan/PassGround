@@ -334,7 +334,7 @@ export default async function TransferPage() {
           <div className="container mx-auto px-4 py-10">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입을 준비하는 학생들을 위한 커뮤니티</h1>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              최신뉴스, 주요 일정, 실시간 인기글과 최신글을 한눈에 확인해.
+              최신뉴스, 주요 일정, 실시간 인기글과 최신글을 한눈에 확인하세요.
             </p>
           </div>
         </section>

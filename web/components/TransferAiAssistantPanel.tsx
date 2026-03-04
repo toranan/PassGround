@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 
 type ChatRole = "user" | "assistant";
 
@@ -14,12 +13,6 @@ type ChatMessage = {
   text: string;
   traceId?: string;
   needsQuestionSubmission?: boolean;
-};
-
-type User = {
-  id?: string;
-  username?: string;
-  nickname?: string;
 };
 
 type DonePayload = {
@@ -71,23 +64,18 @@ function findSseSeparator(buffer: string): { index: number; length: number } | n
 }
 
 export function TransferAiAssistantPanel() {
-  const user = useSyncExternalStore(
-    subscribeAuthChange,
-    () => getUserSnapshot() as User | null,
-    () => null
-  );
-
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: makeId(),
       role: "assistant",
-      text: "안녕! 나는 너의 편입 고민을 같이 풀어줄 합곰이야. 궁금한 거 편하게 물어봐.",
+      text: "안녕하세요. 편입 고민을 함께 정리해드리는 합곰입니다. 궁금한 점을 편하게 말씀해 주세요.",
     },
   ]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [submittingQuestion, setSubmittingQuestion] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -105,6 +93,11 @@ export function TransferAiAssistantPanel() {
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   };
 
+  const openLoginPrompt = () => {
+    setShowLoginPrompt(true);
+    setError("");
+  };
+
   const handleSend = async (event: FormEvent) => {
     event.preventDefault();
     if (pending) return;
@@ -114,7 +107,7 @@ export function TransferAiAssistantPanel() {
 
     const token = localStorage.getItem("access_token") ?? "";
     if (!token) {
-      setError("AI 도우미는 로그인 후 이용할 수 있어.");
+      openLoginPrompt();
       return;
     }
 
@@ -145,7 +138,7 @@ export function TransferAiAssistantPanel() {
 
       if (!response.ok || !response.body) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || "AI 도우미 응답을 불러오지 못했어.");
+        throw new Error(payload?.error || "AI 도우미 응답을 불러오지 못했습니다.");
       }
 
       const reader = response.body.getReader();
@@ -189,7 +182,7 @@ export function TransferAiAssistantPanel() {
 
           if (parsed.event === "error") {
             const errorPayload = JSON.parse(parsed.data) as { error?: string };
-            throw new Error(errorPayload.error || "응답 생성 중 오류가 발생했어.");
+            throw new Error(errorPayload.error || "응답 생성 중 오류가 발생했습니다.");
           }
         }
       }
@@ -200,7 +193,7 @@ export function TransferAiAssistantPanel() {
             item.id === assistantId
               ? {
                   ...item,
-                  text: donePayload?.answer?.trim() || item.text || "답변을 생성하지 못했어.",
+                  text: donePayload?.answer?.trim() || item.text || "답변을 생성하지 못했습니다.",
                   traceId: donePayload?.traceId,
                   needsQuestionSubmission: donePayload?.needsQuestionSubmission === true,
                 }
@@ -211,7 +204,7 @@ export function TransferAiAssistantPanel() {
 
       setTimeout(scrollToBottom, 0);
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "응답 중 오류가 발생했어.";
+      const message = caught instanceof Error ? caught.message : "응답 중 오류가 발생했습니다.";
       setError(message);
       setMessages((prev) => prev.filter((item) => item.id !== assistantId));
     } finally {
@@ -224,13 +217,13 @@ export function TransferAiAssistantPanel() {
     if (!canSubmitQuestion || submittingQuestion) return;
     const token = localStorage.getItem("access_token") ?? "";
     if (!token) {
-      setError("질문 접수는 로그인 후 이용할 수 있어.");
+      openLoginPrompt();
       return;
     }
 
     const lastUserQuestion = [...messages].reverse().find((item) => item.role === "user")?.text?.trim() ?? "";
     if (!lastUserQuestion) {
-      setError("접수할 질문을 찾지 못했어.");
+      setError("접수할 질문을 찾지 못했습니다.");
       return;
     }
 
@@ -251,7 +244,7 @@ export function TransferAiAssistantPanel() {
 
       const payload = (await response.json().catch(() => null)) as { ok?: boolean; message?: string; error?: string } | null;
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.error || "질문 접수에 실패했어.");
+        throw new Error(payload?.error || "질문 접수에 실패했습니다.");
       }
 
       setMessages((prev) => [
@@ -259,80 +252,88 @@ export function TransferAiAssistantPanel() {
         {
           id: makeId(),
           role: "assistant",
-          text: payload.message || "질문 접수 완료! 확인 후 답변 준비해둘게.",
+          text: payload.message || "질문 접수가 완료되었습니다. 확인 후 답변을 준비해드리겠습니다.",
         },
       ]);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "질문 접수 중 오류가 발생했어.");
+      setError(caught instanceof Error ? caught.message : "질문 접수 중 오류가 발생했습니다.");
     } finally {
       setSubmittingQuestion(false);
       setTimeout(scrollToBottom, 0);
     }
   };
 
-  if (!user?.id) {
-    return (
+  return (
+    <>
       <Card className="border border-border shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg">합곰 AI 도우미</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">AI 도우미는 로그인 후 이용할 수 있어.</p>
-          <Button asChild className="bg-primary hover:bg-primary/90">
-            <Link href="/signup">로그인/회원가입</Link>
-          </Button>
+          <div ref={scrollRef} className="max-h-[420px] overflow-y-auto space-y-2 rounded-xl border border-border bg-muted/20 p-3">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
+                  message.role === "assistant"
+                    ? "bg-white border border-border text-foreground"
+                    : "ml-auto w-fit max-w-[85%] bg-primary text-primary-foreground"
+                }`}
+              >
+                {message.text || (pending && message.role === "assistant" ? "생각 정리 중..." : "")}
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleSend} className="space-y-2">
+            <textarea
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="편입 고민이나 질문을 입력해 주세요"
+              rows={3}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              disabled={pending}
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button type="submit" disabled={pending || !input.trim()} className="bg-primary hover:bg-primary/90">
+                {pending ? "답변 생성 중..." : "보내기"}
+              </Button>
+              {canSubmitQuestion && (
+                <Button type="button" variant="outline" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
+                  {submittingQuestion ? "접수 중..." : "질문하기"}
+                </Button>
+              )}
+              <Button type="button" variant="ghost" asChild>
+                <Link href="/transfer/ai?tab=cutoff">AI 커트라인 분석</Link>
+              </Button>
+            </div>
+          </form>
+
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
         </CardContent>
       </Card>
-    );
-  }
 
-  return (
-    <Card className="border border-border shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg">합곰 AI 도우미</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div ref={scrollRef} className="max-h-[420px] overflow-y-auto space-y-2 rounded-xl border border-border bg-muted/20 p-3">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                message.role === "assistant"
-                  ? "bg-white border border-border text-foreground"
-                  : "ml-auto w-fit max-w-[85%] bg-primary text-primary-foreground"
-              }`}
-            >
-              {message.text || (pending && message.role === "assistant" ? "생각 정리 중..." : "")}
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleSend} className="space-y-2">
-          <textarea
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="편입 고민이나 질문을 입력해줘"
-            rows={3}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            disabled={pending}
-          />
-          <div className="flex items-center gap-2">
-            <Button type="submit" disabled={pending || !input.trim()} className="bg-primary hover:bg-primary/90">
-              {pending ? "답변 생성 중..." : "보내기"}
-            </Button>
-            {canSubmitQuestion && (
-              <Button type="button" variant="outline" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
-                {submittingQuestion ? "접수 중..." : "질문하기"}
+      {showLoginPrompt ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4" onClick={() => setShowLoginPrompt(false)}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-base font-semibold">로그인 후 이용 가능합니다</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              이 기능은 회원 전용입니다. 로그인 또는 회원가입 후 이용해 주세요.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <Button asChild className="bg-primary hover:bg-primary/90">
+                <Link href="/signup">로그인/회원가입</Link>
               </Button>
-            )}
-            <Button type="button" variant="ghost" asChild>
-              <Link href="/transfer/ai?tab=cutoff">AI 커트라인 분석</Link>
-            </Button>
+              <Button variant="outline" onClick={() => setShowLoginPrompt(false)}>
+                닫기
+              </Button>
+            </div>
           </div>
-        </form>
-
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      </CardContent>
-    </Card>
+        </div>
+      ) : null}
+    </>
   );
 }
