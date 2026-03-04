@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { TransferRankingTabs } from "@/components/TransferRankingTabs";
 import { TransferPredictor } from "@/components/TransferPredictor";
+import { TransferHomeBanner } from "@/components/TransferHomeBanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { decodeMajorAndTrack, type CutoffTrackType } from "@/lib/cutoffTrack";
+import { parseNewsContent, type NewsAttachment } from "@/lib/newsResources";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -22,69 +23,103 @@ type CutoffRow = {
   initialCutoff: number | null;
 };
 
-type BriefingRow = {
+type FeedRow = {
   id: string;
   title: string;
-  summary: string;
-  sourceLabel: string;
-  publishedAt: string;
-  boardSlug: "qa" | "study-qa" | "free";
-  boardName: string;
-};
-
-type QaRow = {
-  id: string;
-  title: string;
-  commentCount: number;
-  createdAt: string | null;
-};
-
-type PopularRow = {
-  id: string;
-  title: string;
+  content: string;
   boardSlug: string;
   boardName: string;
   commentCount: number;
   likeCount: number;
   viewCount: number;
+  createdAt: string | null;
+  createdAtTs: number;
+  hotScore: number;
 };
 
-type RankingRow = {
+type NewsRow = {
   id: string;
-  subject: string;
-  instructorName: string;
-  rank: number;
+  title: string;
+  summary: string;
+  boardSlug: string;
+  commentCount: number;
+  likeCount: number;
+  viewCount: number;
+  createdAt: string | null;
+  linkUrl: string | null;
+  attachments: NewsAttachment[];
+};
+
+type ScheduleRow = {
+  id: string;
+  university: string | null;
+  title: string;
+  category: string;
+  startsAt: string;
+  linkUrl: string | null;
+};
+
+type FeedBundle = {
+  latestNews: NewsRow[];
+  realtimePosts: FeedRow[];
+  latestPosts: FeedRow[];
 };
 
 function formatRelativeTime(dateString: string | null): string {
-  if (!dateString) return "-";
+  if (!dateString) return "방금";
   if (dateString.includes("분") || dateString.includes("시간") || dateString.includes("일")) {
     return dateString;
   }
+
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (Number.isNaN(date.getTime())) return "방금";
 
   const diffMs = Date.now() - date.getTime();
   const diffMin = Math.floor(diffMs / 60000);
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffMin < 1) return "방금 전";
-  if (diffMin < 60) return `${diffMin}분 전`;
-  if (diffHour < 24) return `${diffHour}시간 전`;
-  if (diffDay < 7) return `${diffDay}일 전`;
-  return date.toLocaleDateString("ko-KR");
+  if (diffMin < 1) return "방금";
+  if (diffMin < 60) return `${diffMin}분`;
+  if (diffHour < 24) return `${diffHour}시간`;
+  if (diffDay < 7) return `${diffDay}일`;
+  return date.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" });
 }
 
-function resolveTransferBriefingBoard(sourceLabel: string, title: string): { slug: "qa" | "study-qa" | "free"; name: string } {
-  const combined = `${sourceLabel} ${title}`;
-  if (combined.includes("입학처") || combined.includes("요강") || combined.includes("커트")) {
-    return { slug: "qa", name: "학습법공유" };
-  }
-  if (combined.includes("학원") || combined.includes("모의고사") || combined.includes("학습")) {
-    return { slug: "study-qa", name: "학습질문" };
-  }
-  return { slug: "qa", name: "학습법공유" };
+function formatScheduleDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function toTimestamp(value: string | null): number {
+  if (!value) return 0;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 0;
+  return parsed.getTime();
+}
+
+function computeHotScore(post: {
+  likeCount: number;
+  commentCount: number;
+  viewCount: number;
+  createdAtTs: number;
+}): number {
+  const now = Date.now();
+  const ageMs = Math.max(0, now - post.createdAtTs);
+  const ageHours = ageMs / 3600000;
+  const recencyBonus = ageHours <= 6 ? 6 : ageHours <= 24 ? 3 : ageHours <= 48 ? 1 : 0;
+  return post.likeCount * 3 + post.commentCount * 2 + Math.min(8, Math.floor(post.viewCount / 25)) + recencyBonus;
+}
+
+function compactSummary(value: string, max = 120): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= max) return normalized;
+  return `${normalized.slice(0, max).trim()}...`;
 }
 
 async function loadCutoffs(): Promise<CutoffRow[]> {
@@ -94,11 +129,9 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
     .select("id,university,major,year,score_band,note,source")
     .eq("exam_slug", "transfer")
     .order("year", { ascending: false })
-    .limit(200);
+    .limit(220);
 
-  if (error || !data?.length) {
-    return [];
-  }
+  if (error || !data?.length) return [];
 
   return data.map((row: {
     id: string;
@@ -121,17 +154,11 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
           initialCutoff?: number;
           memo?: string;
         };
-        if (typeof meta.waitlistCutoff === "number") {
-          waitlistCutoff = meta.waitlistCutoff;
-        }
-        if (typeof meta.initialCutoff === "number") {
-          initialCutoff = meta.initialCutoff;
-        }
-        if (typeof meta.memo === "string") {
-          memo = meta.memo;
-        }
+        if (typeof meta.waitlistCutoff === "number") waitlistCutoff = meta.waitlistCutoff;
+        if (typeof meta.initialCutoff === "number") initialCutoff = meta.initialCutoff;
+        if (typeof meta.memo === "string") memo = meta.memo;
       } catch {
-        // Legacy plain-text note
+        // legacy plain text
       }
     }
 
@@ -150,115 +177,51 @@ async function loadCutoffs(): Promise<CutoffRow[]> {
   });
 }
 
-async function loadBriefings(): Promise<BriefingRow[]> {
+async function loadFeeds(): Promise<FeedBundle> {
   const supabase = getSupabaseServer();
-  const { data, error } = await supabase
-    .from("daily_briefings")
-    .select("id,title,summary,source_label,published_at")
-    .eq("exam_slug", "transfer")
-    .order("published_at", { ascending: false })
-    .limit(5);
 
-  if (error || !data?.length) {
-    return [];
-  }
-
-  return data.map((row: { id: string; title: string; summary: string; source_label: string; published_at: string }) => {
-    const board = resolveTransferBriefingBoard(row.source_label, row.title);
+  const { data: examData } = await supabase.from("exams").select("id").eq("slug", "transfer").maybeSingle();
+  if (!examData?.id) {
     return {
-      id: row.id,
-      title: row.title,
-      summary: row.summary,
-      sourceLabel: row.source_label,
-      publishedAt: row.published_at,
-      boardSlug: board.slug,
-      boardName: board.name,
+      latestNews: [],
+      realtimePosts: [],
+      latestPosts: [],
     };
-  });
-}
-
-async function loadBoardRows(boardSlug: "qa" | "study-qa"): Promise<QaRow[]> {
-  const supabase = getSupabaseServer();
-
-  const { data: examData } = await supabase
-    .from("exams")
-    .select("id")
-    .eq("slug", "transfer")
-    .maybeSingle();
-
-  if (!examData?.id) return [];
-
-  const { data: boardData } = await supabase
-    .from("boards")
-    .select("id")
-    .eq("exam_id", examData.id)
-    .eq("slug", boardSlug)
-    .maybeSingle();
-
-  if (!boardData?.id) return [];
-
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("id,title,created_at,comments(count)")
-    .eq("board_id", boardData.id)
-    .order("created_at", { ascending: false })
-    .limit(6);
-
-  if (!posts?.length) {
-    return [];
   }
-
-  return posts.map((post: { id: string; title: string; created_at: string | null; comments?: { count: number }[] }) => ({
-    id: post.id,
-    title: post.title,
-    commentCount: post.comments?.[0]?.count ?? 0,
-    createdAt: post.created_at,
-  }));
-}
-
-async function loadQaRows(): Promise<QaRow[]> {
-  return loadBoardRows("qa");
-}
-
-async function loadStudyQaRows(): Promise<QaRow[]> {
-  return loadBoardRows("study-qa");
-}
-
-async function loadPopularRows(): Promise<PopularRow[]> {
-  const supabase = getSupabaseServer();
-
-  const { data: examData } = await supabase
-    .from("exams")
-    .select("id")
-    .eq("slug", "transfer")
-    .maybeSingle();
-
-  if (!examData?.id) return [];
 
   const { data: boardRows } = await supabase
     .from("boards")
     .select("id,slug,name")
-    .eq("exam_id", examData.id);
+    .eq("exam_id", examData.id)
+    .in("slug", ["news", "free", "qa", "study-qa", "admit-review"]);
 
   if (!boardRows?.length) {
-    return [];
+    return {
+      latestNews: [],
+      realtimePosts: [],
+      latestPosts: [],
+    };
   }
 
-  const boardIdToMeta = new Map<string, { slug: string; name: string }>();
+  const boardMetaById = new Map<string, { slug: string; name: string }>();
   boardRows.forEach((row: { id: string; slug: string; name: string }) => {
-    boardIdToMeta.set(row.id, { slug: row.slug, name: row.name });
+    boardMetaById.set(row.id, { slug: row.slug, name: row.name });
   });
 
   const boardIds = boardRows.map((row: { id: string }) => row.id);
   const { data: postsData } = await supabase
     .from("posts")
-    .select("id,title,board_id,view_count,created_at")
+    .select("id,title,content,board_id,created_at,view_count")
     .in("board_id", boardIds)
     .order("created_at", { ascending: false })
-    .limit(120);
+    .limit(260);
 
   if (!postsData?.length) {
-    return [];
+    return {
+      latestNews: [],
+      realtimePosts: [],
+      latestPosts: [],
+    };
   }
 
   const postIds = postsData.map((post: { id: string }) => post.id);
@@ -277,96 +240,163 @@ async function loadPopularRows(): Promise<PopularRow[]> {
     likeCountMap.set(row.post_id, (likeCountMap.get(row.post_id) ?? 0) + 1);
   });
 
-  return postsData
-    .map((post: { id: string; title: string; board_id: string; view_count: number | null }) => {
-      const boardMeta = boardIdToMeta.get(post.board_id);
-      const commentCount = commentCountMap.get(post.id) ?? 0;
-      const likeCount = likeCountMap.get(post.id) ?? 0;
-      const viewCount = post.view_count ?? 0;
-      const score = likeCount * 3 + commentCount * 2 + Math.min(10, Math.floor(viewCount / 20));
+  const mapped = postsData.map((post: {
+    id: string;
+    title: string;
+    content: string | null;
+    board_id: string;
+    created_at: string | null;
+    view_count: number | null;
+  }) => {
+    const boardMeta = boardMetaById.get(post.board_id);
+    const createdAtTs = toTimestamp(post.created_at);
+    const likeCount = likeCountMap.get(post.id) ?? 0;
+    const commentCount = commentCountMap.get(post.id) ?? 0;
+    const viewCount = post.view_count ?? 0;
 
-      return {
-        id: post.id,
-        title: post.title,
-        boardSlug: boardMeta?.slug ?? "qa",
-        boardName: boardMeta?.name ?? "게시판",
-        commentCount,
+    return {
+      id: post.id,
+      title: post.title,
+      content: post.content ?? "",
+      boardSlug: boardMeta?.slug ?? "qa",
+      boardName: boardMeta?.name ?? "게시판",
+      commentCount,
+      likeCount,
+      viewCount,
+      createdAt: post.created_at,
+      createdAtTs,
+      hotScore: computeHotScore({
         likeCount,
+        commentCount,
         viewCount,
-        score,
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map((row) => ({
-      id: row.id,
-      title: row.title,
-      boardSlug: row.boardSlug,
-      boardName: row.boardName,
-      commentCount: row.commentCount,
-      likeCount: row.likeCount,
-      viewCount: row.viewCount,
-    }));
-}
-
-async function loadRankings(): Promise<RankingRow[]> {
-  const supabase = getSupabaseServer();
-  const { data: rankingRows, error } = await supabase
-    .from("instructor_rankings")
-    .select("id,subject,instructor_name,rank,confidence")
-    .eq("exam_slug", "transfer")
-    .order("subject", { ascending: true })
-    .order("instructor_name", { ascending: true })
-    .limit(200);
-
-  if (error || !rankingRows?.length) {
-    return [];
-  }
-
-  const { data: voteRows, error: voteError } = await supabase
-    .from("instructor_votes")
-    .select("instructor_name")
-    .eq("exam_slug", "transfer");
-
-  if (voteError) {
-    return [];
-  }
-
-  const voteCountMap = new Map<string, number>();
-  (voteRows ?? []).forEach((row: { instructor_name: string }) => {
-    voteCountMap.set(row.instructor_name, (voteCountMap.get(row.instructor_name) ?? 0) + 1);
+        createdAtTs,
+      }),
+    } satisfies FeedRow;
   });
 
-  const sorted = rankingRows
-    .map((row: { id: string; subject: string; instructor_name: string; rank: number; confidence: number | null }) => ({
-      ...row,
-      voteCount: (voteCountMap.get(row.instructor_name) ?? 0) + Math.max(0, row.confidence ?? 0),
-    }))
-    .sort((a, b) => {
-      if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
-      if (a.rank !== b.rank) return a.rank - b.rank;
-      const bySubject = a.subject.localeCompare(b.subject);
-      if (bySubject !== 0) return bySubject;
-      return a.instructor_name.localeCompare(b.instructor_name);
-    })
-    .slice(0, 12);
+  const latestNews = mapped
+    .filter((item) => item.boardSlug === "news")
+    .slice(0, 6)
+    .map((item) => {
+      const parsed = parseNewsContent(item.content || "");
+      return {
+        id: item.id,
+        title: item.title,
+        summary: compactSummary(parsed.body || item.content || ""),
+        boardSlug: item.boardSlug,
+        commentCount: item.commentCount,
+        likeCount: item.likeCount,
+        viewCount: item.viewCount,
+        createdAt: item.createdAt,
+        linkUrl: parsed.linkUrl,
+        attachments: parsed.attachments,
+      } satisfies NewsRow;
+    });
 
-  return sorted.map((row, index) => ({
-    id: row.id,
-    subject: row.subject,
-    instructorName: row.instructor_name,
-    rank: index + 1,
+  const communityPosts = mapped.filter((item) => item.boardSlug !== "news");
+
+  const latestPosts = [...communityPosts]
+    .sort((left, right) => right.createdAtTs - left.createdAtTs)
+    .slice(0, 6);
+
+  const realtimePosts = [...communityPosts]
+    .sort((left, right) => {
+      if (right.hotScore !== left.hotScore) return right.hotScore - left.hotScore;
+      return right.createdAtTs - left.createdAtTs;
+    })
+    .slice(0, 6);
+
+  return {
+    latestNews,
+    realtimePosts,
+    latestPosts,
+  };
+}
+
+async function loadSchedules(): Promise<ScheduleRow[]> {
+  const supabase = getSupabaseServer();
+
+  const primary = await supabase
+    .from("exam_schedules")
+    .select("id,university,title,category,starts_at,link_url,is_official")
+    .eq("exam_slug", "transfer")
+    .eq("is_official", true)
+    .order("starts_at", { ascending: true })
+    .limit(120);
+
+  let rows = primary.data as
+    | Array<{
+        id: string;
+        university: string | null;
+        title: string;
+        category: string;
+        starts_at: string;
+        link_url: string | null;
+      }>
+    | null;
+
+  if (primary.error && primary.error.message?.toLowerCase().includes("university")) {
+    const fallback = await supabase
+      .from("exam_schedules")
+      .select("id,title,category,starts_at,link_url,is_official")
+      .eq("exam_slug", "transfer")
+      .eq("is_official", true)
+      .order("starts_at", { ascending: true })
+      .limit(120);
+
+    rows = ((fallback.data as Array<{
+      id: string;
+      title: string;
+      category: string;
+      starts_at: string;
+      link_url: string | null;
+    }> | null) ?? []).map((item) => ({
+      ...item,
+      university: null,
+    }));
+  }
+
+  if (!rows?.length) return [];
+
+  const now = Date.now();
+  const upcoming = rows
+    .map((item) => ({
+      id: item.id,
+      university: item.university,
+      title: item.title,
+      category: item.category,
+      startsAt: item.starts_at,
+      linkUrl: item.link_url,
+      startsAtTs: toTimestamp(item.starts_at),
+    }))
+    .filter((item) => item.startsAtTs >= now - 86400000)
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      university: item.university,
+      title: item.title,
+      category: item.category,
+      startsAt: item.startsAt,
+      linkUrl: item.linkUrl,
+    }));
+
+  if (upcoming.length > 0) return upcoming;
+
+  return rows.slice(0, 6).map((item) => ({
+    id: item.id,
+    university: item.university,
+    title: item.title,
+    category: item.category,
+    startsAt: item.starts_at,
+    linkUrl: item.link_url,
   }));
 }
 
 export default async function TransferPage() {
-  const [cutoffRows, briefingRows, qaRows, studyQaRows, popularRows, rankingRows] = await Promise.all([
+  const [cutoffRows, feedRows, schedules] = await Promise.all([
     loadCutoffs(),
-    loadBriefings(),
-    loadQaRows(),
-    loadStudyQaRows(),
-    loadPopularRows(),
-    loadRankings(),
+    loadFeeds(),
+    loadSchedules(),
   ]);
 
   return (
@@ -374,149 +404,188 @@ export default async function TransferPage() {
       <Navbar />
 
       <main className="flex-1">
-        <section className="border-b bg-secondary bg-[radial-gradient(circle_at_top,oklch(0.52_0.2_265_/_0.15),transparent_58%)]">
+        <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.13),transparent_58%)]">
           <div className="container mx-auto px-4 py-10">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입 커뮤니티</h1>
-            <p className="text-sm text-primary/80 mt-3 max-w-2xl">
-              수험생들의 정보 불균형 해소를 위해 다양한 정보를 제공합니다. 질문을 남겨주시면 편입 합격생 출신 운영자가 한 분 한 분 상세히 답변드립니다.
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">합격판 편입 데이터센터</h1>
+            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+              앱에서 쓰는 핵심 기능 그대로 웹에서도 바로 쓸 수 있게 정리했어. AI 도우미, AI 커트라인 분석,
+              최신뉴스, 주요 일정, 커뮤니티 피드를 한 화면에서 확인해.
             </p>
-            <div className="flex flex-wrap gap-2 mt-5">
+            <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href="/transfer/ai-helper">AI 도우미</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-border hover:bg-accent">
+                <Link href="/transfer/cutoff-analysis">AI 커트라인 분석</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-border hover:bg-accent">
                 <Link href="/community/transfer">편입 커뮤니티</Link>
               </Button>
-              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
-                <Link href="/c/transfer/qa">학습법공유</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
-                <Link href="/c/transfer/study-qa">학습질문</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-border text-primary hover:bg-accent">
-                <Link href="/transfer/instructor-ranking">인기 강사 순위</Link>
+              <Button asChild variant="outline" className="border-border hover:bg-accent">
+                <Link href="/verification">합격 인증 신청</Link>
               </Button>
             </div>
           </div>
         </section>
 
         <section className="py-8">
-          <div className="container mx-auto px-4 grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+          <div className="container mx-auto px-4 grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6">
             <div className="space-y-4">
-              <TransferPredictor rows={cutoffRows} />
-              <Card className="border border-border shadow-lg">
+              <TransferHomeBanner />
+
+              <Card className="border border-border shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/c/transfer/free" className="hover:text-primary transition-colors">
-                      오늘의 인기글
-                    </Link>
-                  </CardTitle>
+                  <CardTitle className="text-lg">핵심 기능 바로가기</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <Link href="/transfer/ai-helper" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
+                    합곰 AI 도우미
+                  </Link>
+                  <Link href="/transfer/cutoff-analysis" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
+                    AI 커트라인 분석
+                  </Link>
+                  <Link href="/c/transfer/qa" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
+                    합격전략 게시판
+                  </Link>
+                  <Link href="/c/transfer/study-qa" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
+                    학습질문 게시판
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <TransferPredictor rows={cutoffRows} />
+
+              <Card className="border border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">🔥 실시간 인기글</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {popularRows.map((row) => (
+                  {feedRows.realtimePosts.map((row) => (
                     <Link
                       key={row.id}
                       href={`/c/transfer/${row.boardSlug}/${row.id}`}
                       className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
                     >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
-                        {row.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {row.boardName} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
+                      <p className="text-sm font-medium line-clamp-2">{row.title}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount} · 조회 {row.viewCount}
                       </p>
                     </Link>
                   ))}
-                  {!popularRows.length && <p className="text-sm text-muted-foreground">아직 집계된 인기글이 없습니다.</p>}
+                  {!feedRows.realtimePosts.length && (
+                    <p className="text-sm text-muted-foreground">실시간 인기글이 아직 없어.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">🕒 최신글</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {feedRows.latestPosts.map((row) => (
+                    <Link
+                      key={row.id}
+                      href={`/c/transfer/${row.boardSlug}/${row.id}`}
+                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
+                    >
+                      <p className="text-sm font-medium line-clamp-2">{row.title}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {row.boardName} · {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 좋아요 {row.likeCount}
+                      </p>
+                    </Link>
+                  ))}
+                  {!feedRows.latestPosts.length && (
+                    <p className="text-sm text-muted-foreground">최신글이 아직 없어.</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
             <div className="space-y-4">
-              <Card className="border border-border shadow-lg">
+              <Card className="border border-border shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/c/transfer/qa" className="hover:text-primary transition-colors">
-                      AI 오늘의 편입 정보
-                    </Link>
-                  </CardTitle>
+                  <CardTitle className="text-lg">📰 최신뉴스</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {briefingRows.map((row) => (
-                    <div key={row.id} className="rounded-lg border border-border p-3">
-                      <p className="text-sm font-semibold">{row.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{row.summary}</p>
-                      <p className="text-[11px] text-primary mt-2">
-                        {row.sourceLabel} · {row.publishedAt} · {row.boardName}
+                  {feedRows.latestNews.map((row) => (
+                    <div key={row.id} className="rounded-lg border border-border p-3 space-y-2">
+                      <Link href={`/c/transfer/${row.boardSlug}/${row.id}`} className="block hover:text-primary transition-colors">
+                        <p className="text-sm font-semibold line-clamp-2">{row.title}</p>
+                      </Link>
+                      {row.summary ? <p className="text-xs text-muted-foreground line-clamp-2">{row.summary}</p> : null}
+                      <p className="text-[11px] text-muted-foreground">
+                        {formatRelativeTime(row.createdAt)} · 댓글 {row.commentCount} · 조회 {row.viewCount}
                       </p>
+
+                      {row.linkUrl ? (
+                        <Link href={row.linkUrl} target="_blank" className="block text-xs text-primary hover:underline">
+                          관련 링크 열기
+                        </Link>
+                      ) : null}
+
+                      {row.attachments.length > 0 ? (
+                        <div className="space-y-1">
+                          {row.attachments.slice(0, 2).map((attachment, index) => (
+                            <Link
+                              key={`${attachment.url}-${index}`}
+                              href={attachment.url}
+                              target="_blank"
+                              className="block text-xs text-primary hover:underline"
+                            >
+                              📎 {attachment.filename}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ))}
-                  {!briefingRows.length && (
-                    <p className="text-sm text-muted-foreground">아직 등록된 편입 정보가 없습니다.</p>
+                  {!feedRows.latestNews.length && (
+                    <p className="text-sm text-muted-foreground">최신뉴스가 아직 없어.</p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="border border-border shadow-lg">
+              <Card className="border border-border shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/transfer/instructor-ranking" className="hover:text-primary transition-colors">
-                      편입 인기 강사 순위
-                    </Link>
-                  </CardTitle>
+                  <CardTitle className="text-lg">📅 주요 일정</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <TransferRankingTabs rows={rankingRows} />
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/c/transfer/qa" className="hover:text-primary transition-colors">
-                      편입 학습법공유
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {qaRows.map((row) => (
-                    <Link
-                      key={row.id}
-                      href={`/c/transfer/qa/${row.id}`}
-                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
-                        {row.title}
+                <CardContent className="space-y-2">
+                  {schedules.map((schedule) => (
+                    <div key={schedule.id} className="rounded-lg border border-border p-3">
+                      <p className="text-sm font-medium">{schedule.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatScheduleDate(schedule.startsAt)} · {schedule.category}
+                        {schedule.university ? ` · ${schedule.university}` : ""}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
-                    </Link>
+                      {schedule.linkUrl ? (
+                        <Link href={schedule.linkUrl} target="_blank" className="mt-1 block text-xs text-primary hover:underline">
+                          일정 링크 열기
+                        </Link>
+                      ) : null}
+                    </div>
                   ))}
-                  {!qaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 Q&A가 없습니다.</p>}
+                  {!schedules.length && <p className="text-sm text-muted-foreground">등록된 일정이 아직 없어.</p>}
                 </CardContent>
               </Card>
 
-              <Card className="border border-border shadow-lg">
+              <Card className="border border-border shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    <Link href="/c/transfer/study-qa" className="hover:text-primary transition-colors">
-                      편입 학습질문
-                    </Link>
-                  </CardTitle>
+                  <CardTitle className="text-lg">인증/질문 접수</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {studyQaRows.map((row) => (
-                    <Link
-                      key={row.id}
-                      href={`/c/transfer/study-qa/${row.id}`}
-                      className="block rounded-lg border border-border p-3 hover:bg-accent transition-colors"
-                    >
-                      <p className="text-sm font-medium line-clamp-2 hover:text-primary">
-                        {row.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">댓글 {row.commentCount} · {formatRelativeTime(row.createdAt)}</p>
-                    </Link>
-                  ))}
-                  {!studyQaRows.length && <p className="text-sm text-muted-foreground">아직 등록된 학습질문이 없습니다.</p>}
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>합격 인증을 하면 게시글/댓글에 대학 합격자 배지가 노출돼.</p>
+                  <p>AI가 정보 부족으로 답하면 질문하기로 접수해서 운영팀이 반영해.</p>
+                  <div className="pt-1 flex flex-wrap gap-2">
+                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                      <Link href="/verification">인증 신청</Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/mypage">마이페이지</Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-
             </div>
           </div>
         </section>
