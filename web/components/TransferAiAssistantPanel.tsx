@@ -270,7 +270,7 @@ export function TransferAiAssistantPanel() {
 
   return (
     <>
-      <div className="flex h-[80vh] min-h-[640px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+      <div className="flex h-[86vh] min-h-[700px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
         <div className="border-b border-border/80 bg-background/90 px-4 py-3">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
             <div className="h-8 w-8 overflow-hidden rounded-full border border-border bg-white">
@@ -300,7 +300,7 @@ export function TransferAiAssistantPanel() {
         </div>
 
         <div className="border-t border-border/80 bg-background/95 px-4 py-3">
-          <form onSubmit={handleSend} className="mx-auto w-full max-w-3xl space-y-2">
+          <form onSubmit={handleSend} className="mx-auto w-full max-w-3xl">
             <div className="flex items-end gap-2 rounded-2xl border border-input bg-background px-3 py-2">
               <textarea
                 value={input}
@@ -313,17 +313,11 @@ export function TransferAiAssistantPanel() {
               <Button type="submit" disabled={pending || !input.trim()} className="h-9 rounded-xl bg-primary px-4 hover:bg-primary/90">
                 {pending ? "생성 중" : "전송"}
               </Button>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <div className="text-muted-foreground">근거 기반 답변을 우선 제공하며, 정보 부족 시 질문 접수를 안내합니다.</div>
-              <div className="flex items-center gap-2">
-                {canSubmitQuestion ? (
-                  <Button type="button" variant="outline" size="sm" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
-                    {submittingQuestion ? "접수 중" : "질문하기"}
-                  </Button>
-                ) : null}
-              </div>
+              {canSubmitQuestion ? (
+                <Button type="button" variant="outline" size="sm" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
+                  {submittingQuestion ? "접수 중" : "질문하기"}
+                </Button>
+              ) : null}
             </div>
           </form>
 
