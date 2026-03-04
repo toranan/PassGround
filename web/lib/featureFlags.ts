@@ -1,7 +1,7 @@
 export const ENABLE_TRANSFER = true;
 
-// Show CPA as read-only preview category.
-export const ENABLE_CPA = true;
+// CPA category is disabled for now.
+export const ENABLE_CPA = false;
 
 // Writes for CPA (posting, comments, verification, etc.) are kept off for now.
 export const ENABLE_CPA_WRITE = false;

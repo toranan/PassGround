@@ -4,7 +4,7 @@ import type { ReactElement, SVGProps } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type SocialProvider = "kakao" | "naver" | "google";
+type SocialProvider = "kakao" | "google";
 
 type SocialAuthButtonsProps = {
   redirectTo?: string;
@@ -16,17 +16,6 @@ function KakaoIcon(props: SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
       <path
         d="M12 4.2C7.03 4.2 3 7.32 3 11.18c0 2.56 1.77 4.8 4.41 6.01l-.87 3.32a.45.45 0 0 0 .67.5l3.95-2.63c.28.03.56.05.84.05 4.97 0 9-3.12 9-6.98S16.97 4.2 12 4.2Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function NaverIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path
-        d="M6 5.25v13.5h4.5v-6.68l4.72 6.68H19V5.25h-4.5v6.68L9.78 5.25H6Z"
         fill="currentColor"
       />
     </svg>
@@ -71,13 +60,6 @@ const PROVIDERS: {
     brandClass: "bg-[#FEE500] text-black hover:bg-[#f9de00] border-[#FEE500]",
   },
   {
-    id: "naver",
-    label: "네이버로 시작하기",
-    shortLabel: "네이버",
-    icon: NaverIcon,
-    brandClass: "bg-[#03C75A] text-white hover:bg-[#02b552] border-[#03C75A]",
-  },
-  {
     id: "google",
     label: "구글로 시작하기",
     shortLabel: "구글",
@@ -105,7 +87,7 @@ export function SocialAuthButtons({ redirectTo = "/", className }: SocialAuthBut
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {PROVIDERS.map((provider) => {
           const Icon = provider.icon;
           return (

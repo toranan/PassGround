@@ -1,27 +1,12 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { TransferPredictor } from "@/components/TransferPredictor";
 import { TransferHomeBanner } from "@/components/TransferHomeBanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { decodeMajorAndTrack, type CutoffTrackType } from "@/lib/cutoffTrack";
 import { parseNewsContent, type NewsAttachment } from "@/lib/newsResources";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
-
-type CutoffRow = {
-  id: string;
-  university: string;
-  major: string;
-  track: CutoffTrackType;
-  year: number;
-  scoreBand: string;
-  note: string;
-  inputBasis: "wrong" | "score" | "both";
-  waitlistCutoff: number | null;
-  initialCutoff: number | null;
-};
 
 type FeedRow = {
   id: string;
@@ -120,61 +105,6 @@ function compactSummary(value: string, max = 120): string {
   if (!normalized) return "";
   if (normalized.length <= max) return normalized;
   return `${normalized.slice(0, max).trim()}...`;
-}
-
-async function loadCutoffs(): Promise<CutoffRow[]> {
-  const supabase = getSupabaseServer();
-  const { data, error } = await supabase
-    .from("cutoff_scores")
-    .select("id,university,major,year,score_band,note,source")
-    .eq("exam_slug", "transfer")
-    .order("year", { ascending: false })
-    .limit(220);
-
-  if (error || !data?.length) return [];
-
-  return data.map((row: {
-    id: string;
-    university: string;
-    major: string;
-    year: number;
-    score_band: string;
-    note: string | null;
-    source: string | null;
-  }) => {
-    const decoded = decodeMajorAndTrack(row.major);
-    let waitlistCutoff: number | null = null;
-    let initialCutoff: number | null = null;
-    let memo = row.note ?? "-";
-
-    if (row.note) {
-      try {
-        const meta = JSON.parse(row.note) as {
-          waitlistCutoff?: number;
-          initialCutoff?: number;
-          memo?: string;
-        };
-        if (typeof meta.waitlistCutoff === "number") waitlistCutoff = meta.waitlistCutoff;
-        if (typeof meta.initialCutoff === "number") initialCutoff = meta.initialCutoff;
-        if (typeof meta.memo === "string") memo = meta.memo;
-      } catch {
-        // legacy plain text
-      }
-    }
-
-    return {
-      id: row.id,
-      university: row.university,
-      major: decoded.major,
-      track: decoded.track,
-      year: row.year,
-      scoreBand: row.score_band,
-      note: memo,
-      inputBasis: row.source === "wrong" || row.source === "score" ? row.source : "both",
-      waitlistCutoff,
-      initialCutoff,
-    };
-  });
 }
 
 async function loadFeeds(): Promise<FeedBundle> {
@@ -393,11 +323,7 @@ async function loadSchedules(): Promise<ScheduleRow[]> {
 }
 
 export default async function TransferPage() {
-  const [cutoffRows, feedRows, schedules] = await Promise.all([
-    loadCutoffs(),
-    loadFeeds(),
-    loadSchedules(),
-  ]);
+  const [feedRows, schedules] = await Promise.all([loadFeeds(), loadSchedules()]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -406,55 +332,18 @@ export default async function TransferPage() {
       <main className="flex-1">
         <section className="border-b bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.13),transparent_58%)]">
           <div className="container mx-auto px-4 py-10">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">합격판 편입 데이터센터</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">편입을 준비하는 학생들을 위한 커뮤니티</h1>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              앱에서 쓰는 핵심 기능 그대로 웹에서도 바로 쓸 수 있게 정리했어. AI 도우미, AI 커트라인 분석,
-              최신뉴스, 주요 일정, 커뮤니티 피드를 한 화면에서 확인해.
+              최신뉴스, 주요 일정, 실시간 인기글과 최신글을 한눈에 확인해.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/transfer/ai-helper">AI 도우미</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-border hover:bg-accent">
-                <Link href="/transfer/cutoff-analysis">AI 커트라인 분석</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-border hover:bg-accent">
-                <Link href="/community/transfer">편입 커뮤니티</Link>
-              </Button>
-              <Button asChild variant="outline" className="border-border hover:bg-accent">
-                <Link href="/verification">합격 인증 신청</Link>
-              </Button>
-            </div>
           </div>
         </section>
 
         <section className="py-8">
-          <div className="container mx-auto px-4 grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6">
+          <div className="container mx-auto px-4 space-y-6">
+            <TransferHomeBanner />
+            <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6">
             <div className="space-y-4">
-              <TransferHomeBanner />
-
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">핵심 기능 바로가기</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Link href="/transfer/ai-helper" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
-                    합곰 AI 도우미
-                  </Link>
-                  <Link href="/transfer/cutoff-analysis" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
-                    AI 커트라인 분석
-                  </Link>
-                  <Link href="/c/transfer/qa" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
-                    합격전략 게시판
-                  </Link>
-                  <Link href="/c/transfer/study-qa" className="rounded-xl border border-border bg-card px-3 py-3 text-sm hover:bg-accent transition-colors">
-                    학습질문 게시판
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <TransferPredictor rows={cutoffRows} />
-
               <Card className="border border-border shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">🔥 실시간 인기글</CardTitle>
@@ -587,6 +476,7 @@ export default async function TransferPage() {
                 </CardContent>
               </Card>
             </div>
+          </div>
           </div>
         </section>
       </main>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
+import { ENABLE_CPA } from "@/lib/featureFlags";
 
 type User = {
   id?: string;
@@ -1772,12 +1773,14 @@ export default function AdminPage() {
                   >
                     편입
                   </Button>
-                  <Button
-                    variant={exam === "cpa" ? "default" : "outline"}
-                    onClick={() => setExam("cpa")}
-                  >
-                    CPA
-                  </Button>
+                  {ENABLE_CPA ? (
+                    <Button
+                      variant={exam === "cpa" ? "default" : "outline"}
+                      onClick={() => setExam("cpa")}
+                    >
+                      CPA
+                    </Button>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap gap-2">

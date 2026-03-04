@@ -109,6 +109,9 @@ export function Navbar() {
           <Link href="/community" className="transition-colors hover:text-primary">
             커뮤니티
           </Link>
+          <Link href="/transfer/ai" className="transition-colors hover:text-primary">
+            AI 도우미
+          </Link>
           <Link href="/mypage" className="transition-colors hover:text-primary">
             마이페이지
           </Link>

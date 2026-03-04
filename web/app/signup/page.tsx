@@ -18,7 +18,7 @@ export default function SignupPage() {
                 <CardHeader className="space-y-2">
                   <CardTitle className="text-xl">회원가입</CardTitle>
                   <CardDescription>
-                    카카오, 네이버, 구글 소셜 계정으로 바로 시작하세요.
+                    카카오, 구글 소셜 계정으로 바로 시작하세요.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">

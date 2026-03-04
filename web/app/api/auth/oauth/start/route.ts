@@ -4,11 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 import { ENABLE_SOCIAL_AUTH } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
 
-type SocialProvider = "kakao" | "naver" | "google";
-type SupportedOAuthProvider = Exclude<SocialProvider, "naver">;
+type SocialProvider = "kakao" | "google";
+type SupportedOAuthProvider = SocialProvider;
 
 function parseProvider(value: string | null): SocialProvider | null {
-  if (value === "kakao" || value === "naver" || value === "google") {
+  if (value === "kakao" || value === "google") {
     return value;
   }
   return null;
@@ -93,10 +93,6 @@ export async function GET(request: Request) {
 
   if (!provider) {
     return redirectWithError(appOrigin, "invalid_provider", isMobile, mobileRedirect);
-  }
-
-  if (provider === "naver") {
-    return redirectWithError(appOrigin, "provider_not_enabled", isMobile, mobileRedirect);
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
