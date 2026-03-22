@@ -8,6 +8,7 @@ type Exam = "transfer" | "cpa";
 type SubmissionRow = {
   question: string;
   answer: string;
+  route: string;
   created_at: string;
 };
 
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
     .from("ai_chat_logs")
     .select("question,answer,route,created_at")
     .eq("exam_slug", exam)
-    .eq("route", "ask_button")
+    .in("route", ["ask_button", "consultation_request"])
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -90,9 +91,15 @@ export async function GET(request: Request) {
       question: row.question,
       userId: typeof meta.userId === "string" ? meta.userId : null,
       userEmail: typeof meta.userEmail === "string" ? meta.userEmail : "",
-      source: typeof meta.source === "string" ? meta.source : "ask_button",
+      source:
+        typeof meta.source === "string"
+          ? meta.source
+          : row.route === "consultation_request"
+            ? "consultation_request"
+            : "ask_button",
       status: "new",
       traceId: typeof meta.traceId === "string" ? meta.traceId : "",
+      phoneNumber: typeof meta.phoneNumber === "string" ? meta.phoneNumber : "",
       createdAt: row.created_at,
     };
   });

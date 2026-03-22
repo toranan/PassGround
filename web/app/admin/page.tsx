@@ -165,6 +165,7 @@ type SubmittedQuestionItem = {
   source: string;
   status: string;
   traceId: string;
+  phoneNumber: string;
   createdAt: string;
 };
 
@@ -665,13 +666,13 @@ export default function AdminPage() {
       });
       const payload = (await res.json().catch(() => null)) as AdminSubmittedQuestionsResponse | null;
       if (!res.ok || !payload?.ok) {
-        setMessage(payload?.error ?? "질문하기 접수 목록을 불러오지 못했습니다.");
+        setMessage(payload?.error ?? "질문/상담 접수 목록을 불러오지 못했습니다.");
         setSubmittedQuestions([]);
         return;
       }
       setSubmittedQuestions(payload.items ?? []);
     } catch {
-      setMessage("질문하기 접수 목록을 불러오지 못했습니다.");
+      setMessage("질문/상담 접수 목록을 불러오지 못했습니다.");
       setSubmittedQuestions([]);
     } finally {
       setLoadingSubmittedQuestions(false);
@@ -2549,7 +2550,7 @@ export default function AdminPage() {
                         onClick={() => void loadSubmittedQuestions()}
                         disabled={loadingSubmittedQuestions || submitting}
                       >
-                        {loadingSubmittedQuestions ? "불러오는 중..." : "질문하기 접수 새로고침"}
+                        {loadingSubmittedQuestions ? "불러오는 중..." : "질문/상담 접수 새로고침"}
                       </Button>
                       <Button
                         onClick={() => void handleReindexKnowledge()}
@@ -2631,10 +2632,10 @@ export default function AdminPage() {
 
                     <div className="space-y-2">
                       <p className="text-sm font-semibold">
-                        질문하기 접수 목록 · 최근 {submittedQuestions.length}건
+                        질문/상담 접수 목록 · 최근 {submittedQuestions.length}건
                       </p>
                       {loadingSubmittedQuestions ? (
-                        <p className="text-sm text-muted-foreground">질문하기 접수 목록 불러오는 중...</p>
+                        <p className="text-sm text-muted-foreground">질문/상담 접수 목록 불러오는 중...</p>
                       ) : submittedQuestions.length ? (
                         <div className="space-y-2">
                           {submittedQuestions.slice(0, 30).map((item) => (
@@ -2643,10 +2644,16 @@ export default function AdminPage() {
                               className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
                             >
                               <div className="space-y-1">
-                                <p className="text-sm leading-6">{item.question}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  이메일: {item.userEmail || "-"}
+                                <p className="text-sm font-semibold text-primary">
+                                  {item.source === "consultation_request" ? "상담 신청" : "질문 접수"}
                                 </p>
+                                <p className="text-sm leading-6">{item.question}</p>
+                                {item.phoneNumber ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    전화번호: {item.phoneNumber}
+                                  </p>
+                                ) : null}
+                                <p className="text-xs text-muted-foreground">이메일: {item.userEmail || "-"}</p>
                               </div>
                               <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
                                 <p>{formatDateLabel(item.createdAt)}</p>
@@ -2656,7 +2663,7 @@ export default function AdminPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">접수된 질문이 없습니다.</p>
+                        <p className="text-sm text-muted-foreground">접수된 질문/상담 신청이 없습니다.</p>
                       )}
                     </div>
 
