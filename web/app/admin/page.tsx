@@ -177,6 +177,21 @@ type AdminSubmittedQuestionsResponse = {
   error?: string;
 };
 
+type AiChatLogItem = {
+  id: string;
+  question: string;
+  answer: string;
+  createdAt: string;
+};
+
+type AdminAiChatLogsResponse = {
+  ok: boolean;
+  exam: "transfer" | "cpa";
+  totalCount: number;
+  items: AiChatLogItem[];
+  error?: string;
+};
+
 type VerificationRequestItem = {
   id: string;
   profileId: string | null;
@@ -344,6 +359,8 @@ export default function AdminPage() {
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [knowledgePending, setKnowledgePending] = useState<KnowledgeItem[]>([]);
   const [knowledgeApproved, setKnowledgeApproved] = useState<KnowledgeItem[]>([]);
+  const [loadingAiChatLogs, setLoadingAiChatLogs] = useState(false);
+  const [aiChatLogs, setAiChatLogs] = useState<AiChatLogItem[]>([]);
   const [loadingUnansweredQuestions, setLoadingUnansweredQuestions] = useState(false);
   const [unansweredQuestions, setUnansweredQuestions] = useState<UnansweredQuestionItem[]>([]);
   const [fallbackLogCount, setFallbackLogCount] = useState(0);
@@ -622,6 +639,33 @@ export default function AdminPage() {
     }
   }, [exam]);
 
+  const loadAiChatLogs = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setLoadingAiChatLogs(true);
+    try {
+      const res = await fetch(`/api/admin/ai/logs?exam=${exam}&limit=100`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as AdminAiChatLogsResponse | null;
+      if (!res.ok || !payload?.ok) {
+        setMessage(payload?.error ?? "AI 질문 로그를 불러오지 못했습니다.");
+        setAiChatLogs([]);
+        return;
+      }
+      setAiChatLogs(payload.items ?? []);
+    } catch {
+      setMessage("AI 질문 로그를 불러오지 못했습니다.");
+      setAiChatLogs([]);
+    } finally {
+      setLoadingAiChatLogs(false);
+    }
+  }, [exam]);
+
   const loadUnansweredQuestions = useCallback(async () => {
     const token = getAccessToken();
     if (!token) return;
@@ -727,12 +771,13 @@ export default function AdminPage() {
         loadSchedules(),
         loadNews(),
         loadKnowledge(),
+        loadAiChatLogs(),
         loadUnansweredQuestions(),
         loadSubmittedQuestions(),
         loadVerificationRequests(),
       ]);
     }
-  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadUnansweredQuestions, loadSubmittedQuestions, loadVerificationRequests]);
+  }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadAiChatLogs, loadUnansweredQuestions, loadSubmittedQuestions, loadVerificationRequests]);
 
   const handleBootstrap = async () => {
     const token = getAccessToken();
@@ -2533,6 +2578,13 @@ export default function AdminPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
+                        onClick={() => void loadAiChatLogs()}
+                        disabled={loadingAiChatLogs || submitting}
+                      >
+                        {loadingAiChatLogs ? "불러오는 중..." : "AI 로그 새로고침"}
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => void loadKnowledge()}
                         disabled={loadingKnowledge || submitting}
                       >
@@ -2558,6 +2610,34 @@ export default function AdminPage() {
                       >
                         {reindexingKnowledge ? "재색인 중..." : "RAG 재색인 실행"}
                       </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">AI 질문 로그 · 최근 {aiChatLogs.length}건</p>
+                      {loadingAiChatLogs ? (
+                        <p className="text-sm text-muted-foreground">AI 질문 로그 불러오는 중...</p>
+                      ) : aiChatLogs.length ? (
+                        <div className="space-y-2">
+                          {aiChatLogs.map((item) => (
+                            <div key={item.id} className="rounded-lg border border-border p-3 space-y-3">
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">언제 질문했는지</p>
+                                <p className="text-sm">{formatDateLabel(item.createdAt)}</p>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">질문</p>
+                                <p className="whitespace-pre-wrap text-sm leading-6">{item.question}</p>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">답변</p>
+                                <p className="whitespace-pre-wrap text-sm leading-6">{item.answer}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">수집된 AI 질문 로그가 없습니다.</p>
+                      )}
                     </div>
 
                     <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
