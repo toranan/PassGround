@@ -218,6 +218,16 @@ struct PostComposerView: View {
     }
 
     private func submit() async {
+        guard let userId = session.user?.id, !userId.isEmpty else {
+            message = "로그인 후 글을 작성할 수 있어."
+            return
+        }
+        let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !accessToken.isEmpty else {
+            message = "로그인이 만료됐어. 마이페이지에서 다시 로그인해줘."
+            return
+        }
+
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -260,8 +270,8 @@ struct PostComposerView: View {
                 authorName: postAnonymous ? "익명" : (session.displayName.isEmpty ? "익명" : session.displayName),
                 title: trimmedTitle,
                 content: finalContent,
-                userId: session.user?.id,
-                accessToken: session.accessToken.isEmpty ? nil : session.accessToken
+                userId: userId,
+                accessToken: accessToken
             )
 
             communityStore.invalidateHomeSnapshot(exam: exam)

@@ -257,6 +257,26 @@ final class APIClient {
         )
     }
 
+    func requestConsultation(
+        baseURL: URL,
+        phoneNumber: String,
+        sourcePath: String,
+        accessToken: String? = nil
+    ) async throws -> ConsultationRequestResponse {
+        struct Body: Encodable {
+            let phoneNumber: String
+            let sourcePath: String
+        }
+
+        return try await request(
+            baseURL: baseURL,
+            path: "api/consultation/request",
+            method: "POST",
+            body: Body(phoneNumber: phoneNumber, sourcePath: sourcePath),
+            accessToken: accessToken
+        )
+    }
+
     func chatStream(
         baseURL: URL,
         exam: ExamSlug,
@@ -566,7 +586,13 @@ final class APIClient {
         return max(1, response.deletedCount ?? 1)
     }
 
-    func toggleLike(baseURL: URL, postId: String, userId: String, desiredLiked: Bool? = nil) async throws -> LikeResponse {
+    func toggleLike(
+        baseURL: URL,
+        postId: String,
+        userId: String,
+        desiredLiked: Bool? = nil,
+        accessToken: String? = nil
+    ) async throws -> LikeResponse {
         struct Body: Encodable {
             let postId: String
             let userId: String
@@ -577,7 +603,8 @@ final class APIClient {
             baseURL: baseURL,
             path: "api/posts/like",
             method: "POST",
-            body: Body(postId: postId, userId: userId, desiredLiked: desiredLiked)
+            body: Body(postId: postId, userId: userId, desiredLiked: desiredLiked),
+            accessToken: accessToken
         )
     }
 
@@ -671,6 +698,21 @@ final class APIClient {
         )
 
         return response.user
+    }
+
+    func deleteAccount(baseURL: URL, accessToken: String, userId: String) async throws {
+        struct Body: Encodable {
+            let accessToken: String
+            let userId: String
+        }
+
+        _ = try await request(
+            baseURL: baseURL,
+            path: "api/profile/delete",
+            method: "POST",
+            body: Body(accessToken: accessToken, userId: userId),
+            accessToken: accessToken
+        ) as GenericOKResponse
     }
 
     func fetchNotifications(

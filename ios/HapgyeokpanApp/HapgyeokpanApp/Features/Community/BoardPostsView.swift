@@ -13,6 +13,7 @@ struct BoardPostsView: View {
     let exam: ExamSlug
     let board: BoardInfo
     let writable: Bool
+    var hideBoardHeader: Bool = false
 
     @State private var posts: [PostSummary] = []
     @State private var loading = false
@@ -40,12 +41,14 @@ struct BoardPostsView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(board.name)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                        Text(board.description)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        if !hideBoardHeader {
+                            Text(board.name)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text(board.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
 
                         HStack(spacing: 8) {
                             Image(systemName: "magnifyingglass")

@@ -19,19 +19,27 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const [isFocused, setIsFocused] = useState(!!parentId); // Auto-focus if replying
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token") ?? "";
+    setIsLoggedIn(Boolean(token));
+    if (token) {
+      setAccessToken(token);
+    }
     if (stored) {
       try {
         const user = JSON.parse(stored);
+        if (typeof user.id === "string" && user.id) {
+          setUserId(user.id);
+        }
         if (user.nickname) {
           setAuthorName(user.nickname);
-          setIsLoggedIn(true);
         } else if (user.username) {
           setAuthorName(user.username);
-          setIsLoggedIn(true);
         }
       } catch {
         // ignore
@@ -41,6 +49,10 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
 
   const handleSubmit = async () => {
     setMessage("");
+    if (!isLoggedIn || !userId || !accessToken) {
+      setMessage("로그인 후 댓글을 작성할 수 있어요.");
+      return;
+    }
     const nameValue = isLoggedIn ? authorName.trim() : "익명";
     const contentValue = content.trim();
 
@@ -53,12 +65,17 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
     try {
       const res = await fetch("/api/comments/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           postId,
           parentId,
           authorName: nameValue,
           content: contentValue,
+          userId,
+          accessToken,
         }),
       });
       const data = await res.json();
@@ -126,11 +143,18 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
             </Button>
             <Button
               size="sm"
-              onClick={handleSubmit}
+              onClick={() => {
+                if (!isLoggedIn) {
+                  setMessage("로그인 후 댓글을 작성할 수 있어요.");
+                  router.push(`/signup?next=${encodeURIComponent(window.location.pathname)}`);
+                  return;
+                }
+                void handleSubmit();
+              }}
               disabled={isSubmitting || !content.trim()}
               className="bg-primary hover:bg-primary/90"
             >
-              {isSubmitting ? "등록 중..." : parentId ? "답글 등록" : "댓글 등록"}
+              {isSubmitting ? "등록 중..." : !isLoggedIn ? "로그인" : parentId ? "답글 등록" : "댓글 등록"}
             </Button>
           </div>
         </div>

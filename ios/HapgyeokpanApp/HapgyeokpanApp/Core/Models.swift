@@ -553,6 +553,11 @@ struct AIQuestionSubmitResponse: Codable {
     let message: String?
 }
 
+struct ConsultationRequestResponse: Codable {
+    let ok: Bool
+    let message: String?
+}
+
 struct AIChatContext: Codable, Identifiable {
     let id: String
     let knowledgeItemId: String

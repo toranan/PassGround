@@ -83,10 +83,10 @@ struct ContentView: View {
 
 enum TabSelection: String, CaseIterable {
     case home = "홈"
+    case coach = "AI상담"
     case community = "커뮤니티"
     case ranking = "데이터센터"
     case schedule = "일정"
-    case coach = "AI도우미"
     case mypage = "마이"
 }
 
@@ -98,10 +98,10 @@ struct MainBottomTabBar: View {
             Divider()
             HStack {
                 TabBarButton(title: "홈", iconName: "house.fill", tab: .home, selectedTab: $selectedTab)
+                TabBarButton(title: "AI상담", iconName: "bubble.left.and.bubble.right.fill", tab: .coach, selectedTab: $selectedTab)
                 TabBarButton(title: "커뮤니티", iconName: "text.bubble.fill", tab: .community, selectedTab: $selectedTab)
                 TabBarButton(title: "데이터센터", iconName: "chart.bar.fill", tab: .ranking, selectedTab: $selectedTab)
                 TabBarButton(title: "일정", iconName: "calendar.badge.clock", tab: .schedule, selectedTab: $selectedTab)
-                TabBarButton(title: "AI도우미", iconName: "bubble.left.and.bubble.right.fill", tab: .coach, selectedTab: $selectedTab)
                 TabBarButton(title: "마이", iconName: "person.crop.circle.fill", tab: .mypage, selectedTab: $selectedTab)
             }
             .padding(.horizontal, 8)
@@ -141,7 +141,7 @@ private struct NicknameSetupSheet: View {
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("커뮤니티와 AI도우미에서 사용할 이름이야.")
+                Text("커뮤니티와 AI상담에서 사용할 이름이야.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -276,6 +276,10 @@ private struct ChatCoachView: View {
     @State private var submittingQuestion = false
     @State private var pendingQuestionSubmission: PendingQuestionSubmission?
     @State private var socialLoginProvider: String?
+    @State private var showingConsultationSheet = false
+    @State private var consultationPhone = ""
+    @State private var submittingConsultation = false
+    @State private var consultationErrorMessage = ""
     @FocusState private var inputFocused: Bool
     @State private var messages: [ChatMessage] = [
         ChatMessage(
@@ -328,8 +332,15 @@ private struct ChatCoachView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("상담요청") {
+                    consultationErrorMessage = ""
+                    showingConsultationSheet = true
+                }
+                .font(.caption.weight(.semibold))
+            }
             ToolbarItem(placement: .principal) {
-                Text("AI 도우미")
+                Text("AI 상담")
                     .font(.title3.weight(.bold))
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -338,6 +349,9 @@ private struct ChatCoachView: View {
                 }
                 .font(.caption.weight(.semibold))
             }
+        }
+        .sheet(isPresented: $showingConsultationSheet) {
+            consultationRequestSheet
         }
     }
 
@@ -388,7 +402,7 @@ private struct ChatCoachView: View {
 
     private var coachLoginPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("AI도우미는 로그인 후 사용할 수 있어. 아래에서 바로 로그인해줘.")
+            Text("AI상담은 로그인 후 사용할 수 있어. 아래에서 바로 로그인해줘.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
@@ -411,6 +425,68 @@ private struct ChatCoachView: View {
         .padding(.horizontal, 12)
         .padding(.top, 6)
         .padding(.bottom, 4)
+    }
+
+    private var consultationPhoneDigits: String {
+        consultationPhone.filter(\.isNumber)
+    }
+
+    private var canSubmitConsultation: Bool {
+        let count = consultationPhoneDigits.count
+        return !submittingConsultation && (9...11).contains(count)
+    }
+
+    private var consultationRequestSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("전화번호 남겨주시면 편입 합격에 도움이 되는 답변을 무료로 안내해드릴게요. 편하게 신청해주세요!")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                TextField("전화번호 입력", text: $consultationPhone)
+                    .keyboardType(.phonePad)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                if !consultationErrorMessage.isEmpty {
+                    Text(consultationErrorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else {
+                    Text("숫자만 입력해도 됩니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Button {
+                    Task { await submitConsultationRequest() }
+                } label: {
+                    Text(submittingConsultation ? "접수 중..." : "상담 요청 보내기")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canSubmitConsultation)
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .navigationTitle("상담요청")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("닫기") {
+                        showingConsultationSheet = false
+                    }
+                    .disabled(submittingConsultation)
+                }
+            }
+        }
     }
 
     private func socialLoginButton(provider: String, title: String, icon: String) -> some View {
@@ -592,7 +668,7 @@ private struct ChatCoachView: View {
             messages.append(
                 ChatMessage(
                     role: .assistant,
-                    text: "AI도우미는 로그인 후 사용할 수 있어. 마이페이지에서 먼저 로그인해줘.",
+                    text: "AI상담은 로그인 후 사용할 수 있어. 마이페이지에서 먼저 로그인해줘.",
                     subtitle: ChatCoachView.assistantName
                 )
             )
@@ -922,6 +998,43 @@ private struct ChatCoachView: View {
             )
         )
         pendingQuestionSubmission = nil
+    }
+
+    @MainActor
+    private func submitConsultationRequest() async {
+        let phoneNumber = consultationPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let phoneDigits = consultationPhoneDigits
+
+        guard (9...11).contains(phoneDigits.count) else {
+            consultationErrorMessage = "전화번호 형식을 확인해줘."
+            return
+        }
+
+        consultationErrorMessage = ""
+        submittingConsultation = true
+        defer { submittingConsultation = false }
+
+        do {
+            let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+            let payload = try await api.requestConsultation(
+                baseURL: config.baseURL,
+                phoneNumber: phoneNumber,
+                sourcePath: "ios://transfer/ai",
+                accessToken: accessToken.isEmpty ? nil : accessToken
+            )
+
+            consultationPhone = ""
+            showingConsultationSheet = false
+            messages.append(
+                ChatMessage(
+                    role: .assistant,
+                    text: payload.message ?? "상담 신청이 접수되었습니다. 입력하신 번호로 연락드릴게요.",
+                    subtitle: ChatCoachView.assistantName
+                )
+            )
+        } catch {
+            consultationErrorMessage = error.localizedDescription
+        }
     }
 }
 

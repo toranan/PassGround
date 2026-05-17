@@ -12,16 +12,17 @@
 		0CD059FECFCCB9A9B09FF2B3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43C152F62AC9968D801AD617 /* Foundation.framework */; };
 		11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = 22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */; };
 		2B0AA3267531B8E31EED972E /* MyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */; };
-		8F7E6D5C4B3A291807F6E5D4 /* NotificationInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */; };
 		2FDB8344C85BA2B6419A09F5 /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33414E8FBF83CC9F9DFCD720 /* AdminView.swift */; };
 		3351FCF8249F2D9888B3EA4B /* HapgyeokpanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31012DDE772E5E483D5884E6 /* HapgyeokpanApp.swift */; };
 		45B73BE0E2005DF0EBB8661E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B22966285FCE7E36E84F2A1F /* ContentView.swift */; };
 		53EFD52104134A634E2BC8CB /* BoardPostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC7D26A83A3817973C4908D /* BoardPostsView.swift */; };
 		581DBD63FF7A372749E8999E /* CommunityBoardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9F45AE5C5691415941846C /* CommunityBoardsView.swift */; };
 		7E0743373F7042B6B438C323 /* VerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655A97B3B4369AB44FAD351C /* VerificationView.swift */; };
+		8F7E6D5C4B3A291807F6E5D4 /* NotificationInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */; };
 		A1B2C3D4E5F60718293A4B01 /* KakaoSDKAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B11 /* KakaoSDKAuth */; };
 		A1B2C3D4E5F60718293A4B02 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B12 /* KakaoSDKUser */; };
 		A1B2C3D4E5F60718293A4B03 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B13 /* KakaoSDKCommon */; };
+		AABBC1D2E3F405060708090A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABBC1D2E3F405060708090B /* Assets.xcassets */; };
 		AAF3AA40B747C28B9BD4DC66 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */; };
 		B1E2D3C4F5061728394A5B6C /* CommunityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */; };
 		C45902D37A639C0DE5F9E855 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D3E4BF3FB4B33AFD382DB7 /* APIClient.swift */; };
@@ -46,14 +47,15 @@
 		43C152F62AC9968D801AD617 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		443D81B34F1CB67128FB0129 /* HapgyeokpanApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HapgyeokpanApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BD5FB7D80B8619AA2AEE521 /* MyPageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyPageView.swift; sourceTree = "<group>"; };
-		9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationInboxView.swift; sourceTree = "<group>"; };
 		53C688B0187E4CAC2D85727C /* TransferHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TransferHomeView.swift; sourceTree = "<group>"; };
 		573AC60F7F1B320A140819AB /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		618E04F7504958DD01651353 /* RankingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
 		655A97B3B4369AB44FAD351C /* VerificationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VerificationView.swift; sourceTree = "<group>"; };
 		7B9F45AE5C5691415941846C /* CommunityBoardsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommunityBoardsView.swift; sourceTree = "<group>"; };
 		7E53395B5A9F844647A24118 /* TimerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
+		9A8B7C6D5E4F3029181A2B3C /* NotificationInboxView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationInboxView.swift; sourceTree = "<group>"; };
 		A04D0E2C8C0B0D5EE15A576B /* AppConfig.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		AABBC1D2E3F405060708090B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B22966285FCE7E36E84F2A1F /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BDC7D26A83A3817973C4908D /* BoardPostsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoardPostsView.swift; sourceTree = "<group>"; };
 		C1D2E3F40516273849A5B6C7 /* CommunityStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommunityStore.swift; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				08130C8B82395094D9E53592 /* Info.plist */,
+				AABBC1D2E3F405060708090B /* Assets.xcassets */,
 				22BB33CC44DD55EE66FF77AA /* hapgom-avatar.png */,
 			);
 			path = Resources;
@@ -283,6 +286,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AABBC1D2E3F405060708090A /* Assets.xcassets in Resources */,
 				11AA22BB33CC44DD55EE66FF /* hapgom-avatar.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -327,6 +331,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = HapgyeokpanApp/HapgyeokpanApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = YA6CU6MN98;
 				INFOPLIST_FILE = HapgyeokpanApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -335,11 +340,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = kr.hapgyeokpan.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -467,6 +475,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = HapgyeokpanApp/HapgyeokpanApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = YA6CU6MN98;
 				INFOPLIST_FILE = HapgyeokpanApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -475,11 +484,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = kr.hapgyeokpan.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};

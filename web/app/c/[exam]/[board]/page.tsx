@@ -64,7 +64,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
   const boardId = boardData?.id ?? null;
   const boardName =
     exam === "transfer" && board === "qa"
-      ? "학습법공유"
+      ? "합격전략"
       : exam === "transfer" && board === "study-qa"
         ? "학습질문"
         : (boardData?.name ?? boardNameFromList);

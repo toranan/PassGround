@@ -10,7 +10,7 @@ private struct HomeBannerDdayInfo {
     static let `default` = HomeBannerDdayInfo(
         targetLabel: "목표대학 미설정",
         ddayLabel: "D-day",
-        subtitle: "마이에서 목표대학을 설정하면 대학별 일정 기준 D-day를 보여줘"
+        subtitle: "마이에서 목표대학을 설정하면 D-day를 맞춰서 보여줘"
     )
 }
 
@@ -59,19 +59,6 @@ struct TransferHomeView: View {
                     emptyText: "최신뉴스가 없습니다.",
                     destinationTitle: "최신뉴스"
                 )
-
-                Divider().background(Color(.systemGray5)).frame(height: 8)
-
-                postsSection(
-                    title: "🔥 실시간 인기글",
-                    items: realtimePosts,
-                    emptyText: "실시간 인기글이 없습니다.",
-                    destinationTitle: "실시간 인기글"
-                )
-
-                Divider().background(Color(.systemGray5)).frame(height: 8)
-
-                postsSection(title: "🕒 최신글", items: latestPosts, emptyText: "최신글이 없습니다.")
             }
             .padding(.bottom, 20)
         }
@@ -216,7 +203,7 @@ struct TransferHomeView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             } else {
-                let rows = Array(items.prefix(3))
+                let rows = Array(items.prefix(8))
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
                     NavigationLink {
                         PostDetailView(
@@ -404,8 +391,8 @@ struct TransferHomeView: View {
         }()
 
         if let nextMatched {
-            let targetLabel = trimmedTarget.isEmpty ? "목표대학 미설정" : "\(trimmedTarget) 기준"
-            let subtitle = "\(nextMatched.title) · \(Self.formatDateLabel(nextMatched.startsAt))"
+            let targetLabel = trimmedTarget.isEmpty ? "목표대학 합격까지" : "\(trimmedTarget) 합격까지"
+            let subtitle = "\(nextMatched.category) 일정 기준 D-day"
             return HomeBannerDdayInfo(
                 targetLabel: targetLabel,
                 ddayLabel: ddayLabel,
@@ -413,19 +400,18 @@ struct TransferHomeView: View {
             )
         }
 
-        let defaultDateLabel = Self.formatDateLabel(Self.defaultReferenceDate(from: now))
         if trimmedTarget.isEmpty {
             return HomeBannerDdayInfo(
                 targetLabel: "목표대학 미설정",
                 ddayLabel: ddayLabel,
-                subtitle: "기본 기준일 \(defaultDateLabel) (마이에서 목표대학 설정 가능)"
+                subtitle: "기본 기준일 기반 D-day (마이에서 목표대학 설정 가능)"
             )
         }
 
         return HomeBannerDdayInfo(
-            targetLabel: "\(trimmedTarget) 기준",
+            targetLabel: "\(trimmedTarget) 합격까지",
             ddayLabel: ddayLabel,
-            subtitle: "대학별 일정 미등록 · 기본 기준일 \(defaultDateLabel)"
+            subtitle: "대학별 일정 미등록 · 기본 기준일 기반 D-day"
         )
     }
 
@@ -659,18 +645,6 @@ struct TransferHomeView: View {
         }
         components.year = currentYear + 1
         return calendar.date(from: components) ?? thisYear
-    }
-
-    nonisolated private static func formatDateLabel(_ value: String?) -> String {
-        let date = parseDate(value)
-        return formatDateLabel(date)
-    }
-
-    nonisolated private static func formatDateLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy.MM.dd"
-        return formatter.string(from: date)
     }
 
     private static func readableErrorMessage(_ error: Error, baseURL: URL) -> String {

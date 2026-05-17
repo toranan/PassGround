@@ -214,13 +214,14 @@ type AdminVerificationResponse = {
   error?: string;
 };
 
-type AdminTab = "verification" | "community" | "cutoff" | "content" | "ai";
+type AdminTab = "verification" | "community" | "cutoff" | "content" | "questions" | "ai";
 
 const ADMIN_TAB_OPTIONS: Array<{ value: AdminTab; label: string }> = [
   { value: "verification", label: "인증 검수" },
   { value: "community", label: "커뮤니티" },
   { value: "cutoff", label: "커트라인" },
   { value: "content", label: "뉴스·일정" },
+  { value: "questions", label: "사용자 질문" },
   { value: "ai", label: "AI 지식" },
 ];
 
@@ -257,8 +258,21 @@ function isTokenExpiredSoon(token: string, thresholdMs = 60_000): boolean {
   return Date.now() + thresholdMs >= expMs;
 }
 
+let refreshAccessTokenPromise: Promise<string> | null = null;
+
 async function refreshAccessTokenIfPossible(): Promise<string> {
   if (typeof window === "undefined") return "";
+  if (refreshAccessTokenPromise) return refreshAccessTokenPromise;
+
+  refreshAccessTokenPromise = refreshAccessToken();
+  try {
+    return await refreshAccessTokenPromise;
+  } finally {
+    refreshAccessTokenPromise = null;
+  }
+}
+
+async function refreshAccessToken(): Promise<string> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return "";
 
@@ -459,7 +473,7 @@ export default function AdminPage() {
   }, [verificationRequests]);
 
   const loadAdminMe = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) {
       setAdminState(null);
       setCheckingAdmin(false);
@@ -499,7 +513,7 @@ export default function AdminPage() {
   };
 
   const loadRankings = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingRankings(true);
@@ -529,7 +543,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadCutoffs = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingCutoffs(true);
@@ -556,7 +570,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadSchedules = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingSchedules(true);
@@ -583,7 +597,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadNews = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingNews(true);
@@ -610,7 +624,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadKnowledge = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingKnowledge(true);
@@ -640,7 +654,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadAiChatLogs = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingAiChatLogs(true);
@@ -667,7 +681,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadUnansweredQuestions = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingUnansweredQuestions(true);
@@ -697,7 +711,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadSubmittedQuestions = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingSubmittedQuestions(true);
@@ -724,7 +738,7 @@ export default function AdminPage() {
   }, [exam]);
 
   const loadVerificationRequests = useCallback(async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setLoadingVerifications(true);
@@ -780,7 +794,7 @@ export default function AdminPage() {
   }, [adminState?.isAdmin, loadRankings, loadCutoffs, loadSchedules, loadNews, loadKnowledge, loadAiChatLogs, loadUnansweredQuestions, loadSubmittedQuestions, loadVerificationRequests]);
 
   const handleBootstrap = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -807,7 +821,7 @@ export default function AdminPage() {
   };
 
   const handleSave = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -845,7 +859,7 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -877,7 +891,7 @@ export default function AdminPage() {
   };
 
   const handleSaveCutoff = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -921,7 +935,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteCutoff = async (id: string) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -950,7 +964,7 @@ export default function AdminPage() {
   };
 
   const handleSaveSchedule = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     const startsAtDate = scheduleForm.startsAt ? new Date(scheduleForm.startsAt) : null;
@@ -1019,7 +1033,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -1251,7 +1265,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteNews = async (id: string) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -1323,7 +1337,7 @@ export default function AdminPage() {
   };
 
   const handleCreateKnowledgeDraft = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     if (!knowledgeRawInput.trim()) {
@@ -1362,7 +1376,7 @@ export default function AdminPage() {
   };
 
   const handleCreateKnowledgeFromInfoTab = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     const admissionYear = knowledgeInfoForm.admissionYear.trim();
@@ -1437,7 +1451,7 @@ export default function AdminPage() {
   };
 
   const handleCreateKnowledgeBulkQA = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     const bulkText = knowledgeBulkRawInput.trim();
@@ -1490,7 +1504,7 @@ export default function AdminPage() {
   };
 
   const handleDirectIngestKnowledge = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     const rawText = knowledgeDirectInput.trim();
@@ -1551,7 +1565,7 @@ export default function AdminPage() {
   };
 
   const handleUploadKnowledgePdf = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
     if (!knowledgePdfFile) {
       setMessage("업로드할 PDF 파일을 선택해 주세요.");
@@ -1593,7 +1607,7 @@ export default function AdminPage() {
   };
 
   const handleReindexKnowledge = async () => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setReindexingKnowledge(true);
@@ -1641,7 +1655,7 @@ export default function AdminPage() {
   };
 
   const handleSavePendingKnowledge = async (item: KnowledgeItem) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -1679,7 +1693,7 @@ export default function AdminPage() {
   };
 
   const handleApproveKnowledge = async (item: KnowledgeItem) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -1717,7 +1731,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteKnowledge = async (id: string) => {
-    const token = getAccessToken();
+    const token = await resolveUsableAccessToken();
     if (!token) return;
 
     setSubmitting(true);
@@ -2460,6 +2474,130 @@ export default function AdminPage() {
                 </Card>
                 ) : null}
 
+                {adminTab === "questions" ? (
+                <Card className="border-none shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">사용자 질문 수집</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => void loadAiChatLogs()}
+                        disabled={loadingAiChatLogs || submitting}
+                      >
+                        {loadingAiChatLogs ? "불러오는 중..." : "AI 로그 새로고침"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => void loadUnansweredQuestions()}
+                        disabled={loadingUnansweredQuestions || submitting}
+                      >
+                        {loadingUnansweredQuestions ? "집계 중..." : "미해결 질문 새로고침"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => void loadSubmittedQuestions()}
+                        disabled={loadingSubmittedQuestions || submitting}
+                      >
+                        {loadingSubmittedQuestions ? "불러오는 중..." : "질문/상담 접수 새로고침"}
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">AI 질문 로그 · 최근 {aiChatLogs.length}건</p>
+                      {loadingAiChatLogs ? (
+                        <p className="text-sm text-muted-foreground">AI 질문 로그 불러오는 중...</p>
+                      ) : aiChatLogs.length ? (
+                        <div className="space-y-2">
+                          {aiChatLogs.map((item) => (
+                            <div key={item.id} className="rounded-lg border border-border p-3 space-y-3">
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">언제 질문했는지</p>
+                                <p className="text-sm">{formatDateLabel(item.createdAt)}</p>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">질문</p>
+                                <p className="whitespace-pre-wrap text-sm leading-6">{item.question}</p>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
+                                <p className="text-xs font-medium text-muted-foreground">답변</p>
+                                <p className="whitespace-pre-wrap text-sm leading-6">{item.answer}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">수집된 AI 질문 로그가 없습니다.</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">
+                        미해결 질문 수집 (Fallback) · 최근 로그 {fallbackLogCount}건 기준
+                      </p>
+                      {loadingUnansweredQuestions ? (
+                        <p className="text-sm text-muted-foreground">미해결 질문 집계 중...</p>
+                      ) : unansweredQuestions.length ? (
+                        <div className="space-y-2">
+                          {unansweredQuestions.slice(0, 20).map((item) => (
+                            <div
+                              key={item.normalizedQuestion}
+                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
+                            >
+                              <p className="text-sm leading-6">{item.question}</p>
+                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
+                                <p>횟수: {item.count}</p>
+                                <p>최근: {formatDateLabel(item.lastSeenAt)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">수집된 미해결 질문이 없습니다.</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">
+                        질문/상담 접수 목록 · 최근 {submittedQuestions.length}건
+                      </p>
+                      {loadingSubmittedQuestions ? (
+                        <p className="text-sm text-muted-foreground">질문/상담 접수 목록 불러오는 중...</p>
+                      ) : submittedQuestions.length ? (
+                        <div className="space-y-2">
+                          {submittedQuestions.slice(0, 30).map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
+                            >
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-primary">
+                                  {item.source === "consultation_request" ? "상담 신청" : "질문 접수"}
+                                </p>
+                                <p className="text-sm leading-6">{item.question}</p>
+                                {item.phoneNumber ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    전화번호: {item.phoneNumber}
+                                  </p>
+                                ) : null}
+                                <p className="text-xs text-muted-foreground">이메일: {item.userEmail || "-"}</p>
+                              </div>
+                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
+                                <p>{formatDateLabel(item.createdAt)}</p>
+                                {item.traceId ? <p>trace: {item.traceId.slice(0, 8)}</p> : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">접수된 질문/상담 신청이 없습니다.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                ) : null}
+
                 {adminTab === "ai" ? (
                 <>
                 <Card className="border-none shadow-lg">
@@ -2578,31 +2716,10 @@ export default function AdminPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
-                        onClick={() => void loadAiChatLogs()}
-                        disabled={loadingAiChatLogs || submitting}
-                      >
-                        {loadingAiChatLogs ? "불러오는 중..." : "AI 로그 새로고침"}
-                      </Button>
-                      <Button
-                        variant="outline"
                         onClick={() => void loadKnowledge()}
                         disabled={loadingKnowledge || submitting}
                       >
                         {loadingKnowledge ? "불러오는 중..." : "지식 새로고침"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => void loadUnansweredQuestions()}
-                        disabled={loadingUnansweredQuestions || submitting}
-                      >
-                        {loadingUnansweredQuestions ? "집계 중..." : "미해결 질문 새로고침"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => void loadSubmittedQuestions()}
-                        disabled={loadingSubmittedQuestions || submitting}
-                      >
-                        {loadingSubmittedQuestions ? "불러오는 중..." : "질문/상담 접수 새로고침"}
                       </Button>
                       <Button
                         onClick={() => void handleReindexKnowledge()}
@@ -2610,34 +2727,6 @@ export default function AdminPage() {
                       >
                         {reindexingKnowledge ? "재색인 중..." : "RAG 재색인 실행"}
                       </Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">AI 질문 로그 · 최근 {aiChatLogs.length}건</p>
-                      {loadingAiChatLogs ? (
-                        <p className="text-sm text-muted-foreground">AI 질문 로그 불러오는 중...</p>
-                      ) : aiChatLogs.length ? (
-                        <div className="space-y-2">
-                          {aiChatLogs.map((item) => (
-                            <div key={item.id} className="rounded-lg border border-border p-3 space-y-3">
-                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
-                                <p className="text-xs font-medium text-muted-foreground">언제 질문했는지</p>
-                                <p className="text-sm">{formatDateLabel(item.createdAt)}</p>
-                              </div>
-                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
-                                <p className="text-xs font-medium text-muted-foreground">질문</p>
-                                <p className="whitespace-pre-wrap text-sm leading-6">{item.question}</p>
-                              </div>
-                              <div className="grid gap-2 md:grid-cols-[140px_1fr] md:items-start">
-                                <p className="text-xs font-medium text-muted-foreground">답변</p>
-                                <p className="whitespace-pre-wrap text-sm leading-6">{item.answer}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">수집된 AI 질문 로그가 없습니다.</p>
-                      )}
                     </div>
 
                     <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
@@ -2682,69 +2771,6 @@ export default function AdminPage() {
                           {submitting ? "처리 중..." : "PDF 업로드 + 초안 생성"}
                         </Button>
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">
-                        미해결 질문 수집 (Fallback) · 최근 로그 {fallbackLogCount}건 기준
-                      </p>
-                      {loadingUnansweredQuestions ? (
-                        <p className="text-sm text-muted-foreground">미해결 질문 집계 중...</p>
-                      ) : unansweredQuestions.length ? (
-                        <div className="space-y-2">
-                          {unansweredQuestions.slice(0, 20).map((item) => (
-                            <div
-                              key={item.normalizedQuestion}
-                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
-                            >
-                              <p className="text-sm leading-6">{item.question}</p>
-                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
-                                <p>횟수: {item.count}</p>
-                                <p>최근: {formatDateLabel(item.lastSeenAt)}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">수집된 미해결 질문이 없습니다.</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">
-                        질문/상담 접수 목록 · 최근 {submittedQuestions.length}건
-                      </p>
-                      {loadingSubmittedQuestions ? (
-                        <p className="text-sm text-muted-foreground">질문/상담 접수 목록 불러오는 중...</p>
-                      ) : submittedQuestions.length ? (
-                        <div className="space-y-2">
-                          {submittedQuestions.slice(0, 30).map((item) => (
-                            <div
-                              key={item.id}
-                              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
-                            >
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold text-primary">
-                                  {item.source === "consultation_request" ? "상담 신청" : "질문 접수"}
-                                </p>
-                                <p className="text-sm leading-6">{item.question}</p>
-                                {item.phoneNumber ? (
-                                  <p className="text-xs text-muted-foreground">
-                                    전화번호: {item.phoneNumber}
-                                  </p>
-                                ) : null}
-                                <p className="text-xs text-muted-foreground">이메일: {item.userEmail || "-"}</p>
-                              </div>
-                              <div className="text-xs text-muted-foreground text-right whitespace-nowrap">
-                                <p>{formatDateLabel(item.createdAt)}</p>
-                                {item.traceId ? <p>trace: {item.traceId.slice(0, 8)}</p> : null}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">접수된 질문/상담 신청이 없습니다.</p>
-                      )}
                     </div>
 
                     <div className="space-y-2">

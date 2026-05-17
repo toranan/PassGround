@@ -68,7 +68,7 @@ export function TransferAiAssistantPanel() {
     {
       id: makeId(),
       role: "assistant",
-      text: "안녕하세요. 편입 고민을 함께 정리해드리는 합곰입니다. 궁금한 점을 편하게 말씀해 주세요.",
+      text: "안녕하세요. 편입 상담을 함께 정리해드리는 합곰입니다. 궁금한 점을 편하게 말씀해 주세요.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -142,7 +142,7 @@ export function TransferAiAssistantPanel() {
 
       if (!response.ok || !response.body) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error || "AI 도우미 응답을 불러오지 못했습니다.");
+        throw new Error(payload?.error || "AI 상담 응답을 불러오지 못했습니다.");
       }
 
       const reader = response.body.getReader();
@@ -277,7 +277,7 @@ export function TransferAiAssistantPanel() {
               <Image src="/hapgomi.png" alt="합곰이" width={32} height={32} className="h-full w-full object-cover" />
             </div>
             <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-              <p className="text-sm font-semibold">편입 AI 도우미</p>
+              <p className="text-sm font-semibold">편입 AI 상담</p>
               <p className="text-xs text-muted-foreground">편하게 질문해 주세요</p>
             </div>
           </div>

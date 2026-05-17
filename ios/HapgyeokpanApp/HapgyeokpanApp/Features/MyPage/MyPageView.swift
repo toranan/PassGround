@@ -22,6 +22,8 @@ struct MyPageView: View {
     @State private var message = ""
     @State private var loading = false
     @State private var savingTargetUniversity = false
+    @State private var showingDeleteAccountAlert = false
+    @State private var deletingAccount = false
 
     @State private var adminState: AdminMeResponse?
     @State private var unreadNotificationCount = 0
@@ -66,6 +68,14 @@ struct MyPageView: View {
         }
         .refreshable {
             await refreshData()
+        }
+        .alert("계정을 삭제할까요?", isPresented: $showingDeleteAccountAlert) {
+            Button("취소", role: .cancel) {}
+            Button("삭제", role: .destructive) {
+                Task { await deleteAccount() }
+            }
+        } message: {
+            Text("계정과 작성한 활동 데이터가 삭제되며 복구할 수 없습니다.")
         }
     }
     
@@ -318,8 +328,9 @@ struct MyPageView: View {
                     .padding(.vertical, 14)
                 }
                 .buttonStyle(.plain)
-                
-                
+
+                Divider().padding(.leading, DesignSystem.padding + 32)
+
                 Button(action: {
                     session.clear()
                     pointsData = nil
@@ -335,9 +346,26 @@ struct MyPageView: View {
                             .foregroundColor(.red)
                         Spacer()
                     }
+                        .padding(.horizontal, DesignSystem.padding)
+                        .padding(.vertical, 14)
+                }
+
+                Divider().padding(.leading, DesignSystem.padding + 32)
+
+                Button(action: { showingDeleteAccountAlert = true }) {
+                    HStack {
+                        Image(systemName: "trash.fill")
+                            .frame(width: 24)
+                            .foregroundColor(.red)
+                        Text(deletingAccount ? "회원탈퇴 처리 중..." : "회원탈퇴")
+                            .font(.subheadline)
+                            .foregroundColor(.red)
+                        Spacer()
+                    }
                     .padding(.horizontal, DesignSystem.padding)
                     .padding(.vertical, 14)
                 }
+                .disabled(deletingAccount)
             }
             .background(DesignSystem.cardBackground)
             .cornerRadius(DesignSystem.cardCornerRadius)
@@ -442,19 +470,80 @@ struct MyPageView: View {
 
     private func saveNickname() async {
         guard let user = session.user else { return }
+        let trimmed = nicknameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            message = "닉네임을 입력해줘."
+            return
+        }
+        guard trimmed.count >= 2 else {
+            message = "닉네임은 2자 이상이어야 해."
+            return
+        }
+        guard trimmed.count <= 20 else {
+            message = "닉네임은 20자 이하여야 해."
+            return
+        }
+
+        nicknameInput = trimmed
+        let previousUser = user
+        let optimisticUser = SessionUser(
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            nickname: trimmed,
+            targetUniversity: user.targetUniversity
+        )
+        session.updateUser(optimisticUser)
+        message = "닉네임 저장 중..."
+
         do {
-            let updatedUser = try await api.updateNickname(
-                baseURL: config.baseURL,
-                accessToken: session.accessToken,
-                userId: user.id,
-                nickname: nicknameInput
-            )
+            var updatedUser: SessionUser?
+            do {
+                updatedUser = try await api.updateNickname(
+                    baseURL: config.baseURL,
+                    accessToken: session.accessToken,
+                    userId: user.id,
+                    nickname: trimmed
+                )
+            } catch {
+                if shouldRetryNicknameSave(error) {
+                    await session.refreshIfNeeded(baseURL: config.baseURL, force: true)
+                    updatedUser = try await api.updateNickname(
+                        baseURL: config.baseURL,
+                        accessToken: session.accessToken,
+                        userId: user.id,
+                        nickname: trimmed
+                    )
+                } else {
+                    throw error
+                }
+            }
+
+            guard let updatedUser else {
+                throw APIClientError.server(message: "닉네임 저장에 실패했어. 다시 시도해줘.")
+            }
             session.completeNicknameSetup(updatedUser: updatedUser)
             message = "닉네임 저장 완료"
             await refreshData()
         } catch {
+            session.updateUser(previousUser)
+            nicknameInput = previousUser.nickname
             message = error.localizedDescription
         }
+    }
+
+    private func shouldRetryNicknameSave(_ error: Error) -> Bool {
+        guard let apiError = error as? APIClientError else {
+            return false
+        }
+        guard case let .server(message) = apiError else {
+            return false
+        }
+        let lower = message.lowercased()
+        if message.contains("로그인이 만료") {
+            return true
+        }
+        return lower.contains("token") || lower.contains("jwt") || lower.contains("인증")
     }
 
     private func saveTargetUniversity() async {
@@ -473,6 +562,30 @@ struct MyPageView: View {
             session.updateUser(updatedUser)
             message = selected.isEmpty ? "목표대학 설정을 해제했어." : "목표대학을 저장했어."
             await refreshData()
+        } catch {
+            message = error.localizedDescription
+        }
+    }
+
+    private func deleteAccount() async {
+        guard let user = session.user else { return }
+        deletingAccount = true
+        message = "회원탈퇴 처리 중..."
+        defer { deletingAccount = false }
+
+        do {
+            try await api.deleteAccount(
+                baseURL: config.baseURL,
+                accessToken: session.accessToken,
+                userId: user.id
+            )
+            session.clear()
+            pointsData = nil
+            adminState = nil
+            unreadNotificationCount = 0
+            nicknameInput = ""
+            targetUniversityInput = ""
+            message = "계정이 삭제됐어. 필요하면 다시 회원가입해줘."
         } catch {
             message = error.localizedDescription
         }

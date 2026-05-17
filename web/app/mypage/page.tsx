@@ -31,6 +31,45 @@ type PointResponse = {
   ledger: LedgerItem[];
 };
 
+type RefreshResponse = {
+  ok?: boolean;
+  user?: {
+    id?: string;
+    email?: string;
+    username?: string;
+    nickname?: string;
+    targetUniversity?: string | null;
+  };
+  session?: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_at?: number | null;
+  };
+  error?: string;
+};
+
+type ProfileUpdateSuccess = {
+  ok: true;
+  user: { id: string; username: string; nickname: string };
+};
+
+type ProfileUpdateFailure = {
+  error?: string;
+};
+
+function readStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("user");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as User | null;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 function formatDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
@@ -93,6 +132,52 @@ export default function MyPage() {
     void loadPoints();
   }, [loadPoints]);
 
+  const refreshSessionIfPossible = useCallback(async (): Promise<string> => {
+    const refreshToken = localStorage.getItem("refresh_token") ?? "";
+    if (!refreshToken) return "";
+
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    const payload = (await response.json().catch(() => null)) as RefreshResponse | null;
+    if (!response.ok || !payload?.ok || !payload.session?.access_token) {
+      return "";
+    }
+
+    localStorage.setItem("access_token", payload.session.access_token);
+    if (payload.session.refresh_token) {
+      localStorage.setItem("refresh_token", payload.session.refresh_token);
+    }
+    if (payload.user) {
+      localStorage.setItem("user", JSON.stringify(payload.user));
+    }
+    emitAuthChange();
+    return payload.session.access_token;
+  }, []);
+
+  const requestNicknameUpdate = useCallback(
+    async (accessToken: string, userId: string, nickname: string) => {
+      const response = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessToken,
+          userId,
+          nickname,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | ProfileUpdateSuccess
+        | ProfileUpdateFailure
+        | null;
+      return { response, payload };
+    },
+    []
+  );
+
   const handleSaveNickname = async () => {
     if (!user?.id) {
       setNicknameError(true);
@@ -107,43 +192,58 @@ export default function MyPage() {
       return;
     }
 
-    const accessToken = localStorage.getItem("access_token");
+    let accessToken = localStorage.getItem("access_token") ?? "";
+    if (!accessToken) {
+      accessToken = await refreshSessionIfPossible();
+    }
     if (!accessToken) {
       setNicknameError(true);
       setNicknameMessage("로그인이 만료되었습니다. 다시 로그인해 주세요.");
       return;
     }
 
+    const previousUser = readStoredUser() ?? user;
+    const optimisticUser: User = {
+      ...previousUser,
+      id: user.id,
+      username: previousUser?.username || user.username,
+      nickname,
+    };
+
+    // Optimistic update: reflect nickname immediately in nav/profile.
+    localStorage.setItem("user", JSON.stringify(optimisticUser));
+    emitAuthChange();
+
     setIsSavingNickname(true);
-    setNicknameMessage("");
+    setNicknameError(false);
+    setNicknameMessage("닉네임 저장 중입니다...");
 
     try {
-      const res = await fetch("/api/profile/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accessToken,
-          userId: user.id,
-          nickname,
-        }),
-      });
+      let { response, payload } = await requestNicknameUpdate(accessToken, user.id, nickname);
 
-      const data = (await res.json().catch(() => null)) as
-        | { ok: true; user: { id: string; username: string; nickname: string } }
-        | { error?: string }
-        | null;
+      if (response.status === 401) {
+        const refreshedToken = await refreshSessionIfPossible();
+        if (refreshedToken) {
+          accessToken = refreshedToken;
+          const retry = await requestNicknameUpdate(accessToken, user.id, nickname);
+          response = retry.response;
+          payload = retry.payload;
+        }
+      }
 
-      if (!res.ok || !data || !("ok" in data)) {
+      if (!response.ok || !payload || !("ok" in payload)) {
+        localStorage.setItem("user", JSON.stringify(previousUser));
+        emitAuthChange();
         setNicknameError(true);
-        setNicknameMessage((data && "error" in data && data.error) || "닉네임 저장에 실패했습니다.");
+        setNicknameMessage((payload && "error" in payload && payload.error) || "닉네임 저장에 실패했습니다.");
         return;
       }
 
       const nextUser: User = {
-        ...user,
-        id: data.user.id,
-        username: data.user.username || user.username,
-        nickname: data.user.nickname,
+        ...optimisticUser,
+        id: payload.user.id,
+        username: payload.user.username || optimisticUser.username,
+        nickname: payload.user.nickname,
       };
       localStorage.setItem("user", JSON.stringify(nextUser));
       emitAuthChange();
@@ -152,6 +252,8 @@ export default function MyPage() {
       setNicknameMessage("닉네임이 저장되었습니다.");
       await loadPoints();
     } catch {
+      localStorage.setItem("user", JSON.stringify(previousUser));
+      emitAuthChange();
       setNicknameError(true);
       setNicknameMessage("닉네임 저장 중 오류가 발생했습니다.");
     } finally {

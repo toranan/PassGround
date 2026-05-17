@@ -4,6 +4,7 @@ import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   createEmbedding,
+  EmbeddingsDisabledError,
   generateGroundedAnswer,
   generateGroundedAnswerStream,
   generateText,
@@ -1154,16 +1155,23 @@ async function runChatWorkflow(params: {
     ].join(" ");
 
     const embeddingStarted = Date.now();
-    const queryEmbedding = await createEmbedding(retrievalPrompt);
+    let queryEmbedding: number[] = [];
+    try {
+      queryEmbedding = await createEmbedding(retrievalPrompt);
+    } catch (err) {
+      if (!(err instanceof EmbeddingsDisabledError)) throw err;
+    }
     embeddingMs = Date.now() - embeddingStarted;
 
     const retrievalStarted = Date.now();
-    const { data: matched, error: matchError } = await admin.rpc("match_ai_knowledge_chunks", {
-      query_embedding: queryEmbedding,
-      query_exam: exam,
-      match_count: 12,
-      min_similarity: 0.45,
-    });
+    const { data: matched, error: matchError } = queryEmbedding.length
+      ? await admin.rpc("match_ai_knowledge_chunks", {
+          query_embedding: queryEmbedding,
+          query_exam: exam,
+          match_count: 12,
+          min_similarity: 0.45,
+        })
+      : { data: [] as MatchedChunkRow[], error: null };
     retrievalMs = Date.now() - retrievalStarted;
 
     if (matchError) {
@@ -1420,16 +1428,23 @@ async function runChatWorkflow(params: {
   }
 
   const embeddingStarted = Date.now();
-  const queryEmbedding = await createEmbedding(question);
+  let queryEmbedding: number[] = [];
+  try {
+    queryEmbedding = await createEmbedding(question);
+  } catch (err) {
+    if (!(err instanceof EmbeddingsDisabledError)) throw err;
+  }
   embeddingMs = Date.now() - embeddingStarted;
 
   const retrievalStarted = Date.now();
-  const { data: matched, error: matchError } = await admin.rpc("match_ai_knowledge_chunks", {
-    query_embedding: queryEmbedding,
-    query_exam: exam,
-    match_count: matchCount,
-    min_similarity: minSimilarity,
-  });
+  const { data: matched, error: matchError } = queryEmbedding.length
+    ? await admin.rpc("match_ai_knowledge_chunks", {
+        query_embedding: queryEmbedding,
+        query_exam: exam,
+        match_count: matchCount,
+        min_similarity: minSimilarity,
+      })
+    : { data: [] as MatchedChunkRow[], error: null };
   retrievalMs = Date.now() - retrievalStarted;
 
   if (matchError) {
@@ -1636,7 +1651,7 @@ export async function POST(request: Request) {
   if (!accessToken || !(await getUserByAccessToken(accessToken))) {
     return NextResponse.json(
       {
-        error: "AI 도우미는 로그인 후 이용할 수 있습니다.",
+        error: "AI 상담은 로그인 후 이용할 수 있습니다.",
         traceId,
       },
       { status: 401 }

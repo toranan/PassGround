@@ -57,18 +57,17 @@ export async function POST(request: Request) {
   const admin = getSupabaseAdmin();
   const headerToken = getBearerToken(request);
   const accessToken = headerToken || bodyAccessToken;
-  let actorUserId: string | null = null;
-
-  if (accessToken && requestUserId) {
-    const authed = await getUserByAccessToken(accessToken);
-    if (!authed?.id) {
-      return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
-    }
-    if (authed.id !== requestUserId) {
-      return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
-    }
-    actorUserId = authed.id;
+  if (!accessToken) {
+    return NextResponse.json({ error: "로그인 후 작성할 수 있습니다." }, { status: 401 });
   }
+  const authed = await getUserByAccessToken(accessToken);
+  if (!authed?.id) {
+    return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
+  }
+  if (requestUserId && authed.id !== requestUserId) {
+    return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
+  }
+  const actorUserId = authed.id;
 
   const examMeta = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === examSlug);
   const boardMeta = examMeta?.boards.find((board) => board.slug === boardSlug);

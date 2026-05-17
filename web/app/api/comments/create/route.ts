@@ -145,18 +145,18 @@ export async function POST(request: Request) {
   const admin = getSupabaseAdmin();
   const headerToken = getBearerToken(request);
   const accessToken = headerToken || bodyAccessToken;
-
-  let actorUserId: string | null = null;
-  if (accessToken && requestUserId && isValidUUID(requestUserId)) {
-    const authed = await getUserByAccessToken(accessToken);
-    if (!authed?.id) {
-      return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
-    }
-    if (authed.id !== requestUserId) {
-      return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
-    }
-    actorUserId = authed.id;
+  if (!accessToken) {
+    return NextResponse.json({ error: "로그인 후 댓글을 작성할 수 있습니다." }, { status: 401 });
   }
+
+  const authed = await getUserByAccessToken(accessToken);
+  if (!authed?.id) {
+    return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
+  }
+  if (requestUserId && isValidUUID(requestUserId) && authed.id !== requestUserId) {
+    return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
+  }
+  const actorUserId = authed.id;
 
   const { data: postData, error: postError } = await admin
     .from("posts")

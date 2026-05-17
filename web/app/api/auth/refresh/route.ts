@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 type ProfileRow = {
   username: string | null;
   display_name: string | null;
+  target_university?: string | null;
 };
 
 function sanitizeUsername(value: string): string {
@@ -47,11 +48,20 @@ export async function POST(request: Request) {
     }
 
     const admin = getSupabaseAdmin();
-    const { data: profile } = await admin
+    const primaryProfile = await admin
       .from("profiles")
-      .select("username,display_name")
+      .select("username,display_name,target_university")
       .eq("id", data.user.id)
       .maybeSingle<ProfileRow>();
+    let profile = primaryProfile.data;
+    if (primaryProfile.error?.message?.toLowerCase().includes("target_university")) {
+      const fallbackProfile = await admin
+        .from("profiles")
+        .select("username,display_name")
+        .eq("id", data.user.id)
+        .maybeSingle<ProfileRow>();
+      profile = fallbackProfile.data ? { ...fallbackProfile.data, target_university: null } : null;
+    }
 
     const fallbackUsername =
       sanitizeUsername(data.user.email?.split("@")[0] ?? "") ||
@@ -66,6 +76,7 @@ export async function POST(request: Request) {
         email: data.user.email ?? "",
         username,
         nickname,
+        targetUniversity: profile?.target_university?.trim() || null,
       },
       session: {
         access_token: data.session.access_token,

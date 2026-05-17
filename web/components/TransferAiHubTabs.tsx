@@ -12,7 +12,7 @@ export function TransferAiHubTabs({ defaultTab = "assistant" }: TransferAiHubTab
   return (
     <Tabs defaultValue={defaultTab} className="w-full">
       <TabsList className="w-full justify-start">
-        <TabsTrigger value="assistant">합곰 AI 도우미</TabsTrigger>
+        <TabsTrigger value="assistant">합곰 AI 상담</TabsTrigger>
         <TabsTrigger value="cutoff">AI 커트라인 분석</TabsTrigger>
       </TabsList>
 

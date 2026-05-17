@@ -14,6 +14,13 @@ private struct CutoffAnalysisResult {
     let targetGuide: String
 }
 
+private enum CutoffInputField: Hashable {
+    case year
+    case university
+    case major
+    case score
+}
+
 struct RankingView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
@@ -41,6 +48,7 @@ struct RankingView: View {
     @State private var analysisMessage = ""
     @State private var analysisResult: CutoffAnalysisResult?
     @State private var analysisLoading = false
+    @FocusState private var cutoffInputField: CutoffInputField?
     
     // Status
     @State private var voteStatus: VoteStatusResponse?
@@ -102,6 +110,11 @@ struct RankingView: View {
             }
             .padding(.vertical, 10)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            cutoffInputField = nil
+        }
+        .scrollDismissesKeyboard(.immediately)
         .background(DesignSystem.background)
         .navigationTitle("")
         .navigationBarHidden(true)
@@ -258,6 +271,7 @@ struct RankingView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .keyboardType(.numberPad)
+                    .focused($cutoffInputField, equals: .year)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 11)
                     .background(Color(.systemBackground))
@@ -266,6 +280,7 @@ struct RankingView: View {
                 TextField("학교명", text: $analysisUniversity)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .focused($cutoffInputField, equals: .university)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 11)
                     .background(Color(.systemBackground))
@@ -274,6 +289,7 @@ struct RankingView: View {
                 TextField("학과명", text: $analysisMajor)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .focused($cutoffInputField, equals: .major)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 11)
                     .background(Color(.systemBackground))
@@ -283,12 +299,14 @@ struct RankingView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .keyboardType(.decimalPad)
+                    .focused($cutoffInputField, equals: .score)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 11)
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 Button(action: {
+                    cutoffInputField = nil
                     Task { await runCutoffAnalysis() }
                 }) {
                     Text(analysisLoading ? "분석 중..." : "분석하기")

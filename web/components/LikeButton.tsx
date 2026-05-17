@@ -14,9 +14,14 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
     const [count, setCount] = useState(initialCount);
     const [isLoading, setIsLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [message, setMessage] = useState("");
 
     useEffect(() => {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            setAccessToken(token);
+        }
         const stored = localStorage.getItem("user");
         if (stored) {
             try {
@@ -33,7 +38,7 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
     const handleLike = async () => {
         if (isSample) return;
         if (isLoading) return;
-        if (!userId) {
+        if (!userId || !accessToken) {
             setMessage("로그인 후 이용 가능합니다.");
             return;
         }
@@ -49,7 +54,10 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
         try {
             const res = await fetch("/api/posts/like", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
                 body: JSON.stringify({ postId, userId, desiredLiked: optimisticLiked }),
             });
 

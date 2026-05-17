@@ -43,25 +43,39 @@ final class SessionStore: ObservableObject {
 
     func save(user: SessionUser, tokens: SessionTokens) {
         let previousUserID = self.user?.id
-        self.user = user
+        let preservedTargetUniversity: String? = {
+            guard previousUserID == user.id else { return user.targetUniversity }
+            if let incoming = user.targetUniversity?.trimmingCharacters(in: .whitespacesAndNewlines), !incoming.isEmpty {
+                return incoming
+            }
+            return self.user?.targetUniversity
+        }()
+        let resolvedUser = SessionUser(
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            nickname: user.nickname,
+            targetUniversity: preservedTargetUniversity
+        )
+        self.user = resolvedUser
         self.tokens = tokens
-        Self.encode(user, key: Keys.user)
+        Self.encode(resolvedUser, key: Keys.user)
         Self.encode(tokens, key: Keys.tokens)
 
-        let needsSetup = Self.needsNicknameSetup(for: user)
+        let needsSetup = Self.needsNicknameSetup(for: resolvedUser)
 
         if !needsSetup {
-            nicknameOnboardedUserIDs.insert(user.id)
-            nicknameSetupRequiredUserIDs.remove(user.id)
+            nicknameOnboardedUserIDs.insert(resolvedUser.id)
+            nicknameSetupRequiredUserIDs.remove(resolvedUser.id)
             persistNicknameOnboardedUserIDs()
             persistNicknameSetupRequiredUserIDs()
-        } else if previousUserID != user.id && !nicknameOnboardedUserIDs.contains(user.id) {
-            nicknameSetupRequiredUserIDs.insert(user.id)
+        } else if previousUserID != resolvedUser.id && !nicknameOnboardedUserIDs.contains(resolvedUser.id) {
+            nicknameSetupRequiredUserIDs.insert(resolvedUser.id)
             persistNicknameSetupRequiredUserIDs()
         }
 
         requiresNicknameSetup = Self.shouldRequireNicknameSetup(
-            for: user,
+            for: resolvedUser,
             onboardedUserIDs: nicknameOnboardedUserIDs,
             requiredUserIDs: nicknameSetupRequiredUserIDs
         )

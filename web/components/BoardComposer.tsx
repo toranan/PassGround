@@ -33,18 +33,26 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token") ?? "";
+    setIsLoggedIn(Boolean(token));
+    if (token) {
+      setAccessToken(token);
+    }
     if (stored) {
       try {
         const user = JSON.parse(stored);
+        if (typeof user.id === "string" && user.id) {
+          setUserId(user.id);
+        }
         if (user.nickname) {
           setAuthorName(user.nickname);
-          setIsLoggedIn(true);
         } else if (user.username) {
           setAuthorName(user.username);
-          setIsLoggedIn(true);
         }
       } catch {
         // ignore
@@ -137,6 +145,10 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
 
   const handleSubmit = async () => {
     setMessage("");
+    if (!isLoggedIn || !userId || !accessToken) {
+      setMessage("로그인 후 글을 작성할 수 있어요.");
+      return;
+    }
     const nameValue = isLoggedIn ? authorName.trim() : "익명";
     const titleValue = title.trim();
     let contentValue = content.trim();
@@ -166,13 +178,18 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
     try {
       const res = await fetch("/api/posts/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           examSlug,
           boardSlug,
           authorName: nameValue,
           title: titleValue,
           content: contentValue,
+          userId,
+          accessToken,
         }),
       });
       const data = await res.json();
@@ -315,11 +332,18 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
         </div>
         <button
           type="button"
-          onClick={handleSubmit}
+          onClick={() => {
+            if (!isLoggedIn) {
+              setMessage("로그인 후 글을 작성할 수 있어요.");
+              router.push(`/signup?next=/c/${examSlug}/${boardSlug}`);
+              return;
+            }
+            void handleSubmit();
+          }}
           disabled={isSubmitting}
           className="h-10 rounded-lg bg-primary px-6 text-sm font-semibold text-white hover:bg-primary/90 disabled:bg-primary/40"
         >
-          {isSubmitting ? "작성 중..." : "글쓰기"}
+          {isSubmitting ? "작성 중..." : isLoggedIn ? "글쓰기" : "로그인"}
         </button>
       </div>
     </div>
