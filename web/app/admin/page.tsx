@@ -421,17 +421,15 @@ export default function AdminPage() {
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
-  const [knowledgeRawInput, setKnowledgeRawInput] = useState("");
+  const [knowledgeInputMode, setKnowledgeInputMode] = useState<"single" | "bulk" | "pdf">("single");
+  const [knowledgeSingleQuestion, setKnowledgeSingleQuestion] = useState("");
+  const [knowledgeSingleAnswer, setKnowledgeSingleAnswer] = useState("");
+  const [knowledgeSingleTags, setKnowledgeSingleTags] = useState("");
   const [knowledgeBulkRawInput, setKnowledgeBulkRawInput] = useState("");
-  const [knowledgeDirectInput, setKnowledgeDirectInput] = useState("");
-  const [knowledgeDirectTitle, setKnowledgeDirectTitle] = useState("");
-  const [knowledgeDirectTags, setKnowledgeDirectTags] = useState("");
   const [knowledgeInfoForm, setKnowledgeInfoForm] = useState({
     admissionYear: String(new Date().getFullYear()),
     university: "",
     majorTrack: "",
-    sourceLabel: "",
-    rawText: "",
   });
   const [knowledgePdfFile, setKnowledgePdfFile] = useState<File | null>(null);
   const [knowledgePdfNote, setKnowledgePdfNote] = useState("");
@@ -1336,79 +1334,23 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreateKnowledgeDraft = async () => {
+  const handleCreateSingleQA = async () => {
     const token = await resolveUsableAccessToken();
     if (!token) return;
 
-    if (!knowledgeRawInput.trim()) {
-      setMessage("날것 입력 내용을 먼저 적어주세요.");
+    const question = knowledgeSingleQuestion.trim();
+    const answer = knowledgeSingleAnswer.trim();
+    if (!question || !answer) {
+      setMessage("질문과 답변을 모두 입력해 주세요.");
       return;
     }
-
-    setSubmitting(true);
-    setMessage("");
-    try {
-      const res = await fetch("/api/admin/knowledge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          exam,
-          rawInput: knowledgeRawInput,
-        }),
-      });
-      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
-      if (!res.ok || !payload || !("ok" in payload)) {
-        setMessage((payload && "error" in payload && payload.error) || "AI 지식 초안 생성에 실패했습니다.");
-        return;
-      }
-      setKnowledgePending(payload.pending ?? []);
-      setKnowledgeApproved(payload.approved ?? []);
-      setKnowledgeRawInput("");
-      setMessage("AI 지식 초안을 만들었습니다. 내용 확인 후 승인 반영해 주세요.");
-    } catch {
-      setMessage("AI 지식 초안 생성 중 오류가 발생했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCreateKnowledgeFromInfoTab = async () => {
-    const token = await resolveUsableAccessToken();
-    if (!token) return;
 
     const admissionYear = knowledgeInfoForm.admissionYear.trim();
     const university = knowledgeInfoForm.university.trim();
     const majorTrack = knowledgeInfoForm.majorTrack.trim();
-    const sourceLabel = knowledgeInfoForm.sourceLabel.trim();
-    const rawText = knowledgeInfoForm.rawText.trim();
-
-    if (!rawText) {
-      setMessage("붙여넣을 정보 본문을 입력해 주세요.");
-      return;
-    }
-    if (admissionYear && !/^\d{4}$/.test(admissionYear)) {
-      setMessage("학년도는 4자리 숫자(예: 2026)로 입력해 주세요.");
-      return;
-    }
-
-    const metadataLines = [
-      admissionYear ? `학년도: ${admissionYear}` : "",
-      university ? `학교: ${university}` : "",
-      majorTrack ? `학과/전형: ${majorTrack}` : "",
-      sourceLabel ? `출처: ${sourceLabel}` : "",
-    ].filter(Boolean);
-
-    const mergedRawInput = [
-      metadataLines.length ? `[메타데이터]\n${metadataLines.join("\n")}` : "",
-      `[원문]\n${rawText}`,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-
-    const tagSet = new Set<string>(["편입", "전형정보"]);
+    const tagSet = new Set<string>(parseTagsInput(knowledgeSingleTags));
+    tagSet.add("편입");
+    tagSet.add("FAQ");
     if (admissionYear) {
       tagSet.add(admissionYear);
       tagSet.add(`${admissionYear}학년도`);
@@ -1416,6 +1358,8 @@ export default function AdminPage() {
     if (university) tagSet.add(university);
     if (majorTrack) tagSet.add(majorTrack);
 
+    const body = `질문: ${question}\n\n답변: ${answer}`;
+
     setSubmitting(true);
     setMessage("");
     try {
@@ -1427,24 +1371,28 @@ export default function AdminPage() {
         },
         body: JSON.stringify({
           exam,
-          rawInput: mergedRawInput,
+          directRawInput: body,
+          directTitle: question,
           tags: [...tagSet],
         }),
       });
       const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
       if (!res.ok || !payload || !("ok" in payload)) {
-        setMessage((payload && "error" in payload && payload.error) || "정보 넣기 초안 생성에 실패했습니다.");
+        setMessage((payload && "error" in payload && payload.error) || "Q/A 저장에 실패했습니다.");
         return;
       }
       setKnowledgePending(payload.pending ?? []);
       setKnowledgeApproved(payload.approved ?? []);
-      setKnowledgeInfoForm((prev) => ({
-        ...prev,
-        rawText: "",
-      }));
-      setMessage("정보 넣기 초안 생성 완료. 아래 검수 대기에서 확인 후 승인 반영해 주세요.");
+      setKnowledgeSingleQuestion("");
+      setKnowledgeSingleAnswer("");
+      setKnowledgeSingleTags("");
+      setMessage(
+        payload.ragSyncError
+          ? `Q/A 저장은 됐지만 색인 경고가 있어: ${payload.ragSyncError}`
+          : "Q/A를 저장하고 RAG에 즉시 반영했습니다."
+      );
     } catch {
-      setMessage("정보 넣기 처리 중 오류가 발생했습니다.");
+      setMessage("Q/A 저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -1498,67 +1446,6 @@ export default function AdminPage() {
       setMessage(`Q/A 본문 ${inserted}개를 초안으로 저장했습니다. 아래에서 검수 후 승인 반영하세요.`);
     } catch {
       setMessage("Q/A 일괄 처리 중 오류가 발생했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDirectIngestKnowledge = async () => {
-    const token = await resolveUsableAccessToken();
-    if (!token) return;
-
-    const rawText = knowledgeDirectInput.trim();
-    if (!rawText) {
-      setMessage("직접 반영할 본문을 입력해 주세요.");
-      return;
-    }
-
-    const admissionYear = knowledgeInfoForm.admissionYear.trim();
-    const university = knowledgeInfoForm.university.trim();
-    const majorTrack = knowledgeInfoForm.majorTrack.trim();
-    const tagSet = new Set<string>(parseTagsInput(knowledgeDirectTags));
-    tagSet.add("편입");
-    if (admissionYear) {
-      tagSet.add(admissionYear);
-      tagSet.add(`${admissionYear}학년도`);
-    }
-    if (university) tagSet.add(university);
-    if (majorTrack) tagSet.add(majorTrack);
-
-    setSubmitting(true);
-    setMessage("");
-    try {
-      const res = await fetch("/api/admin/knowledge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          exam,
-          directRawInput: rawText,
-          directTitle: knowledgeDirectTitle.trim(),
-          tags: [...tagSet],
-        }),
-      });
-      const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
-      if (!res.ok || !payload || !("ok" in payload)) {
-        setMessage((payload && "error" in payload && payload.error) || "원문 즉시 반영에 실패했습니다.");
-        return;
-      }
-
-      setKnowledgePending(payload.pending ?? []);
-      setKnowledgeApproved(payload.approved ?? []);
-      setKnowledgeDirectInput("");
-      setKnowledgeDirectTitle("");
-      setKnowledgeDirectTags("");
-      if (payload.ragSyncError) {
-        setMessage(`원문은 저장됐지만 색인 동기화 경고가 있어: ${payload.ragSyncError}`);
-      } else {
-        setMessage("원문을 승인 상태로 즉시 반영하고 색인까지 완료했습니다.");
-      }
-    } catch {
-      setMessage("원문 즉시 반영 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -2602,13 +2489,10 @@ export default function AdminPage() {
                 <>
                 <Card className="border-none shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-lg">정보넣기 탭 (RAG용 장문 입력)</CardTitle>
+                    <CardTitle className="text-lg">정보 입력</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-xs text-muted-foreground">
-                      학교/학과/학년도 정보를 함께 넣으면 `pending` 초안으로 저장돼. 아래 AI 지식 검수에서 확인 후 승인하면 챗봇 RAG에 반영돼.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <CardContent className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <Input
                         placeholder="학년도 (예: 2026)"
                         value={knowledgeInfoForm.admissionYear}
@@ -2617,7 +2501,7 @@ export default function AdminPage() {
                         }
                       />
                       <Input
-                        placeholder="학교명 (예: 성균관대학교)"
+                        placeholder="학교명 (선택)"
                         value={knowledgeInfoForm.university}
                         onChange={(e) =>
                           setKnowledgeInfoForm((prev) => ({ ...prev, university: e.target.value }))
@@ -2630,87 +2514,116 @@ export default function AdminPage() {
                           setKnowledgeInfoForm((prev) => ({ ...prev, majorTrack: e.target.value }))
                         }
                       />
-                      <Input
-                        placeholder="출처 메모 (선택)"
-                        value={knowledgeInfoForm.sourceLabel}
-                        onChange={(e) =>
-                          setKnowledgeInfoForm((prev) => ({ ...prev, sourceLabel: e.target.value }))
-                        }
-                      />
                     </div>
-                    <textarea
-                      className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder="예: 2026학년도 성균관대학교 편입학 주요 일정/전형 변경/경쟁률/예상 커트라인 정보를 여기에 그대로 붙여넣어 주세요."
-                      value={knowledgeInfoForm.rawText}
-                      onChange={(e) =>
-                        setKnowledgeInfoForm((prev) => ({ ...prev, rawText: e.target.value }))
-                      }
-                    />
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs text-muted-foreground">
-                        본문 길이: {knowledgeInfoForm.rawText.trim().length.toLocaleString()}자 (권장 12,000자 이하)
-                      </p>
-                      <Button onClick={handleCreateKnowledgeFromInfoTab} disabled={submitting}>
-                        {submitting ? "처리 중..." : "정보 넣고 초안 생성"}
-                      </Button>
+                    <p className="text-xs text-muted-foreground">
+                      위 메타 정보는 어느 입력 방식이든 공통으로 태그에 자동 반영됩니다.
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+                      {(
+                        [
+                          { value: "single" as const, label: "단일 Q/A" },
+                          { value: "bulk" as const, label: "Q/A 일괄" },
+                          { value: "pdf" as const, label: "PDF 업로드" },
+                        ]
+                      ).map((mode) => (
+                        <Button
+                          key={mode.value}
+                          variant={knowledgeInputMode === mode.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setKnowledgeInputMode(mode.value)}
+                        >
+                          {mode.label}
+                        </Button>
+                      ))}
                     </div>
 
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Q/A 본문을 한 번에 붙여넣어 pending 초안을 여러 개 생성합니다.
-                        형식: `Q01. 질문` + `A01. 답변`
-                      </p>
-                      <textarea
-                        className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        placeholder={"Q01. 질문\nA01. 답변\n\nQ02. 질문\nA02. 답변"}
-                        value={knowledgeBulkRawInput}
-                        onChange={(e) => setKnowledgeBulkRawInput(e.target.value)}
-                      />
-                      <div className="flex items-center justify-between gap-3">
+                    {knowledgeInputMode === "single" ? (
+                      <div className="space-y-3">
                         <p className="text-xs text-muted-foreground">
-                          본문 길이: {knowledgeBulkRawInput.trim().length.toLocaleString()}자
+                          질문과 답변을 하나씩 입력합니다. 저장 즉시 승인 + 색인까지 적용됩니다.
                         </p>
-                        <Button onClick={handleCreateKnowledgeBulkQA} disabled={submitting}>
-                          {submitting ? "처리 중..." : "Q/A 일괄 초안 생성"}
-                        </Button>
+                        <Input
+                          placeholder="질문 (예: 강원대 경영 농어촌전형은 영어 시험이 있나요?)"
+                          value={knowledgeSingleQuestion}
+                          onChange={(e) => setKnowledgeSingleQuestion(e.target.value)}
+                        />
+                        <textarea
+                          className="min-h-[160px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          placeholder="답변 (편입 합곰이가 참고할 사실/조언을 자세히)"
+                          value={knowledgeSingleAnswer}
+                          onChange={(e) => setKnowledgeSingleAnswer(e.target.value)}
+                        />
+                        <Input
+                          placeholder="추가 태그 (선택, 쉼표 구분)"
+                          value={knowledgeSingleTags}
+                          onChange={(e) => setKnowledgeSingleTags(e.target.value)}
+                        />
+                        <div className="flex items-center justify-end">
+                          <Button onClick={handleCreateSingleQA} disabled={submitting}>
+                            {submitting ? "처리 중..." : "저장 + 즉시 반영"}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
 
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        범용 본문 직투입: Q/A 형식이 아니어도 그대로 승인 반영 + 즉시 색인합니다.
-                      </p>
-                      <Input
-                        placeholder="제목(선택) - 비워두면 본문 첫 줄로 자동 생성"
-                        value={knowledgeDirectTitle}
-                        onChange={(e) => setKnowledgeDirectTitle(e.target.value)}
-                      />
-                      <Input
-                        placeholder="추가 태그(선택, 쉼표 구분)"
-                        value={knowledgeDirectTags}
-                        onChange={(e) => setKnowledgeDirectTags(e.target.value)}
-                      />
-                      <textarea
-                        className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        placeholder="RAG에 바로 반영할 본문을 그대로 붙여넣어 주세요."
-                        value={knowledgeDirectInput}
-                        onChange={(e) => setKnowledgeDirectInput(e.target.value)}
-                      />
-                      <div className="flex items-center justify-between gap-3">
+                    {knowledgeInputMode === "bulk" ? (
+                      <div className="space-y-3">
                         <p className="text-xs text-muted-foreground">
-                          본문 길이: {knowledgeDirectInput.trim().length.toLocaleString()}자
+                          Q/A 본문을 한 번에 붙여넣어 `pending` 초안을 여러 개 생성합니다.
+                          형식: `Q01. 질문` + `A01. 답변`
                         </p>
-                        <Button onClick={handleDirectIngestKnowledge} disabled={submitting}>
-                          {submitting ? "처리 중..." : "원문 바로 반영(승인+색인)"}
-                        </Button>
+                        <textarea
+                          className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          placeholder={"Q01. 질문\nA01. 답변\n\nQ02. 질문\nA02. 답변"}
+                          value={knowledgeBulkRawInput}
+                          onChange={(e) => setKnowledgeBulkRawInput(e.target.value)}
+                        />
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs text-muted-foreground">
+                            본문 길이: {knowledgeBulkRawInput.trim().length.toLocaleString()}자
+                          </p>
+                          <Button onClick={handleCreateKnowledgeBulkQA} disabled={submitting}>
+                            {submitting ? "처리 중..." : "Q/A 일괄 초안 생성"}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
+
+                    {knowledgeInputMode === "pdf" ? (
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground">
+                          PDF 파일을 업로드하면 `pending` 초안이 자동 생성됩니다. 검수 후 승인 반영하세요.
+                        </p>
+                        <input
+                          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          onChange={(event) => setKnowledgePdfFile(event.target.files?.[0] ?? null)}
+                        />
+                        <Input
+                          placeholder="PDF 메모 (선택)"
+                          value={knowledgePdfNote}
+                          onChange={(e) => setKnowledgePdfNote(e.target.value)}
+                        />
+                        <Input
+                          placeholder="추가 태그 (선택, 쉼표 구분)"
+                          value={knowledgePdfTags}
+                          onChange={(e) => setKnowledgePdfTags(e.target.value)}
+                        />
+                        <div className="flex items-center justify-end">
+                          <Button onClick={handleUploadKnowledgePdf} disabled={submitting}>
+                            {submitting ? "처리 중..." : "PDF 업로드 + 초안 생성"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-lg">AI 지식 검수 (날것 입력 → 컨펌 후 반영)</CardTitle>
+                    <CardTitle className="text-lg">검수 / 승인</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -2727,50 +2640,6 @@ export default function AdminPage() {
                       >
                         {reindexingKnowledge ? "재색인 중..." : "RAG 재색인 실행"}
                       </Button>
-                    </div>
-
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        입력한 날것은 바로 반영되지 않고 `pending`으로 저장됩니다. 아래에서 내용을 확인 후 승인하세요.
-                      </p>
-                      <textarea
-                        className="min-h-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        placeholder="날것 조언 입력 (예: 모의고사는 지표일 뿐이고 멘탈 흔들리지 말자...)"
-                        value={knowledgeRawInput}
-                        onChange={(e) => setKnowledgeRawInput(e.target.value)}
-                      />
-                      <div>
-                        <Button onClick={handleCreateKnowledgeDraft} disabled={submitting}>
-                          {submitting ? "처리 중..." : "초안 생성 (Pending)"}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        PDF 파일을 업로드하면 `pending` 초안이 자동 생성됩니다. 검수 후 승인 반영하세요.
-                      </p>
-                      <input
-                        className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        onChange={(event) => setKnowledgePdfFile(event.target.files?.[0] ?? null)}
-                      />
-                      <Input
-                        placeholder="PDF 메모(선택)"
-                        value={knowledgePdfNote}
-                        onChange={(e) => setKnowledgePdfNote(e.target.value)}
-                      />
-                      <Input
-                        placeholder="태그(선택, 쉼표 구분)"
-                        value={knowledgePdfTags}
-                        onChange={(e) => setKnowledgePdfTags(e.target.value)}
-                      />
-                      <div>
-                        <Button onClick={handleUploadKnowledgePdf} disabled={submitting}>
-                          {submitting ? "처리 중..." : "PDF 업로드 + 초안 생성"}
-                        </Button>
-                      </div>
                     </div>
 
                     <div className="space-y-2">
