@@ -159,7 +159,7 @@ export function Navbar() {
               커뮤니티
             </Link>
             <Link href="/transfer/data-center" className="transition-colors hover:text-primary">
-              데이터센터
+              커트라인
             </Link>
             <Link href="/mypage" className="transition-colors hover:text-primary">
               마이페이지

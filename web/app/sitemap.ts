@@ -4,15 +4,15 @@ import { ENABLE_CPA, ENABLE_TRANSFER } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+type BoardRel = {
+  slug: string | null;
+  exams: { slug: string } | { slug: string }[] | null;
+};
+
 type RecentPostRow = {
   id: string;
   created_at: string | null;
-  boards:
-    | {
-        slug: string | null;
-        exams: { slug: string } | { slug: string }[] | null;
-      }
-    | null;
+  boards: BoardRel | BoardRel[] | null;
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -51,10 +51,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .limit(500);
 
     if (recentPosts) {
-      recentPosts.forEach((post: RecentPostRow) => {
-        const examInfo = post.boards?.exams;
+      (recentPosts as unknown as RecentPostRow[]).forEach((post) => {
+        const board = Array.isArray(post.boards) ? post.boards[0] : post.boards;
+        const examInfo = board?.exams;
         const examSlug = Array.isArray(examInfo) ? examInfo[0]?.slug : examInfo?.slug;
-        const boardSlug = post.boards?.slug;
+        const boardSlug = board?.slug;
         if (examSlug && boardSlug) {
           if (examSlug === "cpa" && !ENABLE_CPA) return;
           if (examSlug === "transfer" && !ENABLE_TRANSFER) return;
