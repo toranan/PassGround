@@ -61,10 +61,6 @@ struct ContentView: View {
             NavigationStack {
                 CommunityBoardsView()
             }
-        case .ranking:
-            NavigationStack {
-                RankingView()
-            }
         case .schedule:
             NavigationStack {
                 ScheduleView()
@@ -85,7 +81,6 @@ enum TabSelection: String, CaseIterable {
     case home = "홈"
     case coach = "AI상담"
     case community = "커뮤니티"
-    case ranking = "데이터센터"
     case schedule = "일정"
     case mypage = "마이"
 }
@@ -100,7 +95,6 @@ struct MainBottomTabBar: View {
                 TabBarButton(title: "홈", iconName: "house.fill", tab: .home, selectedTab: $selectedTab)
                 TabBarButton(title: "AI상담", iconName: "bubble.left.and.bubble.right.fill", tab: .coach, selectedTab: $selectedTab)
                 TabBarButton(title: "커뮤니티", iconName: "text.bubble.fill", tab: .community, selectedTab: $selectedTab)
-                TabBarButton(title: "데이터센터", iconName: "chart.bar.fill", tab: .ranking, selectedTab: $selectedTab)
                 TabBarButton(title: "일정", iconName: "calendar.badge.clock", tab: .schedule, selectedTab: $selectedTab)
                 TabBarButton(title: "마이", iconName: "person.crop.circle.fill", tab: .mypage, selectedTab: $selectedTab)
             }

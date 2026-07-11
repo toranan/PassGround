@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { resolveUsableAccessToken } from "@/lib/authClient";
 
 type ChatRole = "user" | "assistant";
 
@@ -109,7 +110,7 @@ export function TransferAiAssistantPanel() {
     const question = input.trim();
     if (!question) return;
 
-    const token = localStorage.getItem("access_token") ?? "";
+    let token = await resolveUsableAccessToken();
     if (!token) {
       openLoginPrompt();
       return;
@@ -125,12 +126,12 @@ export function TransferAiAssistantPanel() {
 
     try {
       const history = toHistory(messages);
-      const response = await fetch("/api/ai/chat", {
+      const buildRequest = (accessToken: string) => fetch("/api/ai/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "text/event-stream",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           exam: "transfer",
@@ -139,6 +140,15 @@ export function TransferAiAssistantPanel() {
           messages: history,
         }),
       });
+      let response = await buildRequest(token);
+
+      if (response.status === 401) {
+        const refreshedToken = await resolveUsableAccessToken(true);
+        if (refreshedToken && refreshedToken !== token) {
+          token = refreshedToken;
+          response = await buildRequest(token);
+        }
+      }
 
       if (!response.ok || !response.body) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -220,7 +230,7 @@ export function TransferAiAssistantPanel() {
   const handleSubmitQuestion = async () => {
     if (!canSubmitQuestion || submittingQuestion) return;
 
-    const token = localStorage.getItem("access_token") ?? "";
+    let token = await resolveUsableAccessToken();
     if (!token) {
       openLoginPrompt();
       return;
@@ -234,11 +244,11 @@ export function TransferAiAssistantPanel() {
 
     try {
       setSubmittingQuestion(true);
-      const response = await fetch("/api/ai/questions/submit", {
+      const buildRequest = (accessToken: string) => fetch("/api/ai/questions/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           exam: "transfer",
@@ -246,6 +256,15 @@ export function TransferAiAssistantPanel() {
           traceId: lastAssistant?.traceId,
         }),
       });
+      let response = await buildRequest(token);
+
+      if (response.status === 401) {
+        const refreshedToken = await resolveUsableAccessToken(true);
+        if (refreshedToken && refreshedToken !== token) {
+          token = refreshedToken;
+          response = await buildRequest(token);
+        }
+      }
 
       const payload = (await response.json().catch(() => null)) as { ok?: boolean; message?: string; error?: string } | null;
       if (!response.ok || !payload?.ok) {
