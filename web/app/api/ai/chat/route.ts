@@ -4,6 +4,7 @@ import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   createEmbedding,
+  createEmbeddings,
   EmbeddingsDisabledError,
   generateGroundedAnswer,
   generateGroundedAnswerStream,
@@ -406,6 +407,7 @@ async function resolveMessageRouteWithAI(params: {
         "- smalltalk: 인사/가벼운 잡담",
         "원칙: 기존 커트라인 흐름과 무관한 새 질문이면 반드시 fact_or_emotion 또는 smalltalk를 선택한다.",
         "원칙: 현재 메시지가 학년도/학교명/학과명/점수 같은 슬롯만 보강하면 cutoff_continue를 우선한다.",
+        "원칙: 점수·학점·대학명이 언급되더라도, 특정 대학의 합격선(컷) 판정을 요구하는 게 아니라 전반적인 방향성·전략·상담을 묻는 질문이면 fact_or_emotion을 선택한다.",
         "출력은 JSON만 허용. 코드블록 금지.",
         'JSON 스키마: {"route":"cutoff_start|cutoff_continue|fact_or_emotion|smalltalk","confidence":0.0}',
       ].join("\n"),
@@ -419,6 +421,7 @@ async function resolveMessageRouteWithAI(params: {
       ].join("\n"),
       temperature: 0,
       maxOutputTokens: 120,
+      disableThinking: true,
     });
 
     const ai = parseMessageRouteAiResult(raw) ?? createDefaultMessageRouteAiResult();
@@ -847,6 +850,62 @@ function buildAdviceReferenceText(adviceSnippets: CoachingAdviceSnippet[]): stri
     .join("\n");
 }
 
+function parseSubQuestions(raw: string): string[] {
+  const direct = raw
+    .replace(/```(?:json)?/gi, "")
+    .replace(/```/g, "")
+    .trim();
+  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
+  if (!jsonCandidate) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonCandidate);
+  } catch {
+    return [];
+  }
+  if (!parsed || typeof parsed !== "object") return [];
+  const list = (parsed as Record<string, unknown>).subQuestions;
+  if (!Array.isArray(list)) return [];
+
+  return list
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.replace(/\s+/g, " ").trim())
+    .filter((entry) => entry.length >= 5 && entry.length <= 200)
+    .slice(0, 4);
+}
+
+// 복합 질문은 벡터 하나로 뭉개지면 어떤 지식과도 유사도가 낮아진다.
+// 주제별 하위 질문으로 쪼개 각각 검색하고 근거를 합치면 회수율이 올라간다.
+async function decomposeQuestionForRetrieval(question: string): Promise<string[]> {
+  if (question.length < 80) return [];
+  try {
+    const raw = await generateText({
+      systemPrompt: [
+        "너는 지식 검색용 질문 분해기다.",
+        "사용자 질문이 여러 주제를 담고 있으면, 벡터 검색에 쓸 독립적인 하위 질문 2~4개로 분해한다.",
+        "규칙:",
+        "- 각 하위 질문은 한 가지 주제만 담은 완결된 한 문장으로 쓴다. 최대 4개.",
+        "- 여러 대학·학과가 나열돼 있으면 대학별로 반복하지 말고 하나의 하위 질문으로 묶는다.",
+        "- 검색에 불필요한 개인 서사(현재 다니는 학교, 상황 묘사)는 빼고 핵심 주제만 남긴다.",
+        "- 질문이 단일 주제면 빈 배열을 반환한다.",
+        "출력은 JSON만 허용. 코드블록 금지.",
+        'JSON 스키마: {"subQuestions":["..."]}',
+        "",
+        "예시 입력: 학점 3.5인데 한양대 건국대 기계공학과 편입하려면 뭐부터 해야 해? 수학은 자신 없어",
+        '예시 출력: {"subQuestions":["한양대 건국대 기계공학과 편입 전형은 어떻게 되나요?","편입할 때 학점 3.5면 충분한가요?","수학이 약한데 자연계 편입 준비는 어떻게 시작해야 하나요?"]}',
+      ].join("\n"),
+      userPrompt: `사용자 질문: ${question}`,
+      temperature: 0,
+      maxOutputTokens: 300,
+      disableThinking: true,
+    });
+    return parseSubQuestions(raw);
+  } catch {
+    return [];
+  }
+}
+
 async function classifyIntent(question: string): Promise<IntentRoute> {
   try {
     const classifier = await generateText({
@@ -862,6 +921,7 @@ async function classifyIntent(question: string): Promise<IntentRoute> {
       ].join("\n"),
       temperature: 0,
       maxOutputTokens: 8,
+      disableThinking: true,
     });
     const intent = normalizeIntentLabel(classifier);
     if (intent) return intent;
@@ -909,6 +969,7 @@ async function resolveCoachingFallbackWithAI(params: {
       ].join("\n"),
       temperature: 0,
       maxOutputTokens: 120,
+      disableThinking: true,
     });
 
     const ai = parseCoachingFallbackAiResult(raw);
@@ -1029,7 +1090,7 @@ async function runChatWorkflow(params: {
 
   const admin = getSupabaseAdmin();
   const minSimilarity =
-    typeof body.minSimilarity === "number" ? Math.max(0, Math.min(1, body.minSimilarity)) : 0.7;
+    typeof body.minSimilarity === "number" ? Math.max(0, Math.min(1, body.minSimilarity)) : 0.5;
   const matchCount = typeof body.matchCount === "number" ? Math.max(1, Math.min(12, Math.floor(body.matchCount))) : 6;
   const historyMessages = normalizeHistoryMessages(body.messages);
   const cutoffHistoryContext = deriveCutoffHistoryContext(historyMessages);
@@ -1240,6 +1301,7 @@ async function runChatWorkflow(params: {
         ].join("\n"),
         temperature: 0,
         maxOutputTokens: 420,
+        disableThinking: true,
       });
       generationMs = Date.now() - generationStarted;
     }
@@ -1428,38 +1490,68 @@ async function runChatWorkflow(params: {
   }
 
   const embeddingStarted = Date.now();
+  const subQuestions = await decomposeQuestionForRetrieval(question);
   let queryEmbedding: number[] = [];
+  let subQueryEmbeddings: number[][] = [];
   try {
-    queryEmbedding = await createEmbedding(question);
+    const vectors = await createEmbeddings([question, ...subQuestions]);
+    queryEmbedding = vectors[0] ?? [];
+    subQueryEmbeddings = vectors.slice(1);
   } catch (err) {
     if (!(err instanceof EmbeddingsDisabledError)) throw err;
   }
   embeddingMs = Date.now() - embeddingStarted;
 
   const retrievalStarted = Date.now();
-  const { data: matched, error: matchError } = queryEmbedding.length
-    ? await admin.rpc("match_ai_knowledge_chunks", {
-        query_embedding: queryEmbedding,
-        query_exam: exam,
-        match_count: matchCount,
-        min_similarity: minSimilarity,
-      })
-    : { data: [] as MatchedChunkRow[], error: null };
+  let matched: MatchedChunkRow[] = [];
+  let matchErrorMessage = "";
+  if (queryEmbedding.length) {
+    // 하위 질문은 주제가 좁혀진 만큼 문턱을 살짝 낮춰 회수율을 확보한다.
+    const subMinSimilarity = Math.min(minSimilarity, 0.45);
+    const retrievalQueries = [
+      { embedding: queryEmbedding, minSimilarity },
+      ...subQueryEmbeddings.map((embedding) => ({ embedding, minSimilarity: subMinSimilarity })),
+    ];
+    const results = await Promise.all(
+      retrievalQueries.map((retrievalQuery) =>
+        admin.rpc("match_ai_knowledge_chunks", {
+          query_embedding: retrievalQuery.embedding,
+          query_exam: exam,
+          match_count: matchCount,
+          min_similarity: retrievalQuery.minSimilarity,
+        })
+      )
+    );
+    matchErrorMessage = results[0]?.error?.message ?? "";
+
+    const mergedById = new Map<string, MatchedChunkRow>();
+    for (const result of results) {
+      for (const row of (result.data as MatchedChunkRow[] | null) ?? []) {
+        const existing = mergedById.get(row.id);
+        if (!existing || row.similarity > existing.similarity) {
+          mergedById.set(row.id, row);
+        }
+      }
+    }
+    matched = [...mergedById.values()]
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, matchCount);
+  }
   retrievalMs = Date.now() - retrievalStarted;
 
-  if (matchError) {
+  if (matchErrorMessage) {
     await recordObservation({
       route: intent === "mixed" ? "mixed" : "fallback",
       status: "error",
       matchedContextCount: 0,
       hasEnoughContext: false,
       answerLength: 0,
-      errorMessage: matchError.message,
+      errorMessage: matchErrorMessage,
     });
-    throw new ChatHttpError(400, matchError.message);
+    throw new ChatHttpError(400, matchErrorMessage);
   }
 
-  const contexts = ((matched as MatchedChunkRow[] | null) ?? []).map((row) => ({
+  const contexts = matched.map((row) => ({
     id: row.id,
     knowledgeItemId: row.knowledge_item_id,
     chunkText: row.chunk_text,

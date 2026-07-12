@@ -163,6 +163,7 @@ type GeminiGenerateBody = {
   generationConfig?: {
     temperature?: number;
     maxOutputTokens?: number;
+    thinkingConfig?: { thinkingBudget: number };
   };
 };
 
@@ -180,6 +181,7 @@ function buildGeminiBody(params: {
   userPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
+  disableThinking?: boolean;
 }): GeminiGenerateBody {
   return {
     contents: [
@@ -194,6 +196,9 @@ function buildGeminiBody(params: {
     generationConfig: {
       temperature: params.temperature ?? 0.3,
       maxOutputTokens: params.maxOutputTokens,
+      // gemini-2.5 계열은 thinking 토큰이 maxOutputTokens를 먼저 소모해서
+      // 분류기처럼 작은 토큰 예산의 호출은 출력이 잘린다. 그런 호출은 thinking을 끈다.
+      ...(params.disableThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
     },
   };
 }
@@ -214,6 +219,7 @@ export async function generateText(params: {
   userPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
+  disableThinking?: boolean;
 }): Promise<string> {
   assertGeminiKey();
   const key = getGeminiKey();
@@ -297,6 +303,7 @@ export async function streamText(params: {
   userPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
+  disableThinking?: boolean;
   onDelta: (delta: string) => void;
 }): Promise<string> {
   assertGeminiKey();
@@ -325,6 +332,7 @@ export async function streamText(params: {
     userPrompt: params.userPrompt,
     temperature: params.temperature,
     maxOutputTokens: params.maxOutputTokens,
+    disableThinking: params.disableThinking,
   });
   if (fallbackText) {
     params.onDelta(fallbackText);
