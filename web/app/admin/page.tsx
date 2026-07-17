@@ -390,11 +390,11 @@ export default function AdminPage() {
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
-  const [knowledgeInputMode, setKnowledgeInputMode] = useState<"single" | "bulk" | "pdf">("single");
+  const [knowledgeInputMode, setKnowledgeInputMode] = useState<"single" | "info" | "pdf">("info");
   const [knowledgeSingleQuestion, setKnowledgeSingleQuestion] = useState("");
   const [knowledgeSingleAnswer, setKnowledgeSingleAnswer] = useState("");
   const [knowledgeSingleTags, setKnowledgeSingleTags] = useState("");
-  const [knowledgeBulkRawInput, setKnowledgeBulkRawInput] = useState("");
+  const [knowledgeInfoRawInput, setKnowledgeInfoRawInput] = useState("");
   const [knowledgeInfoForm, setKnowledgeInfoForm] = useState({
     admissionYear: String(new Date().getFullYear()),
     university: "",
@@ -1263,26 +1263,29 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreateKnowledgeBulkQA = async () => {
+  const handleCreateKnowledgeInfo = async () => {
     const token = await resolveUsableAccessToken();
     if (!token) return;
 
-    const bulkText = knowledgeBulkRawInput.trim();
-    if (!bulkText) {
-      setMessage("Q/A 본문을 먼저 붙여넣어 주세요.");
+    const infoText = knowledgeInfoRawInput.trim();
+    if (!infoText) {
+      setMessage("저장할 정보 본문을 먼저 붙여넣어 주세요.");
       return;
     }
 
     const admissionYear = knowledgeInfoForm.admissionYear.trim();
     const university = knowledgeInfoForm.university.trim();
     const majorTrack = knowledgeInfoForm.majorTrack.trim();
-    const tagSet = new Set<string>(["편입", "전형정보", "FAQ"]);
+    const tagSet = new Set<string>(["편입", "전형정보", "정보"]);
     if (admissionYear) {
       tagSet.add(admissionYear);
       tagSet.add(`${admissionYear}학년도`);
     }
     if (university) tagSet.add(university);
     if (majorTrack) tagSet.add(majorTrack);
+
+    const titleParts = [admissionYear ? `${admissionYear}학년도` : "", university, majorTrack || "편입 정보"].filter(Boolean);
+    const directTitle = titleParts.join(" ") || infoText.split("\n").find(Boolean)?.slice(0, 80) || "편입 정보";
 
     setSubmitting(true);
     setMessage("");
@@ -1295,22 +1298,26 @@ export default function AdminPage() {
         },
         body: JSON.stringify({
           exam,
-          bulkRawInput: bulkText,
+          directRawInput: infoText,
+          directTitle,
           tags: [...tagSet],
         }),
       });
       const payload = (await res.json().catch(() => null)) as AdminKnowledgeResponse | { error?: string } | null;
       if (!res.ok || !payload || !("ok" in payload)) {
-        setMessage((payload && "error" in payload && payload.error) || "Q/A 일괄 초안 생성에 실패했습니다.");
+        setMessage((payload && "error" in payload && payload.error) || "정보 저장에 실패했습니다.");
         return;
       }
       setKnowledgePending(payload.pending ?? []);
       setKnowledgeApproved(payload.approved ?? []);
-      setKnowledgeBulkRawInput("");
-      const inserted = typeof payload.bulkInsertedCount === "number" ? payload.bulkInsertedCount : 0;
-      setMessage(`Q/A 본문 ${inserted}개를 초안으로 저장했습니다. 아래에서 검수 후 승인 반영하세요.`);
+      setKnowledgeInfoRawInput("");
+      setMessage(
+        payload.ragSyncError
+          ? `정보 저장은 됐지만 색인 경고가 있어: ${payload.ragSyncError}`
+          : "정보 본문을 저장하고 RAG에 즉시 반영했습니다."
+      );
     } catch {
-      setMessage("Q/A 일괄 처리 중 오류가 발생했습니다.");
+      setMessage("정보 저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -2304,7 +2311,7 @@ export default function AdminPage() {
                       {(
                         [
                           { value: "single" as const, label: "단일 Q/A" },
-                          { value: "bulk" as const, label: "Q/A 일괄" },
+                          { value: "info" as const, label: "정보 넣기" },
                           { value: "pdf" as const, label: "PDF 업로드" },
                         ]
                       ).map((mode) => (
@@ -2348,24 +2355,25 @@ export default function AdminPage() {
                       </div>
                     ) : null}
 
-                    {knowledgeInputMode === "bulk" ? (
+                    {knowledgeInputMode === "info" ? (
                       <div className="space-y-3">
                         <p className="text-xs text-muted-foreground">
-                          Q/A 본문을 한 번에 붙여넣어 `pending` 초안을 여러 개 생성합니다.
-                          형식: `Q01. 질문` + `A01. 답변`
+                          질문 형식이 아닌 공지, 모집요강, 표 정리 내용을 그대로 붙여넣습니다. 저장 즉시 승인 + 색인까지 적용됩니다.
                         </p>
                         <textarea
                           className="min-h-[220px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          placeholder={"Q01. 질문\nA01. 답변\n\nQ02. 질문\nA02. 답변"}
-                          value={knowledgeBulkRawInput}
-                          onChange={(e) => setKnowledgeBulkRawInput(e.target.value)}
+                          placeholder={
+                            "2027학년도 고려대학교 편입학 필기고사 과목 안내\n\n공과대학 화공생명공학과 필기고사 과목은 수학, 화학입니다.\n공과대학 신소재공학부 필기고사 과목은 물리, 화학입니다.\n정보대학 컴퓨터학과 필기고사 과목은 수학, 정보입니다."
+                          }
+                          value={knowledgeInfoRawInput}
+                          onChange={(e) => setKnowledgeInfoRawInput(e.target.value)}
                         />
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-xs text-muted-foreground">
-                            본문 길이: {knowledgeBulkRawInput.trim().length.toLocaleString()}자
+                            본문 길이: {knowledgeInfoRawInput.trim().length.toLocaleString()}자
                           </p>
-                          <Button onClick={handleCreateKnowledgeBulkQA} disabled={submitting}>
-                            {submitting ? "처리 중..." : "Q/A 일괄 초안 생성"}
+                          <Button onClick={handleCreateKnowledgeInfo} disabled={submitting}>
+                            {submitting ? "처리 중..." : "저장 + 즉시 반영"}
                           </Button>
                         </div>
                       </div>
