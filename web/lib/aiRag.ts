@@ -64,18 +64,56 @@ function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
+type TableBlock = { start: number; end: number; head: string };
+
+// 마크다운 표 블록의 위치와 헤더(제목행 + 구분행)를 찾아둔다.
+function findTableBlocks(text: string): TableBlock[] {
+  const blocks: TableBlock[] = [];
+  let offset = 0;
+  let current: { start: number; end: number; lines: string[] } | null = null;
+
+  for (const line of text.split("\n")) {
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      if (current) {
+        current.end = offset + line.length;
+        if (current.lines.length < 2) current.lines.push(line);
+      } else {
+        current = { start: offset, end: offset + line.length, lines: [line] };
+      }
+    } else if (current) {
+      blocks.push({ start: current.start, end: current.end, head: current.lines.join("\n") });
+      current = null;
+    }
+    offset += line.length + 1;
+  }
+  if (current) {
+    blocks.push({ start: current.start, end: current.end, head: current.lines.join("\n") });
+  }
+  return blocks;
+}
+
 export function chunkText(text: string, maxChars = 900, overlapChars = 180): string[] {
   const normalized = text.trim().replace(/\r\n/g, "\n");
   if (!normalized) return [];
   if (normalized.length <= maxChars) return [normalized];
 
+  const tables = findTableBlocks(normalized);
   const chunks: string[] = [];
   let start = 0;
   while (start < normalized.length) {
-    const end = Math.min(normalized.length, start + maxChars);
+    let end = Math.min(normalized.length, start + maxChars);
+    if (end < normalized.length) {
+      // 줄 한가운데(표라면 행 한가운데)에서 자르지 않는다.
+      const lineBreak = normalized.lastIndexOf("\n", end);
+      if (lineBreak > start + maxChars / 2) end = lineBreak;
+    }
+
     const slice = normalized.slice(start, end).trim();
     if (slice) {
-      chunks.push(slice);
+      // 표 중간부터 시작하는 조각은 헤더가 없어 어느 열인지 알 수 없다. 헤더를 붙여준다.
+      const openTable = tables.find((block) => block.start < start && block.end > start);
+      const needsHead = openTable && !slice.startsWith(openTable.head);
+      chunks.push(needsHead ? `${openTable.head}\n${slice}` : slice);
     }
     if (end >= normalized.length) break;
     start = Math.max(0, end - overlapChars);
@@ -398,8 +436,12 @@ function buildGroundedPrompts(params: {
     .map((ctx, index) => `근거 ${index + 1} (유사도 ${ctx.similarity.toFixed(3)}):\n${ctx.chunkText}`)
     .join("\n\n");
 
-  const systemPrompt =
-    "너는 편입/학습 상담 도우미 '합곰'이다. 친구처럼 친근한 반말로 답하되, 제공된 근거를 최우선으로 답하고 근거가 부족하면 단정하지 말고 일반적인 조언으로 답하라.";
+  // 지식은 마크다운 표로 저장하지만, 답변을 그리는 쪽(iOS SwiftUI Text·웹 pre-wrap)은
+  // 마크다운을 렌더링하지 않는다. 표를 그대로 뱉으면 파이프 문자가 그대로 노출된다.
+  const systemPrompt = [
+    "너는 편입/학습 상담 도우미 '합곰'이다. 친구처럼 친근한 반말로 답하되, 제공된 근거를 최우선으로 답하고 근거가 부족하면 단정하지 말고 일반적인 조언으로 답하라.",
+    "근거에 표가 있어도 마크다운 표나 파이프(|) 기호로 출력하지 마라. 항목마다 줄을 바꿔 '구분: 값' 형태로 풀어써라.",
+  ].join("\n");
   const userPrompt = [
     `질문:\n${params.question}`,
     contextText ? `\n근거:\n${contextText}` : "\n근거: 없음",

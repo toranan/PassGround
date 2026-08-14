@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateText } from "@/lib/aiRag";
 import { deleteKnowledgeChunksByItem, upsertKnowledgeChunksForApprovedItem } from "@/lib/ragIndexing";
 import { inferKnowledgeTags, mergeKnowledgeTags } from "@/lib/knowledgeTags";
+import { containsTable, normalizePastedText } from "@/lib/tableText";
 
 type Exam = "transfer" | "cpa";
 type KnowledgeStatus = "pending" | "approved";
@@ -136,8 +137,16 @@ function parseRefinedDraft(raw: string): { question: string; answer: string } | 
 }
 
 async function refineDraftFromRawInput(rawInput: string): Promise<{ question: string; answer: string } | null> {
-  const source = rawInput.replace(/\s+/g, " ").trim().slice(0, 3200);
+  // 표가 섞인 메모는 개행/탭을 뭉개면 어느 값이 어느 열인지 복구할 수 없다.
+  // 줄 구조는 살리고 과도한 빈 줄만 정리한다.
+  const source = normalizePastedText(rawInput)
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 8000);
   if (!source) return null;
+
+  const hasTable = containsTable(source);
 
   try {
     const refined = await generateText({
@@ -147,11 +156,16 @@ async function refineDraftFromRawInput(rawInput: string): Promise<{ question: st
         "원문의 핵심 의미, 수치, 비율(예: 10%)은 절대 바꾸지 마라.",
         "출력 형식을 반드시 지켜라.",
         "QUESTION: 사용자 질문형 한 줄",
-        "ANSWER: 3~6문장, 자연스러운 한국어",
+        hasTable
+          ? "ANSWER: 표는 마크다운 표 그대로 유지하고 행을 빠뜨리지 마라. 표 앞뒤 설명만 자연스러운 한국어로 다듬어라."
+          : "ANSWER: 3~6문장, 자연스러운 한국어",
       ].join("\n"),
       userPrompt: `원문 메모:\n${source}`,
       temperature: 0,
-      maxOutputTokens: 420,
+      // 표를 보존하려면 원문만큼의 출력이 필요하다. 추론 토큰이 예산을 먼저
+      // 먹고 잘리는 것을 막기 위해 추론도 끈다.
+      maxOutputTokens: hasTable ? 4000 : 800,
+      disableThinking: true,
     });
     return parseRefinedDraft(refined);
   } catch {
@@ -248,7 +262,7 @@ export async function POST(request: Request) {
   const examError = validateExam(exam);
   if (examError) return examError;
 
-  const directRawInput = normalizeText(body.directRawInput, 120000);
+  const directRawInput = normalizePastedText(normalizeText(body.directRawInput, 120000));
   if (directRawInput) {
     const manualTags = normalizeTags(body.tags);
     const directTitle = normalizeText(body.directTitle, 120);
