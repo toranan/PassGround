@@ -1,30 +1,29 @@
 // ============================================================================
-// Provider 분리:
-//   - Chat 생성:  Gemini (gemini-2.0-flash)     → GEMINI_API_KEY
+// Provider: OpenAI 단일화
+//   - Chat 생성:  OpenAI Responses API (기본 gpt-5.6-luna, OPENAI_CHAT_MODEL로 교체)
 //   - Embedding:  OpenAI (text-embedding-3-small, 1536차원, DB와 일치) → OPENAI_API_KEY
 //
-// 레거시 Azure OpenAI / OpenAI Responses API 구현은 파일 하단 블록 주석으로 보존.
-// OPENAI_API_KEY가 없으면 EmbeddingsDisabledError throw → chat/route.ts가 catch해서
-// RAG 없이 fallback 답변으로 진행.
+// OPENAI_API_KEY가 없으면 임베딩은 EmbeddingsDisabledError throw → chat/route.ts가
+// catch해서 RAG 없이 fallback 답변으로 진행.
 // ============================================================================
-
-const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_GEMINI_CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-2.5-flash";
 
 const OPENAI_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
+// gpt-5.6-luna: 최신 세대 중 가장 저렴한 티어($0.20/$1.20 per 1M, 캐시 입력 $0.02).
+// RAG 근거 요약/재작성이 주 작업이라 추론 예산 없이도 품질이 충분하다.
+const DEFAULT_OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || "gpt-5.6-luna";
 
-function getGeminiKey(): string {
-  return (process.env.GEMINI_API_KEY || "").trim();
-}
+// Responses API는 max_output_tokens 최소값이 16이다. 분류기처럼 8토큰만 요청하는
+// 호출이 있어서 하한을 강제한다.
+const MIN_OUTPUT_TOKENS = 16;
 
 function getOpenAIKey(): string {
   return (process.env.OPENAI_API_KEY || "").trim();
 }
 
-function assertGeminiKey() {
-  if (!getGeminiKey()) {
-    throw new Error("GEMINI_API_KEY가 설정되어 있지 않습니다.");
+function assertOpenAIKey() {
+  if (!getOpenAIKey()) {
+    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
   }
 }
 
@@ -49,8 +48,8 @@ export type KnowledgeChunk = {
   chunkText: string;
 };
 
-export function getAiProviderName(): "gemini" {
-  return "gemini";
+export function getAiProviderName(): "openai" {
+  return "openai";
 }
 
 export function getEmbeddingModelName(): string {
@@ -58,7 +57,7 @@ export function getEmbeddingModelName(): string {
 }
 
 export function getChatModelName(): string {
-  return DEFAULT_GEMINI_CHAT_MODEL;
+  return DEFAULT_OPENAI_CHAT_MODEL;
 }
 
 function estimateTokens(text: string): number {
@@ -152,96 +151,145 @@ export async function createEmbedding(input: string): Promise<number[]> {
   return vector;
 }
 
-type GeminiContent = {
-  role: "user" | "model";
-  parts: Array<{ text: string }>;
-};
-
-type GeminiGenerateBody = {
-  contents: GeminiContent[];
-  systemInstruction?: { parts: Array<{ text: string }> };
-  generationConfig?: {
-    temperature?: number;
-    maxOutputTokens?: number;
-    thinkingConfig?: { thinkingBudget: number };
-  };
-};
-
-type GeminiGenerateResponse = {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-    finishReason?: string;
+type ResponsesApiResponse = {
+  output_text?: string;
+  status?: string;
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
   }>;
-  error?: { message?: string; status?: string };
-  promptFeedback?: { blockReason?: string };
+  incomplete_details?: { reason?: string };
+  error?: { message?: string };
 };
 
-function buildGeminiBody(params: {
+type StreamEvent = {
+  type?: string;
+  delta?: string;
+  text?: string;
+  error?: { message?: string };
+};
+
+type GenerateParams = {
   systemPrompt: string;
   userPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
   disableThinking?: boolean;
-}): GeminiGenerateBody {
-  return {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: params.userPrompt }],
-      },
-    ],
-    systemInstruction: {
-      parts: [{ text: params.systemPrompt }],
-    },
-    generationConfig: {
-      temperature: params.temperature ?? 0.3,
-      maxOutputTokens: params.maxOutputTokens,
-      // gemini-2.5 계열은 thinking 토큰이 maxOutputTokens를 먼저 소모해서
-      // 분류기처럼 작은 토큰 예산의 호출은 출력이 잘린다. 그런 호출은 thinking을 끈다.
-      ...(params.disableThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-    },
-  };
+};
+
+// gpt-5 / o시리즈는 temperature를 거부하고, reasoning 토큰이 max_output_tokens를
+// 먼저 소모한다.
+function isReasoningModel(model: string): boolean {
+  const normalized = model.toLowerCase();
+  return (
+    normalized.startsWith("gpt-5") ||
+    normalized.startsWith("o1") ||
+    normalized.startsWith("o3") ||
+    normalized.startsWith("o4")
+  );
 }
 
-function parseGeminiText(payload: GeminiGenerateResponse | null): string {
-  const text = payload?.candidates
-    ?.flatMap((c) => c.content?.parts ?? [])
-    .map((p) => p.text ?? "")
+// 추론을 최소로 낮추는 값이 세대마다 다르다.
+//   gpt-5 / 5.1 / 5.2, o시리즈 → "minimal" ("none" 거부)
+//   gpt-5.4 이상            → "none"    ("minimal" 거부)
+// 잘못된 값을 보내면 400이 나므로 모델명으로 분기한다.
+function minimalEffortForModel(model: string): "none" | "minimal" {
+  const normalized = model.toLowerCase();
+  const legacyMinimal =
+    /^gpt-5(\.[12])?(-|$)/.test(normalized) || /^o[134](-|$)/.test(normalized);
+  return legacyMinimal ? "minimal" : "none";
+}
+
+function buildResponsesBody(params: GenerateParams, stream: boolean): Record<string, unknown> {
+  const reasoning = isReasoningModel(DEFAULT_OPENAI_CHAT_MODEL);
+  const body: Record<string, unknown> = {
+    model: DEFAULT_OPENAI_CHAT_MODEL,
+    input: [
+      {
+        role: "system",
+        content: [{ type: "input_text", text: params.systemPrompt }],
+      },
+      {
+        role: "user",
+        content: [{ type: "input_text", text: params.userPrompt }],
+      },
+    ],
+  };
+
+  if (params.maxOutputTokens) {
+    // 추론 모델은 reasoning 토큰까지 이 예산에서 나가므로 여유를 더 준다.
+    const floor = reasoning ? 256 : MIN_OUTPUT_TOKENS;
+    body.max_output_tokens = Math.max(floor, params.maxOutputTokens);
+  }
+
+  if (reasoning) {
+    // 분류기처럼 짧은 출력만 필요한 호출은 추론 예산을 최소로.
+    if (params.disableThinking) {
+      body.reasoning = { effort: minimalEffortForModel(DEFAULT_OPENAI_CHAT_MODEL) };
+    }
+  } else {
+    body.temperature = params.temperature ?? 0.3;
+  }
+
+  if (stream) {
+    body.stream = true;
+  }
+  return body;
+}
+
+function parseResponsesText(payload: ResponsesApiResponse | null): string {
+  const byOutputText = payload?.output_text?.trim();
+  if (byOutputText) return byOutputText;
+
+  const byContents = payload?.output
+    ?.flatMap((item) => item.content ?? [])
+    .filter((content) => content.type === "output_text" || content.type === "text")
+    .map((content) => content.text?.trim() || "")
     .filter(Boolean)
-    .join("")
+    .join("\n")
     .trim();
-  if (text) return text;
+
+  if (byContents) return byContents;
+  if (payload?.status === "incomplete") {
+    throw new Error(
+      `답변이 잘렸습니다(${payload.incomplete_details?.reason || "incomplete"}).`
+    );
+  }
   throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
 }
 
-export async function generateText(params: {
-  systemPrompt: string;
-  userPrompt: string;
-  temperature?: number;
-  maxOutputTokens?: number;
-  disableThinking?: boolean;
-}): Promise<string> {
-  assertGeminiKey();
-  const key = getGeminiKey();
-  const url = `${GEMINI_API_BASE}/models/${DEFAULT_GEMINI_CHAT_MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+export async function generateText(params: GenerateParams): Promise<string> {
+  assertOpenAIKey();
 
-  const response = await fetch(url, {
+  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildGeminiBody(params)),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getOpenAIKey()}`,
+    },
+    body: JSON.stringify(buildResponsesBody(params, false)),
   });
 
-  const payload = (await response.json().catch(() => null)) as GeminiGenerateResponse | null;
+  const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
   if (!response.ok) {
     throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
   }
-  if (payload?.promptFeedback?.blockReason) {
-    throw new Error(`Gemini가 요청을 차단했습니다: ${payload.promptFeedback.blockReason}`);
-  }
-  return parseGeminiText(payload);
+  return parseResponsesText(payload);
 }
 
-async function parseGeminiSseStream(
+function extractStreamDelta(event: StreamEvent): string {
+  if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
+    return event.delta;
+  }
+  if (event.type === "response.output_text.done" && typeof event.text === "string") {
+    return event.text;
+  }
+  return "";
+}
+
+async function parseSseStream(
   body: ReadableStream<Uint8Array>,
   onDelta: (delta: string) => void
 ): Promise<string> {
@@ -249,6 +297,7 @@ async function parseGeminiSseStream(
   const decoder = new TextDecoder();
   let buffer = "";
   let text = "";
+  let sawDelta = false;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -268,63 +317,61 @@ async function parseGeminiSseStream(
         .map((line) => line.slice(5).trimStart())
         .join("\n");
 
-      if (!data) continue;
+      if (!data || data === "[DONE]") continue;
 
-      let parsed: GeminiGenerateResponse | null = null;
+      let parsed: StreamEvent | null = null;
       try {
-        parsed = JSON.parse(data) as GeminiGenerateResponse;
+        parsed = JSON.parse(data) as StreamEvent;
       } catch {
         continue;
       }
       if (!parsed) continue;
 
-      if (parsed.error) {
-        throw new Error(parsed.error.message || "스트리밍 응답 생성에 실패했습니다.");
+      if (parsed.type === "error") {
+        throw new Error(parsed.error?.message || "스트리밍 응답 생성에 실패했습니다.");
       }
 
-      const delta = parsed.candidates
-        ?.flatMap((c) => c.content?.parts ?? [])
-        .map((p) => p.text ?? "")
-        .filter(Boolean)
-        .join("");
+      const delta = extractStreamDelta(parsed);
+      if (!delta) continue;
 
-      if (delta) {
-        onDelta(delta);
-        text += delta;
+      // delta 이벤트를 이미 받았다면 done 이벤트의 전체 텍스트는 중복이라 버린다.
+      if (parsed.type === "response.output_text.delta") {
+        sawDelta = true;
+      } else if (parsed.type === "response.output_text.done" && sawDelta) {
+        continue;
       }
+
+      onDelta(delta);
+      text += delta;
     }
   }
 
   return text;
 }
 
-export async function streamText(params: {
-  systemPrompt: string;
-  userPrompt: string;
-  temperature?: number;
-  maxOutputTokens?: number;
-  disableThinking?: boolean;
-  onDelta: (delta: string) => void;
-}): Promise<string> {
-  assertGeminiKey();
-  const key = getGeminiKey();
-  const url = `${GEMINI_API_BASE}/models/${DEFAULT_GEMINI_CHAT_MODEL}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key)}`;
+export async function streamText(
+  params: GenerateParams & { onDelta: (delta: string) => void }
+): Promise<string> {
+  assertOpenAIKey();
 
-  const response = await fetch(url, {
+  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildGeminiBody(params)),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getOpenAIKey()}`,
+    },
+    body: JSON.stringify(buildResponsesBody(params, true)),
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as GeminiGenerateResponse | null;
+    const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
     throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
   }
   if (!response.body) {
     throw new Error("스트리밍 응답 본문이 비어 있습니다.");
   }
 
-  const streamed = await parseGeminiSseStream(response.body, params.onDelta);
+  const streamed = await parseSseStream(response.body, params.onDelta);
   if (streamed) return streamed;
 
   const fallbackText = await generateText({
@@ -393,359 +440,3 @@ export async function generateGroundedAnswerStream(params: {
 export function estimateChunkTokens(text: string): number {
   return estimateTokens(text);
 }
-
-// ============================================================================
-// LEGACY: Azure OpenAI / OpenAI Responses API 구현 (비활성). 복구 시 위 Gemini
-// 블록 제거 + 아래 블록 주석 해제 + 환경변수(AZURE_OPENAI_*) 복원.
-// ============================================================================
-/*
-const OPENAI_API_URL = "https://api.openai.com/v1";
-const DEFAULT_EMBEDDING_MODEL =
-  process.env.AZURE_OPENAI_EMBEDDING_MODEL ||
-  process.env.OPENAI_EMBEDDING_MODEL ||
-  "text-embedding-3-small";
-const DEFAULT_CHAT_MODEL =
-  process.env.AZURE_OPENAI_CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
-const AZURE_RESPONSES_URL = (process.env.AZURE_OPENAI_RESPONSES_URL || "").trim();
-const AZURE_EMBEDDINGS_URL = (process.env.AZURE_OPENAI_EMBEDDINGS_URL || "").trim();
-
-type EmbeddingResponse = {
-  data?: Array<{ embedding?: number[] }>;
-  error?: { message?: string };
-};
-
-type ResponsesApiResponse = {
-  output_text?: string;
-  output?: Array<{
-    content?: Array<{
-      type?: string;
-      text?: string;
-    }>;
-  }>;
-  error?: { message?: string };
-};
-
-type StreamEvent = {
-  type?: string;
-  delta?: string;
-  text?: string;
-  error?: { message?: string };
-};
-
-function getOpenAIKey(): string {
-  return (process.env.OPENAI_API_KEY || "").trim();
-}
-
-function getAzureKey(): string {
-  return (process.env.AZURE_OPENAI_API_KEY || "").trim();
-}
-
-function isAzureProvider(): boolean {
-  return Boolean(AZURE_RESPONSES_URL);
-}
-
-function assertProviderKey() {
-  if (isAzureProvider()) {
-    if (!getAzureKey()) {
-      throw new Error("AZURE_OPENAI_API_KEY가 설정되어 있지 않습니다.");
-    }
-    return;
-  }
-  if (!getOpenAIKey()) {
-    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
-  }
-}
-
-function buildAzureEmbeddingsUrl(): string {
-  if (AZURE_EMBEDDINGS_URL) return AZURE_EMBEDDINGS_URL;
-  if (!AZURE_RESPONSES_URL) return "";
-  try {
-    const parsed = new URL(AZURE_RESPONSES_URL);
-    parsed.pathname = parsed.pathname.replace(/\/responses\/?$/, "/embeddings");
-    return parsed.toString();
-  } catch {
-    return "";
-  }
-}
-
-function buildAuthHeaders(): Record<string, string> {
-  if (isAzureProvider()) {
-    return {
-      "Content-Type": "application/json",
-      "api-key": getAzureKey(),
-    };
-  }
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${getOpenAIKey()}`,
-  };
-}
-
-export async function createEmbeddingsLegacy(inputs: string[]): Promise<number[][]> {
-  assertProviderKey();
-  if (!inputs.length) return [];
-
-  const endpoint = isAzureProvider() ? buildAzureEmbeddingsUrl() : `${OPENAI_API_URL}/embeddings`;
-  if (!endpoint) {
-    throw new Error("AZURE_OPENAI_EMBEDDINGS_URL이 필요합니다.");
-  }
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: buildAuthHeaders(),
-    body: JSON.stringify({
-      model: DEFAULT_EMBEDDING_MODEL,
-      input: inputs,
-    }),
-  });
-
-  const payload = (await response.json().catch(() => null)) as EmbeddingResponse | null;
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || "임베딩 생성에 실패했습니다.");
-  }
-  const vectors = payload?.data?.map((row) => row.embedding ?? []) ?? [];
-  if (vectors.length !== inputs.length || vectors.some((vector) => !vector.length)) {
-    throw new Error("임베딩 응답 형식이 올바르지 않습니다.");
-  }
-  return vectors;
-}
-
-function parseResponsesText(payload: ResponsesApiResponse | null): string {
-  const byOutputText = payload?.output_text?.trim();
-  if (byOutputText) return byOutputText;
-
-  const byContents = payload?.output
-    ?.flatMap((item) => item.content ?? [])
-    .filter((content) => content.type === "output_text" || content.type === "text")
-    .map((content) => content.text?.trim() || "")
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-
-  if (byContents) return byContents;
-  throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
-}
-
-function modelLikelyRejectsTemperature(model: string): boolean {
-  const normalized = model.toLowerCase();
-  return (
-    normalized.includes("gpt-5") ||
-    normalized.startsWith("o1") ||
-    normalized.startsWith("o3") ||
-    normalized.startsWith("o4")
-  );
-}
-
-function isUnsupportedTemperatureError(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return normalized.includes("unsupported parameter") && normalized.includes("temperature");
-}
-
-export async function generateTextLegacy(params: {
-  systemPrompt: string;
-  userPrompt: string;
-  temperature?: number;
-  maxOutputTokens?: number;
-}): Promise<string> {
-  assertProviderKey();
-  const endpoint = isAzureProvider() ? AZURE_RESPONSES_URL : `${OPENAI_API_URL}/responses`;
-  if (!endpoint) {
-    throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
-  }
-
-  const sendRequest = async (includeTemperature: boolean) => {
-    const body: Record<string, unknown> = {
-      model: DEFAULT_CHAT_MODEL,
-      input: [
-        {
-          role: "system",
-          content: [{ type: "input_text", text: params.systemPrompt }],
-        },
-        {
-          role: "user",
-          content: [{ type: "input_text", text: params.userPrompt }],
-        },
-      ],
-      max_output_tokens: params.maxOutputTokens,
-    };
-    if (includeTemperature) {
-      body.temperature = params.temperature ?? 0.3;
-    }
-    return fetch(endpoint, {
-      method: "POST",
-      headers: buildAuthHeaders(),
-      body: JSON.stringify(body),
-    });
-  };
-
-  let includeTemperature = !modelLikelyRejectsTemperature(DEFAULT_CHAT_MODEL);
-  let response = await sendRequest(includeTemperature);
-  let payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-
-  if (
-    !response.ok &&
-    includeTemperature &&
-    isUnsupportedTemperatureError(payload?.error?.message || "")
-  ) {
-    includeTemperature = false;
-    response = await sendRequest(includeTemperature);
-    payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-  }
-
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
-  }
-
-  return parseResponsesText(payload);
-}
-
-function buildChatInput(systemPrompt: string, userPrompt: string) {
-  return [
-    {
-      role: "system",
-      content: [{ type: "input_text", text: systemPrompt }],
-    },
-    {
-      role: "user",
-      content: [{ type: "input_text", text: userPrompt }],
-    },
-  ];
-}
-
-function extractStreamDelta(event: StreamEvent): string {
-  if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
-    return event.delta;
-  }
-  if (event.type === "response.output_text.done" && typeof event.text === "string") {
-    return event.text;
-  }
-  return "";
-}
-
-async function parseSseStream(
-  body: ReadableStream<Uint8Array>,
-  onDelta: (delta: string) => void
-): Promise<string> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let text = "";
-  let sawDelta = false;
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    while (true) {
-      const boundary = buffer.indexOf("\n\n");
-      if (boundary < 0) break;
-
-      const rawEvent = buffer.slice(0, boundary);
-      buffer = buffer.slice(boundary + 2);
-
-      const data = rawEvent
-        .split("\n")
-        .filter((line) => line.startsWith("data:"))
-        .map((line) => line.slice(5).trimStart())
-        .join("\n");
-
-      if (!data || data === "[DONE]") continue;
-
-      let parsed: StreamEvent | null = null;
-      try {
-        parsed = JSON.parse(data) as StreamEvent;
-      } catch {
-        continue;
-      }
-      if (!parsed) continue;
-
-      if (parsed.type === "error") {
-        throw new Error(parsed.error?.message || "스트리밍 응답 생성에 실패했습니다.");
-      }
-
-      const delta = extractStreamDelta(parsed);
-      if (!delta) continue;
-
-      if (parsed.type === "response.output_text.delta") {
-        sawDelta = true;
-      } else if (parsed.type === "response.output_text.done" && sawDelta) {
-        continue;
-      }
-
-      onDelta(delta);
-      text += delta;
-    }
-  }
-
-  return text;
-}
-
-export async function streamTextLegacy(params: {
-  systemPrompt: string;
-  userPrompt: string;
-  temperature?: number;
-  maxOutputTokens?: number;
-  onDelta: (delta: string) => void;
-}): Promise<string> {
-  assertProviderKey();
-  const endpoint = isAzureProvider() ? AZURE_RESPONSES_URL : `${OPENAI_API_URL}/responses`;
-  if (!endpoint) {
-    throw new Error("AZURE_OPENAI_RESPONSES_URL이 필요합니다.");
-  }
-
-  const sendRequest = async (includeTemperature: boolean) => {
-    const body: Record<string, unknown> = {
-      model: DEFAULT_CHAT_MODEL,
-      input: buildChatInput(params.systemPrompt, params.userPrompt),
-      max_output_tokens: params.maxOutputTokens,
-      stream: true,
-    };
-    if (includeTemperature) {
-      body.temperature = params.temperature ?? 0.3;
-    }
-    return fetch(endpoint, {
-      method: "POST",
-      headers: buildAuthHeaders(),
-      body: JSON.stringify(body),
-    });
-  };
-
-  let includeTemperature = !modelLikelyRejectsTemperature(DEFAULT_CHAT_MODEL);
-  let response = await sendRequest(includeTemperature);
-
-  if (!response.ok) {
-    let payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-    if (
-      includeTemperature &&
-      isUnsupportedTemperatureError(payload?.error?.message || "")
-    ) {
-      includeTemperature = false;
-      response = await sendRequest(includeTemperature);
-      if (!response.ok) {
-        payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-        throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
-      }
-    } else {
-      throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
-    }
-  }
-  if (!response.body) {
-    throw new Error("스트리밍 응답 본문이 비어 있습니다.");
-  }
-
-  const streamed = await parseSseStream(response.body, params.onDelta);
-  if (streamed) return streamed;
-
-  const fallbackText = await generateTextLegacy({
-    systemPrompt: params.systemPrompt,
-    userPrompt: params.userPrompt,
-    temperature: params.temperature,
-    maxOutputTokens: params.maxOutputTokens,
-  });
-  if (fallbackText) {
-    params.onDelta(fallbackText);
-  }
-  return fallbackText;
-}
-*/
