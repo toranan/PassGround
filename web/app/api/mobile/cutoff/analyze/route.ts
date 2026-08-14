@@ -164,16 +164,21 @@ function toFormalSentence(value: string, fallback: string): string {
   const compact = compactSentence(value, 900) || fallback;
   const trimmed = compact.replace(/[.!?]+$/g, "").trim();
   if (!trimmed) return fallback;
-  if (/(습니다|입니다|됩니다|없습니다|필요합니다|권장합니다|어렵습니다|부족합니다|겠습니다|드립니다)$/u.test(trimmed)) {
+  // 종결어미를 통째로 나열하면 '미달합니다' 같은 형태가 빠져서 '미달합니다입니다'가 된다.
+  // 정중체 종결은 모두 '니다/니까'로 끝나므로 어간이 아니라 어미로 판단한다.
+  if (/(니다|니까|세요|십시오)$/u.test(trimmed)) {
     return `${trimmed}.`;
   }
   return `${trimmed}입니다.`;
 }
 
-function withContextPrefix(text: string, contextPrefix: string): string {
+function withContextPrefix(text: string, contextPrefix: string, contextParts: string[] = []): string {
   const trimmed = text.trim();
   if (!trimmed) return contextPrefix;
   if (trimmed.includes(contextPrefix)) return trimmed;
+  // 모델이 학년도/학교/학과를 이미 문장에 넣었으면 접두어를 또 붙이지 않는다.
+  const parts = contextParts.filter(Boolean);
+  if (parts.length && parts.every((part) => trimmed.includes(part))) return trimmed;
   return `${contextPrefix} ${trimmed}`;
 }
 
@@ -429,12 +434,13 @@ export async function POST(request: Request) {
     }
 
     const resolvedLabel = parsed.label || mapStatusLabel(parsed.status);
+    const contextParts = [`${year}학년도`, university, major];
     const summary = toFormalSentence(
-      withContextPrefix(parsed.summary, contextPrefix),
+      withContextPrefix(parsed.summary, contextPrefix, contextParts),
       `${contextPrefix} 현재 입력 점수는 ${resolvedLabel}으로 판단됩니다.`
     );
     const detail = toFormalSentence(
-      withContextPrefix(parsed.detail, contextPrefix),
+      withContextPrefix(parsed.detail, contextPrefix, contextParts),
       `${contextPrefix} 조회된 근거를 기준으로 ${resolvedLabel}으로 판단됩니다.`
     );
     const targetGuide = toFormalSentence(
