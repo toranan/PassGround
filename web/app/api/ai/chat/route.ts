@@ -25,6 +25,7 @@ import {
 import { recordAiChatObservation } from "@/lib/aiObservability";
 import { inferKnowledgeTags } from "@/lib/knowledgeTags";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
+import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
 
 type Exam = "transfer" | "cpa";
 type IntentRoute = "fact" | "emotion" | "mixed";
@@ -1352,6 +1353,73 @@ async function runChatWorkflow(params: {
         generationMs,
       },
     };
+  }
+
+  // "수학만 보는 학교 나열"처럼 여러 대학을 교차 집계하는 질문은
+  // 벡터 top-k로는 전체 목록성을 보장할 수 없다. 검증 manifest에서 적재한
+  // 구조화 전형 규칙을 먼저 조회하고, 테이블이 없는 배포는 기존 RAG로 fail-open한다.
+  if (exam === "transfer" && intent === "fact") {
+    const structuredStarted = Date.now();
+    const catalogAnswer = await tryAnswerTransferCatalogQuestion({ admin, question });
+    retrievalMs += Date.now() - structuredStarted;
+
+    if (catalogAnswer) {
+      const route: FinalRoute = catalogAnswer.grounded ? "grounded" : "fallback";
+      stream?.onMeta({
+        intent,
+        route,
+        cache: cacheStatus,
+        mode: "transfer_catalog",
+        admissionYear: catalogAnswer.admissionYear,
+        coverageCount: catalogAnswer.coverageCount,
+        matchedRuleCount: catalogAnswer.matchedRuleCount,
+      });
+      if (stream) {
+        for (const chunk of splitForStream(catalogAnswer.answer)) {
+          stream.onDelta(chunk);
+        }
+      }
+
+      try {
+        await admin.from("ai_chat_logs").insert({
+          exam_slug: exam,
+          question,
+          answer: catalogAnswer.answer,
+          route,
+          top_chunk_ids: [],
+          top_knowledge_item_ids: [],
+        });
+      } catch {
+        // Fail-open: logging errors should not block catalog answers.
+      }
+
+      await recordObservation({
+        route,
+        status: "ok",
+        matchedContextCount: catalogAnswer.matchedRuleCount,
+        hasEnoughContext: catalogAnswer.grounded,
+        answerLength: catalogAnswer.answer.length,
+      });
+
+      return {
+        ok: true,
+        exam,
+        intent,
+        route,
+        answer: catalogAnswer.answer,
+        needsQuestionSubmission: !catalogAnswer.grounded,
+        contexts: [],
+        cache: cacheStatus,
+        traceId,
+        metrics: {
+          totalMs: Date.now() - startedAt,
+          cacheMs,
+          embeddingMs,
+          retrievalMs,
+          generationMs,
+        },
+      };
+    }
   }
 
   if (intent === "emotion") {

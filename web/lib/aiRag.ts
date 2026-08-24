@@ -7,6 +7,8 @@
 // catch해서 RAG 없이 fallback 답변으로 진행.
 // ============================================================================
 
+import { chunkVerifiedSectionText } from "@/lib/knowledgeDoc";
+
 const OPENAI_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 // gpt-5.6-luna: 최신 세대 중 가장 저렴한 티어($0.20/$1.20 per 1M, 캐시 입력 $0.02).
@@ -137,7 +139,13 @@ export function buildKnowledgeChunks(items: RagKnowledgeItem[]): KnowledgeChunk[
   const result: KnowledgeChunk[] = [];
   for (const item of items) {
     const sourceText = buildKnowledgeSourceText(item);
-    const parts = chunkText(sourceText);
+    // 검증 문서는 answer 자체에 출처 프리픽스와 표가 들어 있다. 질문/원문 메모를
+    // 다시 합치면 같은 본문이 중복되고, 표 전체가 일반 텍스트 청크로 뭉개진다.
+    // 검증 문서만 전용 청커로 보내 표 행을 자기완결 문장으로 만든다.
+    const verifiedAnswer = item.answer.trim();
+    const parts = verifiedAnswer.startsWith("[출처:")
+      ? chunkVerifiedSectionText(verifiedAnswer)
+      : chunkText(sourceText);
     parts.forEach((chunkTextPart, index) => {
       result.push({
         knowledgeItemId: item.id,
@@ -170,6 +178,9 @@ export async function createEmbeddings(inputs: string[]): Promise<number[][]> {
     body: JSON.stringify({
       model: DEFAULT_OPENAI_EMBEDDING_MODEL,
       input: inputs,
+      ...(DEFAULT_OPENAI_EMBEDDING_MODEL.startsWith("text-embedding-3")
+        ? { dimensions: 1536 }
+        : {}),
     }),
   });
 
@@ -215,6 +226,11 @@ type GenerateParams = {
   temperature?: number;
   maxOutputTokens?: number;
   disableThinking?: boolean;
+};
+
+type StructuredGenerateParams = GenerateParams & {
+  schemaName: string;
+  schema: Record<string, unknown>;
 };
 
 // gpt-5 / o시리즈는 temperature를 거부하고, reasoning 토큰이 max_output_tokens를
@@ -315,6 +331,46 @@ export async function generateText(params: GenerateParams): Promise<string> {
     throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
   }
   return parseResponsesText(payload);
+}
+
+/**
+ * Responses API Structured Outputs를 사용해 검증 가능한 JSON을 생성한다.
+ * 질의 플래너처럼 출력 형태가 애플리케이션 로직을 결정하는 경우에만 사용한다.
+ */
+export async function generateStructuredJson<T>(params: StructuredGenerateParams): Promise<T> {
+  assertOpenAIKey();
+
+  const body = buildResponsesBody(params, false);
+  body.store = false;
+  body.text = {
+    format: {
+      type: "json_schema",
+      name: params.schemaName,
+      strict: true,
+      schema: params.schema,
+    },
+  };
+
+  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getOpenAIKey()}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || "구조화 응답 생성에 실패했습니다.");
+  }
+
+  const raw = parseResponsesText(payload);
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new Error("구조화 응답 JSON을 파싱하지 못했습니다.");
+  }
 }
 
 function extractStreamDelta(event: StreamEvent): string {

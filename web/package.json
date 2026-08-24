@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "eval:ai": "node ./scripts/run-ai-chat-evals.mjs"
+    "eval:ai": "node ./scripts/run-ai-chat-evals.mjs",
+    "transfer:ingest": "node --env-file=.env.local ./scripts/ingest-transfer-manifest.mjs",
+    "eval:transfer-final": "node --env-file=.env.local ./scripts/eval-transfer-final-architecture.mjs",
+    "eval:transfer-final:offline": "node --env-file=.env.local ./scripts/eval-transfer-final-architecture.mjs --offline",
+    "test:transfer-catalog": "npm run eval:transfer-final:offline"
   },
   "dependencies": {
     "@radix-ui/react-navigation-menu": "^1.2.14",
