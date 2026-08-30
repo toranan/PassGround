@@ -24,6 +24,11 @@ import {
 } from "@/lib/aiChatCache";
 import { recordAiChatObservation } from "@/lib/aiObservability";
 import { inferKnowledgeTags } from "@/lib/knowledgeTags";
+import {
+  inferDeterministicCoachingReason,
+  selectCoachingAdviceRows,
+  type CoachingAdviceSourceRow,
+} from "@/lib/coachingKnowledge";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
 import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
 
@@ -39,14 +44,7 @@ type MatchedChunkRow = {
   similarity: number;
 };
 
-type CoachingAdviceRow = {
-  id: string;
-  question: string;
-  answer: string;
-  tags: string[] | null;
-  approved_at: string | null;
-  updated_at: string;
-};
+type CoachingAdviceRow = CoachingAdviceSourceRow;
 
 type CoachingAdviceSnippet = {
   id: string;
@@ -75,6 +73,7 @@ type ChatSuccessPayload = {
   route: FinalRoute;
   answer: string;
   needsQuestionSubmission: boolean;
+  adviceKnowledgeItemIds?: string[];
   contexts: ResponseContext[];
   cache: CacheStatus;
   traceId: string;
@@ -102,9 +101,8 @@ class ChatHttpError extends Error {
 }
 
 const FACT_FALLBACK_ANSWER = [
-  "아직 내가 가지고 있지 않은 정보인 것 같아.",
-  "섣부른 조언보다는 정확한 확인이 먼저라서,",
-  "'질문하기' 버튼을 눌러주면 빠른 시일 내에 답변 준비해둘게.",
+  "현재 저장된 정보에서는 이 질문에 답할 근거를 찾지 못했어.",
+  "없는 내용을 임의로 덧붙이지 않을게.",
 ].join("\n");
 
 const EMOTION_KEYWORDS = [
@@ -543,21 +541,16 @@ function classifyIntentHeuristics(question: string): IntentRoute | null {
   return null;
 }
 
-function tokenizeQuestion(text: string): string[] {
-  const tokens = text
-    .toLowerCase()
-    .replace(/[^a-z0-9가-힣\s]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 2);
-  return [...new Set(tokens)].slice(0, 24);
-}
-
 function normalizeToken(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9가-힣]/g, "")
     .trim();
+}
+
+function mentionsKnownUniversity(value: string): boolean {
+  const normalized = normalizeToken(value);
+  return UNIVERSITY_ALIASES.some((item) => normalized.includes(normalizeToken(item.alias)));
 }
 
 function normalizeCutoffInput(question: string): string {
@@ -771,24 +764,6 @@ function buildQuestionWithHistory(question: string, historyMessages: ChatHistory
   return [`이전 대화 맥락:\n${historyText}`, `현재 질문:\n${question}`].join("\n\n");
 }
 
-function scoreAdviceRow(params: {
-  row: CoachingAdviceRow;
-  queryTags: string[];
-  queryTokens: string[];
-}): number {
-  const itemTags = Array.isArray(params.row.tags) ? params.row.tags : [];
-  const normalizedItemTags = itemTags.map((tag) => tag.trim()).filter(Boolean);
-  const tagOverlap = params.queryTags.reduce(
-    (count, tag) => count + (normalizedItemTags.includes(tag) ? 1 : 0),
-    0
-  );
-
-  const haystack = [params.row.question, params.row.answer, normalizedItemTags.join(" ")].join(" ").toLowerCase();
-  const tokenHits = params.queryTokens.reduce((count, token) => count + (haystack.includes(token) ? 1 : 0), 0);
-
-  return tagOverlap * 3 + tokenHits;
-}
-
 async function loadCoachingAdviceSnippets(params: {
   admin: SupabaseClient;
   exam: Exam;
@@ -797,7 +772,6 @@ async function loadCoachingAdviceSnippets(params: {
 }): Promise<CoachingAdviceSnippet[]> {
   const limit = params.limit ?? 3;
   const queryTags = inferKnowledgeTags(params.question, 4);
-  const queryTokens = tokenizeQuestion(params.question);
 
   const { data, error } = await params.admin
     .from("ai_knowledge_items")
@@ -813,24 +787,12 @@ async function loadCoachingAdviceSnippets(params: {
   const rows = (data as CoachingAdviceRow[] | null) ?? [];
   if (!rows.length) return [];
 
-  const scored = rows
-    .map((row) => ({
-      row,
-      score: scoreAdviceRow({
-        row,
-        queryTags,
-        queryTokens,
-      }),
-    }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const left = Date.parse(a.row.approved_at || a.row.updated_at || "");
-      const right = Date.parse(b.row.approved_at || b.row.updated_at || "");
-      return right - left;
-    });
-
-  const meaningful = scored.filter((item) => item.score > 0);
-  const selected = (meaningful.length ? meaningful : scored.slice(0, 1)).slice(0, Math.max(1, limit));
+  const selected = selectCoachingAdviceRows({
+    rows,
+    question: params.question,
+    queryTags,
+    limit,
+  });
 
   return selected.map(({ row, score }) => ({
     id: row.id,
@@ -944,7 +906,11 @@ async function resolveCoachingFallbackWithAI(params: {
     return { shouldFallback: false, reason: "none" };
   }
 
-  const heuristicFallback = isGeneralChat;
+  const deterministicReason = inferDeterministicCoachingReason(question, historyMessages);
+  const heuristicReason: CoachingFallbackAiResult["reason"] = isGeneralChat
+    ? "general_chat"
+    : deterministicReason;
+  const heuristicFallback = heuristicReason !== "none";
   const historyText = buildConversationHistoryText(historyMessages);
 
   try {
@@ -977,14 +943,14 @@ async function resolveCoachingFallbackWithAI(params: {
     if (!ai || (ai.confidence !== null && ai.confidence < 0.55)) {
       return {
         shouldFallback: heuristicFallback,
-        reason: heuristicFallback ? "general_chat" : "none",
+        reason: heuristicReason,
       };
     }
 
     if (!ai.shouldCoaching) {
       return {
         shouldFallback: heuristicFallback,
-        reason: heuristicFallback ? "general_chat" : "none",
+        reason: heuristicReason,
       };
     }
 
@@ -995,7 +961,7 @@ async function resolveCoachingFallbackWithAI(params: {
   } catch {
     return {
       shouldFallback: heuristicFallback,
-      reason: heuristicFallback ? "general_chat" : "none",
+      reason: heuristicReason,
     };
   }
 }
@@ -1014,8 +980,10 @@ function buildEmotionPrompts(
       "말투는 친구처럼 친근하고 다정하게 유지하고, 반드시 반말만 사용한다. 존댓말은 금지한다.",
       "답변은 4~6문장으로 짧게 유지한다.",
       "사용자 입력이 인사/잡담(예: 안녕, 하이, 반가워) 성격이면 첫 문장을 '안녕! 나는 너의 편입 고민을 들어줄 합곰이야.'로 시작한다.",
-      "제공된 조언 레퍼런스가 있으면 그 철학을 우선 반영하되, 학생 문맥에 맞게 자연스럽게 재작성한다.",
-      "질문이 불명확하면 짧게 한 번 되물어 맥락을 확인한다.",
+      "제공된 조언 레퍼런스에 적힌 정보만 학생 문맥에 맞게 자연스럽게 재작성한다.",
+      "레퍼런스에 없는 공부시간 숫자, 시기별 기준, 대학 정보, 과목·문법 세부 목록, 학습법을 절대 새로 만들지 마라.",
+      "레퍼런스로 질문의 핵심에 직접 답할 수 없으면 그 사실을 분명히 말하고, 필요한 경우에만 짧게 한 번 되물어라.",
+      "모델의 일반 상식이나 사전학습 지식을 보충 근거로 사용하지 마라.",
       "과장이나 근거 없는 단정은 금지한다.",
     ].join("\n"),
     userPrompt: [
@@ -1034,6 +1002,12 @@ async function generateEmotionAnswer(
   adviceSnippets: CoachingAdviceSnippet[] = [],
   historyMessages: ChatHistoryMessage[] = []
 ): Promise<string> {
+  if (!adviceSnippets.length) {
+    if (/^(안녕|하이|hello|hi|반가)/i.test(question.trim())) {
+      return "안녕! 나는 너의 편입 고민을 들어줄 합곰이야. 편하게 물어봐줘.";
+    }
+    return "현재 저장된 조언에서는 이 질문에 직접 답할 근거를 찾지 못했어. 없는 내용을 임의로 덧붙이지 않을게.";
+  }
   const prompts = buildEmotionPrompts(question, adviceSnippets, historyMessages);
   return generateText({
     ...prompts,
@@ -1047,6 +1021,13 @@ async function generateEmotionAnswerStream(
   historyMessages: ChatHistoryMessage[] = [],
   onDelta: (delta: string) => void
 ): Promise<string> {
+  if (!adviceSnippets.length) {
+    const answer = /^(안녕|하이|hello|hi|반가)/i.test(question.trim())
+      ? "안녕! 나는 너의 편입 고민을 들어줄 합곰이야. 편하게 물어봐줘."
+      : "현재 저장된 조언에서는 이 질문에 직접 답할 근거를 찾지 못했어. 없는 내용을 임의로 덧붙이지 않을게.";
+    onDelta(answer);
+    return answer;
+  }
   const prompts = buildEmotionPrompts(question, adviceSnippets, historyMessages);
   return streamText({
     ...prompts,
@@ -1273,7 +1254,7 @@ async function runChatWorkflow(params: {
       answer = [
         `${cutoff.year}학년도 ${cutoff.university} ${cutoff.major} 기준으로 확인했는데,`,
         "현재 저장된 근거에서 일치하는 컷 정보를 찾지 못했어.",
-        "질문하기로 남겨주면 우선 확인해서 반영해둘게.",
+        "없는 컷이나 합격 가능성을 임의로 만들지는 않을게.",
       ].join("\n");
     } else {
       const generationStarted = Date.now();
@@ -1341,8 +1322,84 @@ async function runChatWorkflow(params: {
       intent,
       route,
       answer,
-      needsQuestionSubmission: route === "fallback",
+      needsQuestionSubmission: false,
       contexts: responseContexts,
+      cache: cacheStatus,
+      traceId,
+      metrics: {
+        totalMs: Date.now() - startedAt,
+        cacheMs,
+        embeddingMs,
+        retrievalMs,
+        generationMs,
+      },
+    };
+  }
+
+  // 공부법과 학생 프로필 후속 답변은 모집요강 검색보다 먼저 코칭으로 보낸다.
+  // "학사·인문" 같은 프로필 단어 때문에 특정 대학 자료가 끼어드는 것을 막는다.
+  const preRetrievalCoaching = await resolveCoachingFallbackWithAI({
+    question,
+    historyMessages,
+    intent,
+    hasEnoughContext: false,
+    isGeneralChat,
+  });
+
+  if (intent === "emotion" || preRetrievalCoaching.shouldFallback) {
+    const adviceSnippets = await getAdviceSnippets();
+    const adviceKnowledgeItemIds = adviceSnippets.map((item) => item.id);
+    stream?.onMeta({
+      intent,
+      route: "emotion",
+      cache: cacheStatus,
+      reason: intent === "emotion" ? "emotion" : preRetrievalCoaching.reason,
+      adviceCount: adviceSnippets.length,
+      adviceKnowledgeItemIds,
+    });
+
+    const generationStarted = Date.now();
+    let answer = "";
+    if (stream) {
+      answer = await generateEmotionAnswerStream(question, adviceSnippets, historyMessages, (delta) => {
+        if (!delta) return;
+        stream.onDelta(delta);
+      });
+    } else {
+      answer = await generateEmotionAnswer(question, adviceSnippets, historyMessages);
+    }
+    generationMs = Date.now() - generationStarted;
+
+    try {
+      await admin.from("ai_chat_logs").insert({
+        exam_slug: exam,
+        question,
+        answer,
+        route: "emotion",
+        top_chunk_ids: [],
+        top_knowledge_item_ids: adviceKnowledgeItemIds,
+      });
+    } catch {
+      // Fail-open: logging errors should not block chat answers.
+    }
+
+    await recordObservation({
+      route: "emotion",
+      status: "ok",
+      matchedContextCount: adviceSnippets.length,
+      hasEnoughContext: adviceSnippets.length > 0,
+      answerLength: answer.length,
+    });
+
+    return {
+      ok: true,
+      exam,
+      intent,
+      route: "emotion",
+      answer,
+      needsQuestionSubmission: false,
+      adviceKnowledgeItemIds,
+      contexts: [],
       cache: cacheStatus,
       traceId,
       metrics: {
@@ -1407,7 +1464,7 @@ async function runChatWorkflow(params: {
         intent,
         route,
         answer: catalogAnswer.answer,
-        needsQuestionSubmission: !catalogAnswer.grounded,
+        needsQuestionSubmission: false,
         contexts: [],
         cache: cacheStatus,
         traceId,
@@ -1420,63 +1477,6 @@ async function runChatWorkflow(params: {
         },
       };
     }
-  }
-
-  if (intent === "emotion") {
-    const adviceSnippets = await getAdviceSnippets();
-    stream?.onMeta({ intent, route: "emotion", cache: cacheStatus, adviceCount: adviceSnippets.length });
-
-    const generationStarted = Date.now();
-    let answer = "";
-    if (stream) {
-      answer = await generateEmotionAnswerStream(question, adviceSnippets, historyMessages, (delta) => {
-        if (!delta) return;
-        stream.onDelta(delta);
-      });
-    } else {
-      answer = await generateEmotionAnswer(question, adviceSnippets, historyMessages);
-    }
-    generationMs = Date.now() - generationStarted;
-
-    try {
-      await admin.from("ai_chat_logs").insert({
-        exam_slug: exam,
-        question,
-        answer,
-        route: "emotion",
-        top_chunk_ids: [],
-        top_knowledge_item_ids: [],
-      });
-    } catch {
-      // Fail-open: logging errors should not block chat answers.
-    }
-
-    await recordObservation({
-      route: "emotion",
-      status: "ok",
-      matchedContextCount: 0,
-      hasEnoughContext: false,
-      answerLength: answer.length,
-    });
-
-    return {
-      ok: true,
-      exam,
-      intent,
-      route: "emotion",
-      answer,
-      needsQuestionSubmission: false,
-      contexts: [],
-      cache: cacheStatus,
-      traceId,
-      metrics: {
-        totalMs: Date.now() - startedAt,
-        cacheMs,
-        embeddingMs,
-        retrievalMs,
-        generationMs,
-      },
-    };
   }
 
   const cacheMeta = buildChatCacheKey({
@@ -1538,7 +1538,7 @@ async function runChatWorkflow(params: {
           intent,
           route: cached.route,
           answer: cached.answer,
-          needsQuestionSubmission: cached.route === "fallback",
+          needsQuestionSubmission: false,
           contexts: cached.contexts,
           cache: cacheStatus,
           traceId,
@@ -1601,8 +1601,12 @@ async function runChatWorkflow(params: {
         }
       }
     }
-    matched = [...mergedById.values()]
-      .sort((a, b) => b.similarity - a.similarity)
+    const ranked = [...mergedById.values()].sort((a, b) => b.similarity - a.similarity);
+    // 학교를 말하지 않은 질문에는 특정 대학 청크를 근거로 주입하지 않는다.
+    // 여러 학교 목록/비교는 앞선 구조화 카탈로그가 담당하므로 여기서는 누락이 더 안전하다.
+    matched = (mentionsKnownUniversity(question)
+      ? ranked
+      : ranked.filter((row) => !mentionsKnownUniversity(row.chunk_text)))
       .slice(0, matchCount);
   }
   retrievalMs = Date.now() - retrievalStarted;
@@ -1653,7 +1657,13 @@ async function runChatWorkflow(params: {
   if (intent === "mixed") {
     adviceSnippets = await getAdviceSnippets();
     route = "mixed";
-    stream?.onMeta({ intent, route, cache: cacheStatus, adviceCount: adviceSnippets.length });
+    stream?.onMeta({
+      intent,
+      route,
+      cache: cacheStatus,
+      adviceCount: adviceSnippets.length,
+      adviceKnowledgeItemIds: adviceSnippets.map((item) => item.id),
+    });
 
     let factAnswer = "";
       if (stream) {
@@ -1699,6 +1709,7 @@ async function runChatWorkflow(params: {
         cache: cacheStatus,
         reason: coachingFallback.reason,
         adviceCount: adviceSnippets.length,
+        adviceKnowledgeItemIds: adviceSnippets.map((item) => item.id),
       });
 
       if (stream) {
@@ -1741,6 +1752,8 @@ async function runChatWorkflow(params: {
   }
 
   generationMs = Date.now() - generationStarted;
+  const adviceKnowledgeItemIds = adviceSnippets.map((item) => item.id);
+  const loggedKnowledgeItemIds = [...new Set([...topKnowledgeIds, ...adviceKnowledgeItemIds])];
 
   try {
     await admin.from("ai_chat_logs").insert({
@@ -1749,7 +1762,7 @@ async function runChatWorkflow(params: {
       answer,
       route,
       top_chunk_ids: topChunkIds,
-      top_knowledge_item_ids: topKnowledgeIds,
+      top_knowledge_item_ids: loggedKnowledgeItemIds,
     });
   } catch {
     // Fail-open: logging errors should not block chat answers.
@@ -1780,8 +1793,8 @@ async function runChatWorkflow(params: {
   await recordObservation({
     route,
     status: "ok",
-    matchedContextCount: contexts.length,
-    hasEnoughContext,
+    matchedContextCount: contexts.length + adviceSnippets.length,
+    hasEnoughContext: hasEnoughContext || adviceSnippets.length > 0,
     answerLength: answer.length,
   });
 
@@ -1791,7 +1804,8 @@ async function runChatWorkflow(params: {
     intent,
     route,
     answer,
-    needsQuestionSubmission: route === "fallback",
+    needsQuestionSubmission: false,
+    adviceKnowledgeItemIds,
     contexts: responseContexts,
     cache: cacheStatus,
     traceId,

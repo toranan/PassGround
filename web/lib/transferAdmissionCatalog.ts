@@ -189,7 +189,7 @@ function normalizeUniversity(value: string): string {
 }
 
 function explicitUniversities(question: string): string[] {
-  const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{2,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|$)/g);
+  const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{2,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|[?!.,]|$)/g);
   return uniqueStrings([...matches].map((match) => match[1]));
 }
 
@@ -283,6 +283,8 @@ async function createPlan(question: string, currentAdmissionYear: number): Promi
       `현재 운영 중인 최신 입시 학년도는 ${currentAdmissionYear}학년도다.`,
       "답을 만들지 말고 검색 계획만 반환한다.",
       "질문에 직접 나온 대학만 universities에 넣고 추측하지 않는다.",
+      "공부법·공부시간·학습 우선순위·루틴 상담이나 학생이 자신의 베이스·진도만 설명한 메시지는 admission_guide가 아니라 other다.",
+      "학사·인문·자연 같은 단어가 있어도 모집요강의 자격·인원·전형·일정 등을 묻지 않으면 other다.",
       "작년·지난해·전년도는 previous, 올해는 current, 명시 연도는 explicit이다.",
       "모집인원·몇 명 모집·티오는 recruitment_quota이고 실제 합격·등록 인원은 actual_outcome이다.",
       "자연계·이과는 category=natural, 인문계·문과는 humanities이다.",
@@ -597,6 +599,14 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     };
   }
   if (plan.domain !== "admission_guide") return null;
+
+  const requestedUniversities = explicitUniversities(params.question);
+  const crossSchoolOperation = plan.operation === "list"
+    || plan.operation === "count"
+    || plan.operation === "compare";
+  if (!requestedUniversities.length && !crossSchoolOperation) {
+    return null;
+  }
 
   const scope = resolveScope({
     question: params.question,

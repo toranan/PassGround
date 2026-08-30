@@ -244,11 +244,6 @@ private struct ChatCoachView: View {
     @EnvironmentObject private var config: AppConfig
     @EnvironmentObject private var session: SessionStore
 
-    private struct PendingQuestionSubmission {
-        let question: String
-        let traceId: String?
-    }
-
     private let api = APIClient()
     private let oauth = OAuthCoordinator()
     private static let assistantName = "합곰이"
@@ -267,13 +262,7 @@ private struct ChatCoachView: View {
     @State private var pendingDeltaText = ""
     @State private var renderingDelta = false
     @State private var sawStreamSignal = false
-    @State private var submittingQuestion = false
-    @State private var pendingQuestionSubmission: PendingQuestionSubmission?
     @State private var socialLoginProvider: String?
-    @State private var showingConsultationSheet = false
-    @State private var consultationPhone = ""
-    @State private var submittingConsultation = false
-    @State private var consultationErrorMessage = ""
     @FocusState private var inputFocused: Bool
     @State private var messages: [ChatMessage] = [
         ChatMessage(
@@ -315,24 +304,12 @@ private struct ChatCoachView: View {
             }
 
             Divider()
-            VStack(spacing: 8) {
-                if pendingQuestionSubmission != nil {
-                    questionSubmissionBar
-                }
-                inputBar
-            }
-            .padding(.top, 8)
-            .background(Color(UIColor.systemBackground))
+            inputBar
+                .padding(.top, 8)
+                .background(Color(UIColor.systemBackground))
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("상담요청") {
-                    consultationErrorMessage = ""
-                    showingConsultationSheet = true
-                }
-                .font(.caption.weight(.semibold))
-            }
             ToolbarItem(placement: .principal) {
                 Text("AI 상담")
                     .font(.title3.weight(.bold))
@@ -343,9 +320,6 @@ private struct ChatCoachView: View {
                 }
                 .font(.caption.weight(.semibold))
             }
-        }
-        .sheet(isPresented: $showingConsultationSheet) {
-            consultationRequestSheet
         }
     }
 
@@ -374,26 +348,6 @@ private struct ChatCoachView: View {
         .padding(.vertical, 10)
     }
 
-    private var questionSubmissionBar: some View {
-        HStack(spacing: 8) {
-            Text("정보가 없어서 답변을 못했어. 질문 접수할래?")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-            Spacer(minLength: 8)
-            Button {
-                Task { await submitPendingQuestion() }
-            } label: {
-                Text(submittingQuestion ? "접수 중..." : "질문하기")
-                    .font(.caption.weight(.semibold))
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.small)
-            .disabled(submittingQuestion)
-        }
-        .padding(.horizontal, 12)
-    }
-
     private var coachLoginPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("AI상담은 로그인 후 사용할 수 있어. 아래에서 바로 로그인해줘.")
@@ -419,68 +373,6 @@ private struct ChatCoachView: View {
         .padding(.horizontal, 12)
         .padding(.top, 6)
         .padding(.bottom, 4)
-    }
-
-    private var consultationPhoneDigits: String {
-        consultationPhone.filter(\.isNumber)
-    }
-
-    private var canSubmitConsultation: Bool {
-        let count = consultationPhoneDigits.count
-        return !submittingConsultation && (9...11).contains(count)
-    }
-
-    private var consultationRequestSheet: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("전화번호 남겨주시면 편입 합격에 도움이 되는 답변을 무료로 안내해드릴게요. 편하게 신청해주세요!")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                TextField("전화번호 입력", text: $consultationPhone)
-                    .keyboardType(.phonePad)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                if !consultationErrorMessage.isEmpty {
-                    Text(consultationErrorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                } else {
-                    Text("숫자만 입력해도 됩니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button {
-                    Task { await submitConsultationRequest() }
-                } label: {
-                    Text(submittingConsultation ? "접수 중..." : "상담 요청 보내기")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!canSubmitConsultation)
-
-                Spacer(minLength: 0)
-            }
-            .padding(16)
-            .navigationTitle("상담요청")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("닫기") {
-                        showingConsultationSheet = false
-                    }
-                    .disabled(submittingConsultation)
-                }
-            }
-        }
     }
 
     private func socialLoginButton(provider: String, title: String, icon: String) -> some View {
@@ -649,8 +541,6 @@ private struct ChatCoachView: View {
         inputFocused = false
         pendingDeltaText = ""
         renderingDelta = false
-        submittingQuestion = false
-        pendingQuestionSubmission = nil
     }
 
     @MainActor
@@ -692,7 +582,6 @@ private struct ChatCoachView: View {
         pendingDeltaText = ""
         renderingDelta = false
         sawStreamSignal = false
-        pendingQuestionSubmission = nil
         messages.append(ChatMessage(role: .user, text: question, subtitle: nil))
         let assistantId = UUID()
         messages.append(
@@ -729,9 +618,6 @@ private struct ChatCoachView: View {
             if shouldTypeFinal, !response.answer.isEmpty {
                 appendDelta(response.answer, assistantId: assistantId)
             }
-            pendingQuestionSubmission = response.needsQuestionSubmission == true
-                ? PendingQuestionSubmission(question: question, traceId: response.traceId)
-                : nil
         } catch {
             let streamError = error
             if sawStreamSignal {
@@ -771,9 +657,6 @@ private struct ChatCoachView: View {
                 if shouldTypeFallback, !fallback.answer.isEmpty {
                     appendDelta(fallback.answer, assistantId: assistantId)
                 }
-                pendingQuestionSubmission = fallback.needsQuestionSubmission == true
-                    ? PendingQuestionSubmission(question: question, traceId: fallback.traceId)
-                    : nil
             } catch {
                 let isUnauthorized =
                     streamError.localizedDescription.contains("HTTP 401")
@@ -922,114 +805,6 @@ private struct ChatCoachView: View {
         messages[index] = message
     }
 
-    @MainActor
-    private func submitPendingQuestion() async {
-        guard !submittingQuestion else { return }
-        guard let pending = pendingQuestionSubmission else { return }
-        await session.refreshIfNeeded(baseURL: config.baseURL)
-        var accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !accessToken.isEmpty else {
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    text: "질문 접수는 로그인 후 가능해. 마이페이지에서 먼저 로그인해줘.",
-                    subtitle: ChatCoachView.assistantName
-                )
-            )
-            return
-        }
-
-        submittingQuestion = true
-        defer { submittingQuestion = false }
-
-        do {
-            try await submitQuestionRequest(pending: pending, accessToken: accessToken)
-        } catch {
-            let isUnauthorized = error.localizedDescription.contains("HTTP 401")
-            if isUnauthorized {
-                await session.refreshIfNeeded(baseURL: config.baseURL, force: true)
-                accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !accessToken.isEmpty {
-                    do {
-                        try await submitQuestionRequest(pending: pending, accessToken: accessToken)
-                        return
-                    } catch {
-                        // fall through to message below
-                    }
-                }
-            }
-
-            let messageText = isUnauthorized
-                ? "세션이 만료된 것 같아. 마이페이지에서 다시 로그인하고 눌러줘."
-                : "질문 접수에 실패했어. 잠시 후 다시 눌러줘."
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    text: messageText,
-                    subtitle: ChatCoachView.assistantName
-                )
-            )
-        }
-    }
-
-    @MainActor
-    private func submitQuestionRequest(
-        pending: PendingQuestionSubmission,
-        accessToken: String
-    ) async throws {
-        let payload = try await api.submitAIQuestion(
-            baseURL: config.baseURL,
-            exam: exam,
-            question: pending.question,
-            traceId: pending.traceId,
-            accessToken: accessToken
-        )
-        messages.append(
-            ChatMessage(
-                role: .assistant,
-                text: payload.message ?? "질문 접수 완료! 등록된 이메일로 답변 준비해둘게.",
-                subtitle: ChatCoachView.assistantName
-            )
-        )
-        pendingQuestionSubmission = nil
-    }
-
-    @MainActor
-    private func submitConsultationRequest() async {
-        let phoneNumber = consultationPhone.trimmingCharacters(in: .whitespacesAndNewlines)
-        let phoneDigits = consultationPhoneDigits
-
-        guard (9...11).contains(phoneDigits.count) else {
-            consultationErrorMessage = "전화번호 형식을 확인해줘."
-            return
-        }
-
-        consultationErrorMessage = ""
-        submittingConsultation = true
-        defer { submittingConsultation = false }
-
-        do {
-            let accessToken = session.accessToken.trimmingCharacters(in: .whitespacesAndNewlines)
-            let payload = try await api.requestConsultation(
-                baseURL: config.baseURL,
-                phoneNumber: phoneNumber,
-                sourcePath: "ios://transfer/ai",
-                accessToken: accessToken.isEmpty ? nil : accessToken
-            )
-
-            consultationPhone = ""
-            showingConsultationSheet = false
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    text: payload.message ?? "상담 신청이 접수되었습니다. 입력하신 번호로 연락드릴게요.",
-                    subtitle: ChatCoachView.assistantName
-                )
-            )
-        } catch {
-            consultationErrorMessage = error.localizedDescription
-        }
-    }
 }
 
 struct TabBarButton: View {

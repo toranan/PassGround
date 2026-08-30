@@ -248,7 +248,7 @@ function buildUnavailablePayload(params: {
       detailBase,
       "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다."
     ),
-    targetGuide: "질문하기 버튼으로 접수해주시면 확인 후 반영하겠습니다.",
+    targetGuide: "현재 저장된 근거에서 확인되지 않는 내용은 임의로 안내하지 않습니다.",
     basis: params.basis ?? [],
     message: "아직 해당 정보가 존재하지않습니다. 빠른시일내에 준비하도록하겠습니다.",
     evidenceCount: params.evidenceCount ?? 0,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { resolveUsableAccessToken } from "@/lib/authClient";
 
@@ -12,14 +12,10 @@ type ChatMessage = {
   id: string;
   role: ChatRole;
   text: string;
-  traceId?: string;
-  needsQuestionSubmission?: boolean;
 };
 
 type DonePayload = {
   answer?: string;
-  traceId?: string;
-  needsQuestionSubmission?: boolean;
 };
 
 function makeId(): string {
@@ -75,19 +71,9 @@ export function TransferAiAssistantPanel() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [submittingQuestion, setSubmittingQuestion] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  const lastAssistant = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i].role === "assistant") return messages[i];
-    }
-    return null;
-  }, [messages]);
-
-  const canSubmitQuestion = Boolean(lastAssistant?.needsQuestionSubmission);
 
   const scrollToBottom = () => {
     if (!scrollRef.current) return;
@@ -208,8 +194,6 @@ export function TransferAiAssistantPanel() {
               ? {
                   ...item,
                   text: donePayload?.answer?.trim() || item.text || "답변을 생성하지 못했습니다.",
-                  traceId: donePayload?.traceId,
-                  needsQuestionSubmission: donePayload?.needsQuestionSubmission === true,
                 }
               : item
           )
@@ -223,66 +207,6 @@ export function TransferAiAssistantPanel() {
       setMessages((prev) => prev.filter((item) => item.id !== assistantId));
     } finally {
       setPending(false);
-      setTimeout(scrollToBottom, 0);
-    }
-  };
-
-  const handleSubmitQuestion = async () => {
-    if (!canSubmitQuestion || submittingQuestion) return;
-
-    let token = await resolveUsableAccessToken();
-    if (!token) {
-      openLoginPrompt();
-      return;
-    }
-
-    const lastUserQuestion = [...messages].reverse().find((item) => item.role === "user")?.text?.trim() ?? "";
-    if (!lastUserQuestion) {
-      setError("접수할 질문을 찾지 못했습니다.");
-      return;
-    }
-
-    try {
-      setSubmittingQuestion(true);
-      const buildRequest = (accessToken: string) => fetch("/api/ai/questions/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          exam: "transfer",
-          question: lastUserQuestion,
-          traceId: lastAssistant?.traceId,
-        }),
-      });
-      let response = await buildRequest(token);
-
-      if (response.status === 401) {
-        const refreshedToken = await resolveUsableAccessToken(true);
-        if (refreshedToken && refreshedToken !== token) {
-          token = refreshedToken;
-          response = await buildRequest(token);
-        }
-      }
-
-      const payload = (await response.json().catch(() => null)) as { ok?: boolean; message?: string; error?: string } | null;
-      if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.error || "질문 접수에 실패했습니다.");
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: makeId(),
-          role: "assistant",
-          text: payload.message || "질문 접수가 완료되었습니다. 확인 후 답변을 준비해드리겠습니다.",
-        },
-      ]);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "질문 접수 중 오류가 발생했습니다.");
-    } finally {
-      setSubmittingQuestion(false);
       setTimeout(scrollToBottom, 0);
     }
   };
@@ -332,11 +256,6 @@ export function TransferAiAssistantPanel() {
               <Button type="submit" disabled={pending || !input.trim()} className="h-9 rounded-xl bg-primary px-4 hover:bg-primary/90">
                 {pending ? "생성 중" : "전송"}
               </Button>
-              {canSubmitQuestion ? (
-                <Button type="button" variant="outline" size="sm" onClick={handleSubmitQuestion} disabled={submittingQuestion}>
-                  {submittingQuestion ? "접수 중" : "질문하기"}
-                </Button>
-              ) : null}
             </div>
           </form>
 
