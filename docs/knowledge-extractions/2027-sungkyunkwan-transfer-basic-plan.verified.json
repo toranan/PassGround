@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "성균관대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 성균관대학교 편입학 기본계획",
+    "sourceFile": "2027_성균관대학교_편입학기본계획.pdf",
+    "sourceUrl": "https://admission.skku.edu/",
+    "sha256": "e55544ced68f2cf6011209cca92eb5ab40607ee539953cc7b4311e8f923eafcc",
+    "fileSizeBytes": 77297,
+    "pageCount": 8,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-09-02T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "selectionMultiple": "deferred",
+        "questionCount": "deferred",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "2026년 12월",
+      "notice": "기본계획은 변경될 수 있다. 정확한 모집인원·일정·선발배수·문항 수·세부 지원자격은 2026년 12월 최종 모집요강을 확인해야 한다."
+    }
+  },
+  "sections": [
+    {
+      "key": "status-and-overall-schedule",
+      "heading": "기본계획 상태와 전체 일정",
+      "pageStart": 2,
+      "pageEnd": 3,
+      "content": "이 문서는 2027학년도 성균관대학교 편입학 기본계획이며 교육부의 2027학년도 대학 편입학 전형 기본계획에 따라 변경될 수 있다. 최종 모집요강은 2026년 12월 중 성균관대학교 입학안내 홈페이지에 게재될 예정이다. 원서접수와 서류제출은 2026년 12월 중, 필답시험과 면접시험을 포함한 전형기간은 2026년 12월부터 2027년 2월 중, 합격자 발표는 2027년 2월 중으로만 안내됐다. 정확한 날짜와 시간은 공개되지 않았다. 원서는 인터넷으로만 접수하고 서류는 온라인으로 업로드한다."
+    },
+    {
+      "key": "installed-programs-and-quota",
+      "heading": "설치 모집단위와 모집인원 미공개",
+      "pageStart": 4,
+      "pageEnd": 5,
+      "content": "성균관대학교는 설치 모집단위를 공개했지만 전형별·모집단위별 정확한 모집인원은 공개하지 않았다. 모집인원은 여석 산정 후 2026년 12월 최종 모집요강에서 안내할 예정이며 일부 모집단위는 변경되거나 선발하지 않을 수 있다. 인문사회과학캠퍼스 모집단위는 유학·동양학과, 국어국문학과, 영어영문학과, 프랑스어문학과, 중어중문학과, 독어독문학과, 러시아어문학과, 한문학과, 사학과, 철학과, 문헌정보학과, 행정학과, 정치외교학과, 미디어커뮤니케이션학과, 사회학과, 사회복지학과, 심리학과, 소비자학과, 아동·청소년학과, 경제학과, 통계학과, 경영학과, 교육학과, 한문교육과, 수학교육과, 컴퓨터교육과다. 자연과학캠퍼스 모집단위는 에너지학과, 소프트웨어학과, 생명과학과, 수학과, 물리학과, 화학과, 식품생명공학과, 바이오메카트로닉스학과, 융합생명공학과, 전자전기공학부, 반도체융합공학과, 화학공학/고분자공학부, 신소재공학부, 기계공학부, 건설환경공학부, 시스템경영공학과, 나노공학과, 건축학과, 양자정보공학과, 약학과다. 양자정보공학과는 2027학년도 확대 표시가 있다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "general-eligibility",
+      "heading": "일반편입학 지원자격",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "일반편입학 유형1과 유형2는 성균관대학교를 제외한 국내·외 4년제 이상 정규대학에서 2학년 또는 4개 학기 이상 등록하고 수료했거나 수료 예정인 자, 국내·외 전문대학 졸업자·졸업예정자, 전문학사학위 취득자·취득예정자, 학점은행제 학사학위과정 70학점 이상 취득자·취득예정자 등이 지원할 수 있다. 4년제 대학 지원자는 단과대학별 최소학점을 충족해야 한다. 유학·문과·사회과학·경제·경영대학 및 성균융합원은 60학점 이상, 자연과학·정보통신·소프트웨어융합·공과·생명공학·약학대학은 65학점 이상, 사범대학은 70학점 이상이다. 해외 4년제 대학은 학위취득학점의 2분의 1 이상, 해외 3년제 대학은 3분의 2 이상을 취득해야 하며 대학 학제 등을 종합적으로 고려해 판단한다."
+    },
+    {
+      "key": "bachelor-eligibility",
+      "heading": "학사편입학 지원자격",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "학사편입학은 국내·외 정규 학사학위 취득자 또는 취득예정자가 지원할 수 있고 학점인정제 또는 독학학위제에 따른 학사학위 소지자도 포함한다. 지원자격과 전형별 세부 조건은 2027학년도 대학 편입학 전형 기본계획에 따라 변경될 수 있으므로 2026년 12월 최종 모집요강을 확인해야 한다."
+    },
+    {
+      "key": "written-document-interview",
+      "heading": "필답시험·서류평가·전적대학성적·면접",
+      "pageStart": 7,
+      "pageEnd": 8,
+      "content": "필답시험은 2027년 1월 중 실시할 예정이다. 인문계는 영어를 90분, 자연계는 영어와 수학을 합해 90분 동안 응시한다. 정확한 시험일·시간·문항 수·출제 형식은 아직 공개되지 않았다. 서류평가는 학업성취도, 교육과정 이수현황, 공인어학성적, 수상·연구 활동실적, 국가공인시험 합격증과 자격증 등을 바탕으로 학업역량, 탐구역량인 전공적합성, 잠재역량을 종합평가한다. 일반편입 유형1과 학사편입의 전적대학 성적은 서류평가에 포함해 종합평가한다. 일반편입 유형2와 군위탁 특별전형은 전적대학 성적을 정량 반영하되 세부 산출방법은 최종 모집요강에서 안내한다. 면접시험은 2027년 1월 중 인문사회과학캠퍼스에서 실시할 예정이며 전공 관련 지식, 특기사항과 이력, 학업 및 진로계획 등 전공기초소양을 포함한 인·적성 면접이다."
+    },
+    {
+      "key": "special-admission-notice",
+      "heading": "정원외 특별전형 주의사항",
+      "pageStart": 7,
+      "pageEnd": 7,
+      "content": "정원외 특별전형은 여석 산정 결과 등에 따라 일반편입 유형1 또는 유형2의 전형방법으로 시행하며 일부 설치 모집단위에 한해 운영한다. 적용 모집단위와 세부사항은 최종 모집요강에서 안내한다. 특성화고졸재직자전형은 선발하지 않는다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "general-type1-humanities",
+      "scopeType": "category",
+      "scopeValue": "인문계 일반편입 유형1",
+      "transferTypes": ["일반편입(유형1)"],
+      "writtenSubjects": ["영어"],
+      "examMinutes": 90,
+      "questionCount": null,
+      "examFormat": "문항 수와 출제 형식은 추후 모집요강에서 안내",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7],
+      "notes": "1단계 영어 100%, 2단계 1단계 성적 60%+서류 20%+면접 20%. 선발배수는 미공개.",
+      "metadata": { "factStatus": "provisional" }
+    },
+    {
+      "key": "general-type1-natural",
+      "scopeType": "category",
+      "scopeValue": "자연계 일반편입 유형1",
+      "transferTypes": ["일반편입(유형1)"],
+      "writtenSubjects": ["영어", "수학"],
+      "examMinutes": 90,
+      "questionCount": null,
+      "examFormat": "영어 50%+수학 50%, 문항 수와 출제 형식은 추후 모집요강에서 안내",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7],
+      "notes": "1단계 영어 50%+수학 50%, 2단계 1단계 성적 60%+서류 20%+면접 20%. 선발배수는 미공개.",
+      "metadata": { "factStatus": "provisional" }
+    },
+    {
+      "key": "general-type2-and-military",
+      "scopeType": "all",
+      "scopeValue": "일반편입 유형2·군위탁",
+      "transferTypes": ["일반편입(유형2)", "군위탁"],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필답시험 없음",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7, 8],
+      "notes": "1단계 서류 25%+전적대학 성적 75%, 2단계 1단계 성적 80%+면접 20%. 최종 환산은 서류 20%+전적대학 성적 60%+면접 20%.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalPriorUniversityWeight": 60
+      }
+    },
+    {
+      "key": "bachelor-humanities",
+      "scopeType": "category",
+      "scopeValue": "인문계 학사편입",
+      "transferTypes": ["학사편입"],
+      "writtenSubjects": ["영어"],
+      "examMinutes": 90,
+      "questionCount": null,
+      "examFormat": "문항 수와 출제 형식은 추후 모집요강에서 안내",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7],
+      "notes": "1단계 영어 100%, 2단계 1단계 성적 60%+서류 40%. 면접은 없고 선발배수는 미공개.",
+      "metadata": { "factStatus": "provisional" }
+    },
+    {
+      "key": "bachelor-natural",
+      "scopeType": "category",
+      "scopeValue": "자연계 학사편입",
+      "transferTypes": ["학사편입"],
+      "writtenSubjects": ["영어", "수학"],
+      "examMinutes": 90,
+      "questionCount": null,
+      "examFormat": "영어 50%+수학 50%, 문항 수와 출제 형식은 추후 모집요강에서 안내",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7],
+      "notes": "1단계 영어 50%+수학 50%, 2단계 1단계 성적 60%+서류 40%. 면접은 없고 선발배수는 미공개.",
+      "metadata": { "factStatus": "provisional" }
+    },
+    {
+      "key": "outside-quota-special",
+      "scopeType": "all",
+      "scopeValue": "정원외 특별전형",
+      "transferTypes": ["정원외 특별전형"],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "여석 산정 결과에 따라 유형1 또는 유형2로 시행",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [7],
+      "notes": "세부 모집단위와 적용 유형은 최종 모집요강에서 안내한다. 특성화고졸재직자전형은 선발하지 않는다.",
+      "metadata": { "factStatus": "deferred" }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application-and-documents",
+      "audience": "전체 지원자",
+      "label": "원서접수·서류제출",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "인터넷 원서접수, 서류 온라인 업로드. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 3,
+      "metadata": { "precision": "month", "factStatus": "provisional" }
+    },
+    {
+      "key": "selection-period",
+      "audience": "전체 지원자",
+      "label": "필답·면접 전형기간",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 ~ 2027년 2월 중",
+      "details": "정확한 일자와 시간은 최종 모집요강에서 안내.",
+      "sourcePage": 3,
+      "metadata": { "precision": "range", "factStatus": "provisional" }
+    },
+    {
+      "key": "written-exam",
+      "audience": "일반편입 유형1·학사편입",
+      "label": "필답시험",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "인문계 영어 90분, 자연계 영어·수학 90분. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 7,
+      "metadata": { "precision": "month", "factStatus": "provisional" }
+    },
+    {
+      "key": "interview",
+      "audience": "면접 반영 전형",
+      "label": "면접시험",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "인문사회과학캠퍼스에서 실시 예정. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 8,
+      "metadata": { "precision": "month", "factStatus": "provisional" }
+    },
+    {
+      "key": "final-result",
+      "audience": "전체 지원자",
+      "label": "합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 3,
+      "metadata": { "precision": "month", "factStatus": "provisional" }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 6,
+    "expectedScheduleRows": 5,
+    "tablesChecked": [
+      "PDF 3페이지 전형일정 표",
+      "PDF 4~5페이지 설치 모집단위 표",
+      "PDF 6페이지 지원자격 표",
+      "PDF 7페이지 전형요소 및 반영비율 표",
+      "PDF 7~8페이지 필답·서류·전적대·면접 안내"
+    ],
+    "notes": [
+      "최종 모집요강이 아니라 전형 기본계획으로 분류",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "월 단위 일정에 임의의 일자와 시간을 생성하지 않음",
+      "정확한 선발배수·문항 수·출제 형식·전적대학 성적 산출방법은 미공개 처리",
+      "최종 모집요강 적재 후 기본계획 지식 청크를 문서 ID 기준으로 폐기할 수 있음"
+    ]
+  }
+}

@@ -229,7 +229,10 @@ export function parseManifest(raw, filename) {
       metadata: row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) ? row.metadata : {},
     };
   });
-  if (!programs.length) fail("programs가 하나 이상 필요합니다.");
+  const recruitmentQuotaStatus = document.metadata?.factAvailability?.recruitmentQuota;
+  if (!programs.length && recruitmentQuotaStatus !== "deferred") {
+    fail("programs가 하나 이상 필요합니다. 모집인원 미공개 기본계획은 document.metadata.factAvailability.recruitmentQuota=deferred를 지정하세요.");
+  }
 
   const validation = parsed.validation ?? {};
   const actual = {
@@ -463,7 +466,6 @@ async function syncManifest(manifest, units, embeddingResult) {
     .eq("university", document.university)
     .eq("campus", document.campus)
     .eq("admission_year", document.admissionYear)
-    .eq("document_type", document.documentType)
     .eq("lifecycle_status", "active")
     .neq("id", documentId);
   if (previousError) fail(`이전 활성 문서 조회 실패: ${previousError.message}`);

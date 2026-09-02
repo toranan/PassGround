@@ -54,6 +54,7 @@ type SourceDocumentRow = {
   title: string;
   source_url: string | null;
   verified_at: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 type KnowledgeUnitRow = {
@@ -234,6 +235,32 @@ function distinctSchoolCount(documents: SourceDocumentRow[]): number {
   return new Set(documents.map((row) => `${row.university}|${row.campus}`)).size;
 }
 
+function factAvailability(document: SourceDocumentRow, fact: string): string | null {
+  const availability = document.metadata?.factAvailability;
+  if (!availability || typeof availability !== "object" || Array.isArray(availability)) return null;
+  const value = (availability as Record<string, unknown>)[fact];
+  return typeof value === "string" ? value : null;
+}
+
+function finalGuideExpectation(documents: SourceDocumentRow[]): string {
+  const expected = documents
+    .map((document) => document.metadata?.finalGuideExpected)
+    .find((value): value is string => typeof value === "string" && value.trim().length > 0);
+  return expected ? ` ${expected}에 공개 예정인 최종 모집요강에서 확인할 수 있습니다.` : " 최종 모집요강에서 확인할 수 있습니다.";
+}
+
+function documentBasisLabel(documents: SourceDocumentRow[]): string {
+  const types = uniqueStrings(documents.map((document) => document.document_type));
+  if (types.length === 1 && types[0] === "전형 기본계획") return "기본계획(안)";
+  if (types.length === 1 && types[0]) return types[0];
+  return "활성화된 검증 문서";
+}
+
+function schoolCampusLabel(university: string, campus: string): string {
+  if (!campus || campus === "전체") return university;
+  return `${university} ${campus}캠퍼스`;
+}
+
 function pagesLabel(pages: number[] | null): string {
   return uniqueStrings((pages ?? []).map(String)).join(", ");
 }
@@ -257,10 +284,25 @@ function textMatches(value: string | null, needle: string | null): boolean {
 
 function subjectMatches(subjects: string[] | null, mode: TransferQueryPlan["subjectMode"]): boolean {
   if (mode === "none") return true;
-  const normalized = uniqueStrings(subjects ?? []).sort();
+  const normalized = uniqueStrings((subjects ?? []).map((subject) => {
+    const compact = subject.replace(/\s+/g, "");
+    if (compact.startsWith("수학")) return "수학";
+    if (compact.startsWith("영어")) return "영어";
+    return compact;
+  })).sort();
   if (mode === "math_only") return normalized.length === 1 && normalized[0] === "수학";
   if (mode === "english_only") return normalized.length === 1 && normalized[0] === "영어";
   return normalized.includes("영어") && normalized.includes("수학");
+}
+
+function selectionScopeMatches(row: KnowledgeUnitRow, plan: TransferQueryPlan): boolean {
+  if (!plan.major && !plan.college) return true;
+  const haystack = [
+    row.scope_value || "",
+    row.content,
+    JSON.stringify(row.metadata ?? {}),
+  ].join(" ");
+  return textMatches(haystack, plan.major) && textMatches(haystack, plan.college);
 }
 
 function transferTypeMatches(types: string[] | null, requested: string | null): boolean {
@@ -328,7 +370,7 @@ function resolveScope(params: {
     year = params.currentAdmissionYear - 1;
   } else if (params.plan.yearReference === "current") {
     year = params.currentAdmissionYear;
-  } else if (year === null && !requestedUniversities.length) {
+  } else if (year === null) {
     year = params.currentAdmissionYear;
   }
 
@@ -341,7 +383,7 @@ function resolveScope(params: {
 function coveragePrefix(documents: SourceDocumentRow[], year: number | null): string {
   const years = uniqueStrings(documents.map((document) => String(document.admission_year))).join("·");
   const yearLabel = year ? `${year}학년도` : `${years}학년도`;
-  return `${yearLabel} 현재 적재·검증된 ${distinctSchoolCount(documents)}개교 모집요강 기준`;
+  return `${yearLabel} 현재 적재·검증된 ${distinctSchoolCount(documents)}개교 ${documentBasisLabel(documents)} 기준`;
 }
 
 function formatQuotaAnswer(
@@ -351,6 +393,10 @@ function formatQuotaAnswer(
   year: number | null
 ): string {
   const prefix = coveragePrefix(documents, year);
+  if (!rows.length && documents.some((document) => factAvailability(document, "recruitmentQuota") === "deferred")) {
+    const schoolNames = uniqueStrings(documents.map((document) => document.university)).join("·");
+    return `${schoolNames} ${year ?? documents[0]?.admission_year}학년도 기본계획에는 모집단위별 정확한 모집인원이 아직 공개되지 않았습니다.${finalGuideExpectation(documents)}`;
+  }
   if (!rows.length) return `${prefix}으로 조건에 맞는 모집단위를 찾지 못했습니다.`;
 
   const sorted = [...rows].sort((a, b) =>
@@ -361,7 +407,7 @@ function formatQuotaAnswer(
   const lines = [`${prefix}입니다.`];
   let previousSchool = "";
   for (const row of sorted) {
-    const school = `${row.university} ${row.campus}캠퍼스`;
+    const school = schoolCampusLabel(row.university, row.campus);
     if (school !== previousSchool) {
       lines.push(`\n- ${school}`);
       previousSchool = school;
@@ -395,7 +441,7 @@ function formatSelectionAnswer(
   }
   for (const group of [...grouped.values()]) {
     const document = group[0];
-    lines.push(`\n- ${document.university} ${document.campus}캠퍼스`);
+    lines.push(`\n- ${schoolCampusLabel(document.university, document.campus)}`);
     for (const row of group) {
       const subjects = row.written_subjects?.length ? row.written_subjects.join("·") : "없음";
       const multiple = row.stage1_selection_min_multiple && row.stage1_selection_max_multiple
@@ -404,8 +450,22 @@ function formatSelectionAnswer(
       const english = row.english_toeic_min === null
         ? ""
         : `, 공인영어 TOEIC ${row.english_toeic_min}·TEPS ${row.english_teps_min}·TOEFL(iBT) ${row.english_toefl_ibt_min}점 이상 중 하나`;
+      const supplementalWeights = [
+        ["전적대학", row.metadata?.finalPriorUniversityWeight],
+        ["자격실적", row.metadata?.finalQualificationWeight],
+        ["공인어학", row.metadata?.finalLanguageWeight],
+      ]
+        .filter((entry): entry is [string, number] => typeof entry[1] === "number")
+        .map(([label, value]) => `${label} ${formatPercent(value)}`);
+      const finalWeights = [
+        row.final_written_weight === null ? null : `필기 ${formatPercent(row.final_written_weight)}`,
+        row.final_document_weight === null ? null : `서류 ${formatPercent(row.final_document_weight)}`,
+        ...supplementalWeights,
+        row.final_interview_weight === null ? null : `면접 ${formatPercent(row.final_interview_weight)}`,
+        row.final_practical_weight === null ? null : `실기 ${formatPercent(row.final_practical_weight)}`,
+      ].filter((value): value is string => value !== null);
       lines.push(
-        `  - ${row.scope_value}: 필기 ${subjects}, 최종 필기 ${formatPercent(row.final_written_weight)}·서류 ${formatPercent(row.final_document_weight)}·면접 ${formatPercent(row.final_interview_weight)}${multiple}${english} (PDF ${pagesLabel(row.source_pages)}페이지)`
+        `  - ${row.scope_value}: 필기 ${subjects}, 최종 ${finalWeights.length ? finalWeights.join("·") : "세부 반영비율 미공개"}${multiple}${english} (PDF ${pagesLabel(row.source_pages)}페이지)`
       );
     }
   }
@@ -420,6 +480,10 @@ function formatScheduleAnswer(
   year: number | null
 ): string {
   const prefix = coveragePrefix(documents, year);
+  if (!rows.length && documents.some((document) => factAvailability(document, "exactSchedule") === "deferred")) {
+    const schoolNames = uniqueStrings(documents.map((document) => document.university)).join("·");
+    return `${schoolNames} ${year ?? documents[0]?.admission_year}학년도 기본계획에는 정확한 전형 일정이 아직 공개되지 않았습니다.${finalGuideExpectation(documents)}`;
+  }
   if (!rows.length) return `${prefix}으로 요청한 일정을 찾지 못했습니다.`;
   const lines = [`${prefix}입니다.`];
   for (const row of rows) {
@@ -427,6 +491,9 @@ function formatScheduleAnswer(
       ? row.metadata.displayText
       : [row.starts_on, row.ends_on].filter(Boolean).join(" ~ ");
     lines.push(`- ${row.university} ${row.event_label}: ${displayText} (PDF ${pagesLabel(row.source_pages)}페이지)`);
+  }
+  if (documents.some((document) => factAvailability(document, "exactSchedule") === "deferred")) {
+    lines.push(`정확한 날짜와 시간은 아직 공개되지 않았습니다.${finalGuideExpectation(documents)}`);
   }
   return lines.join("\n");
 }
@@ -484,6 +551,7 @@ async function answerStructured(params: {
     if (loaded.missingCatalog) return "missing_catalog";
     const rows = loaded.rows.filter((row) =>
       subjectMatches(row.written_subjects, params.plan.subjectMode)
+      && selectionScopeMatches(row, params.plan)
       && transferTypeMatches(row.transfer_types, params.plan.transferType)
       && (params.plan.minDocumentWeight === null
         || Number(row.final_document_weight ?? -1) >= params.plan.minDocumentWeight)
@@ -573,7 +641,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
 }): Promise<TransferCatalogAnswer | null> {
   const { data: documentData, error: documentError } = await params.admin
     .from("ai_source_documents")
-    .select("id,university,campus,admission_year,document_type,title,source_url,verified_at")
+    .select("id,university,campus,admission_year,document_type,title,source_url,verified_at,metadata")
     .eq("exam_slug", "transfer")
     .eq("review_status", "verified")
     .eq("lifecycle_status", "active");
