@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument } from "@/lib/transferDocumentPolicy";
 import {
   createEmbedding,
   generateGroundedAnswer,
@@ -186,7 +187,8 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 function normalizeUniversity(value: string): string {
-  return value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대");
+  const normalized = value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대");
+  return ({ 연대: "연세대", 경상대: "경상국립대" } as Record<string, string>)[normalized] ?? normalized;
 }
 
 function explicitUniversities(question: string): string[] {
@@ -246,7 +248,7 @@ function finalGuideExpectation(documents: SourceDocumentRow[]): string {
   const expected = documents
     .map((document) => document.metadata?.finalGuideExpected)
     .find((value): value is string => typeof value === "string" && value.trim().length > 0);
-  return expected ? ` ${expected}에 공개 예정인 최종 모집요강에서 확인할 수 있습니다.` : " 최종 모집요강에서 확인할 수 있습니다.";
+  return expected ? ` 기본계획에 기재된 최종 모집요강 발표 예정 시기는 ${expected}입니다. 최종 모집요강을 확인해야 합니다.` : " 최종 모집요강을 확인해야 합니다.";
 }
 
 function documentBasisLabel(documents: SourceDocumentRow[]): string {
@@ -356,7 +358,12 @@ function resolveScope(params: {
       (document) => normalizeUniversity(document.university) === normalizeUniversity(requested)
     )
   );
-  if (missingUniversities.length) return { documents: [], year: null, missingUniversities };
+  if (missingUniversities.length) return {
+    documents: [],
+    year: explicitAdmissionYear(params.question) ?? params.plan.admissionYear
+      ?? (params.plan.yearReference === "previous" ? params.currentAdmissionYear - 1 : params.currentAdmissionYear),
+    missingUniversities,
+  };
 
   let candidates = requestedUniversities.length
     ? params.documents.filter((document) => requestedUniversities.some(
@@ -454,6 +461,7 @@ function formatSelectionAnswer(
         ["전적대학", row.metadata?.finalPriorUniversityWeight],
         ["자격실적", row.metadata?.finalQualificationWeight],
         ["공인어학", row.metadata?.finalLanguageWeight],
+        ["전공이수능력", row.metadata?.finalMajorCourseWeight],
       ]
         .filter((entry): entry is [string, number] => typeof entry[1] === "number")
         .map(([label, value]) => `${label} ${formatPercent(value)}`);
@@ -467,6 +475,7 @@ function formatSelectionAnswer(
       lines.push(
         `  - ${row.scope_value}: 필기 ${subjects}, 최종 ${finalWeights.length ? finalWeights.join("·") : "세부 반영비율 미공개"}${multiple}${english} (PDF ${pagesLabel(row.source_pages)}페이지)`
       );
+      if (typeof row.metadata?.notes === "string" && row.metadata.notes) lines.push(`    ${row.metadata.notes}`);
     }
   }
   lines.push("\n'수학만/영어만'은 필기시험 과목 기준이며 최종 서류·면접 반영은 별도로 표시했습니다.");
@@ -615,7 +624,7 @@ async function answerSemantic(params: {
     .sort((a, b) => Number(b.similarity ?? 0) - Number(a.similarity ?? 0));
   if (!rows.length) {
     return {
-      answer: `${coveragePrefix(params.documents, params.year)}으로 질문에 답할 근거를 찾지 못했습니다.`,
+      answer: missingAdmissionEvidence(params.documents),
       matched: 0,
     };
   }
@@ -624,6 +633,8 @@ async function answerSemantic(params: {
     question: [
       params.question,
       `검색 범위: ${coveragePrefix(params.documents, params.year)}`,
+      basicPlanNotice(params.documents),
+      "기본계획은 확정 모집요강이 아니다. 검색 근거에 없으면 현재 확보한 문서에서 확인하지 못했다고 답하고, 공개되지 않았다고 추정하지 마라. 문서의 발표 예정 시기와 실제 공개 여부를 구분하라. 데이터 미보유를 대학 미공개로 단정하지 마라. 지원자격이나 전형별 예외를 추측하지 마라.",
       "답변 끝에 아직 DB에 적재되지 않은 학교·학년도는 포함되지 않는다고 밝혀라.",
     ].join("\n"),
     contexts: rows.map((row) => ({
@@ -651,8 +662,9 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     throw new Error(documentError.message);
   }
   const documents = selectAuthoritativeDocuments((documentData as SourceDocumentRow[] | null) ?? []);
-  if (!documents.length) return null;
-  const currentAdmissionYear = Math.max(...documents.map((document) => document.admission_year));
+  const currentAdmissionYear = documents.length
+    ? Math.max(...documents.map((document) => document.admission_year))
+    : new Date().getFullYear() + 1;
 
   let plan: TransferQueryPlan;
   try {
@@ -684,7 +696,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   });
   if (scope.missingUniversities.length) {
     return {
-      answer: `현재 검증된 모집요강 DB에는 ${scope.missingUniversities.join(", ")} 자료가 없어 답변할 수 없습니다.`,
+      answer: noAdmissionDocument(`${scope.year ?? currentAdmissionYear}학년도 ${scope.missingUniversities.join(", ")}`),
       admissionYear: scope.year,
       coverageCount: 0,
       matchedRuleCount: 0,
@@ -694,7 +706,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   if (!scope.documents.length) {
     const requestedYear = scope.year ? `${scope.year}학년도` : "요청한 범위의";
     return {
-      answer: `현재 검증된 모집요강 DB에는 ${requestedYear} 자료가 없어 답변할 수 없습니다.`,
+      answer: noAdmissionDocument(requestedYear),
       admissionYear: scope.year,
       coverageCount: 0,
       matchedRuleCount: 0,
@@ -719,13 +731,15 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     year: scope.year,
   });
   if (structured === "missing_catalog") return null;
-  if (structured) {
+  const retrySelectionInText = structured && structured.matched === 0
+    && plan.factKind === "selection" && ["lookup", "explain"].includes(plan.operation);
+  if (structured && !retrySelectionInText) {
     return {
-      answer: structured.answer,
+      answer: [basicPlanNotice(scope.documents), structured.matched > 0 || plan.factKind === "recruitment_quota" ? structured.answer : missingAdmissionEvidence(scope.documents)].filter(Boolean).join("\n\n"),
       admissionYear: scope.year,
       coverageCount: distinctSchoolCount(scope.documents),
       matchedRuleCount: structured.matched,
-      grounded: true,
+      grounded: structured.matched > 0,
     };
   }
 
@@ -734,7 +748,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     semantic = await answerSemantic({
       admin: params.admin,
       question: params.question,
-      plan,
+      plan: retrySelectionInText ? { ...plan, unitTypes: ["section", "selection_rule"] } : plan,
       documents: scope.documents,
       year: scope.year,
     });
@@ -749,7 +763,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   }
   if (semantic === "missing_catalog") return null;
   return {
-    answer: semantic.answer,
+    answer: [basicPlanNotice(scope.documents), semantic.answer].filter(Boolean).join("\n\n"),
     admissionYear: scope.year,
     coverageCount: distinctSchoolCount(scope.documents),
     matchedRuleCount: semantic.matched,

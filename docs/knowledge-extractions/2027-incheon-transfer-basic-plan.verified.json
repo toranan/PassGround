@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "인천대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 인천대학교 편입학기본계획",
+    "sourceFile": "2027_인천대학교_편입학 기본계획.pdf",
+    "sha256": "81cb721b89c0b3caa1f123fa7fb4d973847fe6b0e069a8b6ccedab8c8a2744ab",
+    "fileSizeBytes": 158300,
+    "pageCount": 10,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-09-09T12:00:00+09:00",
+    "metadata": {
+      "publicationStage": "basic_plan",
+      "finalGuideExpected": "2026년 12월 초~중순",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "partial",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "notice": "제공된 기본계획 기준. 최종 모집요강에서 변경될 수 있으며 현재의 실제 공개 여부는 별도 확인이 필요하다.",
+      "extractionScope": "주요 일정·전형요소·지원자격 검증 요약. 전체 원문 및 모든 표의 완전한 구조화가 아님.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/2027_인천대학교_편입학 기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status",
+      "heading": "기본계획과 모집인원",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2027학년도 인천대학교 편입학 기본계획이며 교육부 및 대학 사정에 따라 변경될 수 있다. 최종 모집요강은 2026년 12월 초~중순 발표 예정이다. 모집단위별 모집인원은 최종 모집요강에서 확인해야 한다. 편입학 학년은 3학년이며 외국 전 교육과정 이수자·북한이탈주민의 2학년 편입은 폐지된다."
+    },
+    {
+      "key": "general",
+      "heading": "일반편입 지원자격",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "국내4년제 대학2학년 이상 수료(예정), 외국4년제 대학 졸업학점1/2 이상(영국3년제2/3 이상), 전문대학 졸업(예정), 학점은행제 (전문)학사학위 취득(예정), 교육부 지정4년제 간호학과2학년 수료(예정) 등이 일반편입 지원대상이다. 3년제 전문대학2학년 수료만으로는 지원할 수 없다. 학점은행제는 단순 일정학점 취득이 아니라 (전문)학사학위 요건을 확인해야 한다."
+    },
+    {
+      "key": "bachelor",
+      "heading": "학사편입 지원자격",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "국내대학 학사학위 취득(예정), 외국대학 학사학위 취득, 학점은행제·독학학위제·학사학위 전공심화과정 등의 학사학위 취득(예정)자가 학사편입 지원대상이다."
+    },
+    {
+      "key": "english",
+      "heading": "공인영어 지원자격",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "일반·학사 등 공인영어 적용 전형의 최저기준은 TOEIC500점 또는 TEPS195점 또는 TOEFL iBT이다. TOEFL은 2026년1월21일 이전 시험57점 이상, 이후 시험은 새척도3.0 이상이다. 인정 응시기간은 2025년3월1일부터 원서접수 마감일까지다. 공연예술학과·스포츠과학부·체육교육과·조형예술학부는 공인영어 미적용이다. 외국 전 교육과정 이수자·북한이탈주민 등은 별도 자격을 확인해야 한다. 공인영어는 대학 자체 편입영어 필기시험과 다르다."
+    },
+    {
+      "key": "selection",
+      "heading": "일반·학사 등 전형요소",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "일반·학사·농어촌학생·특성화고졸업자·기회균형·유치원교사양성 전형: 인문·자연계열 및 디자인학부는 공인영어60%+면접40%, 공연예술학과·스포츠과학부·체육교육과는 실기60%+면접40%, 운동건강학부는 공인영어30%+실기30%+면접40%, 조형예술학부는 전적대학성적60%+면접40%이다. 모집단위별 일괄합산 전형이다. 전적대학 성적은 면접 참고자료로 활용된다."
+    },
+    {
+      "key": "foreign-selection",
+      "heading": "외국 전 교육과정·북한이탈주민 전형",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "외국 전 교육과정 이수자·북한이탈주민: 인문·자연계열 및 조형예술학부·디자인학부는 전적대학성적60%+면접40%, 공연예술학과·스포츠과학부·체육교육과는 실기60%+면접40%, 운동건강학부는 실기30%+전적대학성적30%+면접40%이다."
+    },
+    {
+      "key": "interview",
+      "heading": "면접과 포트폴리오",
+      "pageStart": 5,
+      "pageEnd": 6,
+      "content": "면접은 블라인드로 진행하며 평가위원2~3명이 평가한다. 조형예술학부·디자인학부·건축학부 지원자는 포트폴리오 제출 사항을 확인해야 한다. 포트폴리오는50MB 이내 PDF1개, 조형예술·디자인은10페이지 이내 권장, 건축학부는2개 이상 프로젝트5페이지 이내 권장이다. 디자인학부는 AI 사용 여부를 명기해야 한다."
+    },
+    {
+      "key": "schedule",
+      "heading": "예정 일정",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "최종 모집요강 발표는2026년12월 초~중순 예정이다. 면접고사는2027년1월14일 예정이며 실기는1월 초~말, 합격자 발표는2월 초~중순 예정이다. 변경 가능하므로 최종 모집요강을 확인해야 한다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "normal",
+      "scopeType": "category",
+      "scopeValue": "인문·자연계열, 디자인학부",
+      "sourcePages": [
+        4
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "finalInterviewWeight": 40,
+      "metadata": {
+        "finalLanguageWeight": 60
+      },
+      "notes": "공인영어60%+면접40%, 일괄합산. 공인영어는 자체 필기시험이 아니다. 적용 전형: 일반·학사·농어촌·특성화고·기회균형·유치원교사양성."
+    },
+    {
+      "key": "arts-sports",
+      "scopeType": "category",
+      "scopeValue": "공연예술학과·스포츠과학부·체육교육과",
+      "sourcePages": [
+        4
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "finalPracticalWeight": 60,
+      "finalInterviewWeight": 40
+    },
+    {
+      "key": "exercise",
+      "scopeType": "major",
+      "scopeValue": "운동건강학부",
+      "sourcePages": [
+        4
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "finalPracticalWeight": 30,
+      "finalInterviewWeight": 40,
+      "metadata": {
+        "finalLanguageWeight": 30
+      },
+      "notes": "공인영어30%+실기30%+면접40%."
+    },
+    {
+      "key": "finearts",
+      "scopeType": "major",
+      "scopeValue": "조형예술학부",
+      "sourcePages": [
+        4
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "finalInterviewWeight": 40,
+      "metadata": {
+        "finalPriorUniversityWeight": 60
+      },
+      "notes": "전적대학성적60%+면접40%."
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "final-guide",
+      "audience": "전체",
+      "label": "최종 모집요강 발표",
+      "displayText": "2026년12월 초~중순 예정",
+      "sourcePage": 1
+    },
+    {
+      "key": "interview",
+      "audience": "전체",
+      "label": "면접고사",
+      "displayText": "2027.1.14. 예정",
+      "sourcePage": 1,
+      "startsOn": "2027-01-14"
+    },
+    {
+      "key": "practical",
+      "audience": "전체",
+      "label": "실기고사",
+      "displayText": "2027년1월 초~말 예정",
+      "sourcePage": 1
+    },
+    {
+      "key": "results",
+      "audience": "전체",
+      "label": "합격자 발표",
+      "displayText": "2027년2월 초~중순 예정",
+      "sourcePage": 1
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 4,
+    "expectedScheduleRows": 4
+  }
+}

@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "연세대학교",
+    "campus": "서울",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 연세대학교 편입학기본계획",
+    "sourceFile": "2027_연세대학교_편입학 기본계획.pdf",
+    "sha256": "dd7afcd9513a61a66ecfb54f15a145bf8d62d7558ffb30d12107e28b96dee0d8",
+    "fileSizeBytes": 145958,
+    "pageCount": 11,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-09-09T12:00:00+09:00",
+    "metadata": {
+      "publicationStage": "basic_plan",
+      "finalGuideExpected": "2026년 11월 말",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "partial",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "notice": "제공된 기본계획 기준. 최종 모집요강에서 변경될 수 있으며 현재의 실제 공개 여부는 별도 확인이 필요하다.",
+      "extractionScope": "주요 일정·전형요소·지원자격 검증 요약. 전체 원문 및 모든 표의 완전한 구조화가 아님.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/2027_연세대학교_편입학 기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status",
+      "heading": "예고사항과 모집인원",
+      "pageStart": 1,
+      "pageEnd": 5,
+      "content": "2027학년도 연세대학교 서울캠퍼스 편입학전형 예고사항이다. 최종 모집요강이 아니므로 일정과 전형 운영 및 평가 방식은 변경될 수 있다. 최종 모집요강은 2026년 11월 말 발표 예정이다. 일반편입 모집단위 및 모집인원은 최종 모집요강에서 확인해야 한다."
+    },
+    {
+      "key": "selection",
+      "heading": "일반·학사 전형 방법",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "일반·학사편입은 음악대학·의과대학을 제외하고 1단계 필기시험 100%, 2단계 필기시험 60%와 서류평가 40%로 선발한다. 의과대학 일반편입은 1단계 필기 100%, 최종 필기 70%와 면접 30%이다. 음악대학은 전적대학 성적 60%와 실기 40% 일괄합산이다. 공인영어는 학과별 추가지원자격이며 이 전형의 필기 영어시험이나 합격선과 다르다."
+    },
+    {
+      "key": "schedule",
+      "heading": "전형 일정",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "원서접수는 2026년 12월 1일부터 3일까지다. 필기시험은 2026년 12월 19일 10:00~13:00 이내 예정이며 모집단위별 2시간 또는 3시간으로 다르다. 해당자 면접은 2027년 1월 16일, 음악대학 실기는 2027년 1월 26일 예정이다."
+    },
+    {
+      "key": "ai",
+      "heading": "컴퓨터과학·인공지능 계열",
+      "pageStart": 3,
+      "pageEnd": 5,
+      "content": "컴퓨터과학과, 인공지능학과, 인공지능시스템학과, IT융합공학전공의 필기는 수학 80%와 물리 20%이다. 지능형반도체전공은 수학 40%, 물리 40%, 화학 20%이다. 이들 인공지능융합대학 모집단위는 TOEIC 700점, TEPS 264점, TOEFL iBT 79점 이상 중 하나의 추가지원자격이 있다. 최종은 필기 60%와 서류 40%이다. IT융합공학전공은 학사편입을 선발하지 않는다."
+    },
+    {
+      "key": "health",
+      "heading": "간호·의학·약학",
+      "pageStart": 4,
+      "pageEnd": 5,
+      "content": "간호학과는 사회논술, TOEIC 700 또는 TEPS 264 또는 TOEFL iBT 79점 이상이 필요하며 최종 필기 60%와 서류 40%이다. 의학과는 화학 50%와 생물 50% 필기, TOEIC 900 또는 TEPS 370 또는 TOEFL iBT 105점 이상과 교수 또는 학장 추천서가 필요하다. 의학과는 일반편입 결원 발생 시만 선발한다. 약학과 필기는 수학 40%, 화학 30%, 생물 30%이며 TOEIC 900 또는 TEPS 370 또는 TOEFL iBT 105점 이상과 선수과목 5과목 총15학점 이수가 모두 필요하다. 선수과목은 약품생화학1·2, 유기약화학1·2, 생리학이며 관련 인정과목 예시는 원문을 확인해야 한다."
+    },
+    {
+      "key": "english-validity",
+      "heading": "공인영어 인정 기간",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "일반·학사편입 공인영어는 2단계 서류제출 마감일 2027년 1월 8일 기준 2년 이내, 즉 2025년 1월 9일~2027년 1월 8일 내 응시·취득한 성적만 인정한다. 서류 마감 이전 발표된 성적이어야 한다. 기관 TOEFL·TOEIC, TOEIC Bridge, TOEIC Speaking and Writing은 인정하지 않는다. TOEFL은 동일 회차 Test Date Scores만 인정하고 MyBest Scores는 인정하지 않는다."
+    },
+    {
+      "key": "excluded",
+      "heading": "학사편입 미선발 및 치과대학",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "학사편입 미선발 모집단위: IT융합공학전공, 문화인류학과, 교회음악과, 성악과, 피아노과, 작곡과, 교육학부, 체육교육학과, 의학과, 치의학과, 글로벌인재학부. 치과대학은 편입학을 선발하지 않는다. 교육학부·체육교육학과·의학과 일반편입은 결원이 있을 때만 선발한다."
+    },
+    {
+      "key": "special",
+      "heading": "군위탁·외국인",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "군위탁편입은 공인영어20%, 전적대학성적40%, 서류20%, 면접20%이다. 외국인편입은 공인영어30%, 한국어능력30%, 서류40%이다. 교육학부·체육교육학과는 정원 외 편입 미선발, 의과대학은 외국인편입 미선발, 음악대학은 군위탁·외국인 미선발, 치과대학은 편입 미선발이다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "common",
+      "scopeType": "category",
+      "scopeValue": "전 대학(음악대학·의과대학 제외)",
+      "sourcePages": [
+        1
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "모집단위별 상이"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "notes": "필기 과목은 각 모집단위 규정을 확인해야 한다. 일반편입 모집 여부·인원은 최종 모집요강에서 확인."
+    },
+    {
+      "key": "ai-0",
+      "scopeType": "major",
+      "scopeValue": "컴퓨터과학과",
+      "sourcePages": [
+        3,
+        5
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "물리"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 700,
+      "englishTepsMin": 264,
+      "englishToeflIbtMin": 79,
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+    },
+    {
+      "key": "ai-1",
+      "scopeType": "major",
+      "scopeValue": "인공지능학과",
+      "sourcePages": [
+        3,
+        5
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "물리"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 700,
+      "englishTepsMin": 264,
+      "englishToeflIbtMin": 79,
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+    },
+    {
+      "key": "ai-2",
+      "scopeType": "major",
+      "scopeValue": "인공지능시스템학과",
+      "sourcePages": [
+        3,
+        5
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "물리"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 700,
+      "englishTepsMin": 264,
+      "englishToeflIbtMin": 79,
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+    },
+    {
+      "key": "ai-3",
+      "scopeType": "major",
+      "scopeValue": "IT융합공학전공",
+      "sourcePages": [
+        3,
+        5
+      ],
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "물리"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 700,
+      "englishTepsMin": 264,
+      "englishToeflIbtMin": 79,
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+    },
+    {
+      "key": "ee",
+      "scopeType": "major",
+      "scopeValue": "전기전자공학부",
+      "sourcePages": [
+        3
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "물리",
+        "화학"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 800,
+      "englishTepsMin": 309,
+      "englishToeflIbtMin": 91,
+      "notes": "필기 과목 비중: 수학50%, 물리40%, 화학10%."
+    },
+    {
+      "key": "nursing",
+      "scopeType": "major",
+      "scopeValue": "간호학과",
+      "sourcePages": [
+        4
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "사회논술"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 700,
+      "englishTepsMin": 264,
+      "englishToeflIbtMin": 79
+    },
+    {
+      "key": "medicine",
+      "scopeType": "major",
+      "scopeValue": "의학과",
+      "sourcePages": [
+        1,
+        4
+      ],
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "화학",
+        "생물"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 70,
+      "finalInterviewWeight": 30,
+      "englishToeicMin": 900,
+      "englishTepsMin": 370,
+      "englishToeflIbtMin": 105,
+      "notes": "필기 화학50%, 생물50%. 교수 또는 학장 추천서 필요. 결원 발생 시 선발."
+    },
+    {
+      "key": "pharmacy",
+      "scopeType": "major",
+      "scopeValue": "약학과",
+      "sourcePages": [
+        5
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학",
+        "화학",
+        "생물"
+      ],
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 40,
+      "englishToeicMin": 900,
+      "englishTepsMin": 370,
+      "englishToeflIbtMin": 105,
+      "notes": "필기 수학40%, 화학30%, 생물30%. 선수과목5과목15학점 필수."
+    },
+    {
+      "key": "music",
+      "scopeType": "college",
+      "scopeValue": "음악대학",
+      "sourcePages": [
+        1,
+        5
+      ],
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "finalPracticalWeight": 40,
+      "metadata": {
+        "finalPriorUniversityWeight": 60
+      },
+      "notes": "전적대학성적60%+실기40%. 교회음악·성악·피아노·작곡은 학사편입 미선발. 일반편입 전공 제한은 원문 확인."
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application",
+      "audience": "전체",
+      "label": "원서접수",
+      "displayText": "2026.12.1.~12.3.",
+      "sourcePage": 1,
+      "startsOn": "2026-12-01",
+      "endsOn": "2026-12-03"
+    },
+    {
+      "key": "written",
+      "audience": "전체",
+      "label": "필기시험",
+      "displayText": "2026.12.19. 10:00~13:00 이내 예정(모집단위별 2시간 또는 3시간)",
+      "sourcePage": 1,
+      "startsOn": "2026-12-19",
+      "details": "모집단위별 시험시간 상이"
+    },
+    {
+      "key": "interview",
+      "audience": "면접 대상자",
+      "label": "면접시험",
+      "displayText": "2027.1.16. 예정(해당자)",
+      "sourcePage": 1,
+      "startsOn": "2027-01-16"
+    },
+    {
+      "key": "practical",
+      "audience": "음악대학",
+      "label": "음악대학 실기시험",
+      "displayText": "2027.1.26. 예정",
+      "sourcePage": 1,
+      "startsOn": "2027-01-26"
+    },
+    {
+      "key": "final-guide",
+      "audience": "전체",
+      "label": "최종 모집요강 발표",
+      "displayText": "2026년 11월 말 예정",
+      "sourcePage": 1
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 10,
+    "expectedScheduleRows": 5
+  }
+}

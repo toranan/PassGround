@@ -15,6 +15,16 @@ const EMBEDDING_BATCH_SIZE = 64;
 // 문서가 archived인 동안 작은 멱등 배치로 모두 적재한 뒤 마지막에 active로 전환한다.
 const DATABASE_UPSERT_BATCH_SIZE = 10;
 
+export const isFinalDocument = (row) => ["최종 모집요강", "모집요강"].includes(row.document_type);
+export const isPreliminaryDocument = (row) => row.metadata?.publicationStage === "basic_plan"
+  || /기본계획|주요사항|예고사항/.test(row.document_type);
+
+export function assertNoDocumentDowngrade(documentType, previousActive) {
+  if (!isFinalDocument({ document_type: documentType }) && previousActive.some(isFinalDocument)) {
+    fail("동일 대학·캠퍼스·학년도에 최종 모집요강이 활성화되어 있어 기본계획으로 되돌릴 수 없습니다.");
+  }
+}
+
 function usage() {
   console.log(
     [
@@ -308,6 +318,9 @@ export function buildTransferKnowledgeUnits(manifest) {
       formatWeight("서류", rule.finalDocumentWeight),
       formatWeight("면접", rule.finalInterviewWeight),
       formatWeight("실기", rule.finalPracticalWeight),
+      formatWeight("전적대학", rule.metadata.finalPriorUniversityWeight ?? null),
+      formatWeight("공인어학", rule.metadata.finalLanguageWeight ?? null),
+      formatWeight("전공이수능력", rule.metadata.finalMajorCourseWeight ?? null),
     ].filter(Boolean);
     const body = [
       `${rule.scopeValue}에 적용되는 ${rule.transferTypes.join("·")}의 필기시험 과목은 ${subjects}이다.`,
@@ -319,7 +332,7 @@ export function buildTransferKnowledgeUnits(manifest) {
       finalWeights.length ? `최종 단계는 ${finalWeights.join(", ")}를 반영한다.` : "",
       rule.englishToeicMin === null
         ? ""
-        : `추가지원자격 공인영어 기준은 TOEIC ${rule.englishToeicMin}점, TEPS ${rule.englishTepsMin}점, TOEFL(iBT) ${rule.englishToeflIbtMin}점 이상 중 하나이며 인정 응시기간은 ${rule.englishScoreValidFrom}부터 ${rule.englishScoreValidThrough}까지다.`,
+        : `추가지원자격 공인영어 기준은 ${[["TOEIC", rule.englishToeicMin], ["TEPS", rule.englishTepsMin], ["TOEFL(iBT)", rule.englishToeflIbtMin]].filter(([, score]) => score !== null).map(([name, score]) => `${name} ${score}점`).join(", ")} 이상 중 하나다.${rule.englishScoreValidFrom && rule.englishScoreValidThrough ? ` 인정 응시기간은 ${rule.englishScoreValidFrom}부터 ${rule.englishScoreValidThrough}까지다.` : " 인정 응시기간은 문서의 공인영어 자격 안내를 확인해야 한다."}`,
       rule.notes,
     ].filter(Boolean).join(" ");
     units.push({
@@ -461,7 +474,7 @@ async function syncManifest(manifest, units, embeddingResult) {
   const documentId = existingDocument?.id ?? randomUUID();
   const { data: previousActive, error: previousError } = await admin
     .from("ai_source_documents")
-    .select("id,sha256")
+    .select("id,sha256,document_type,metadata")
     .eq("exam_slug", document.examSlug)
     .eq("university", document.university)
     .eq("campus", document.campus)
@@ -469,6 +482,8 @@ async function syncManifest(manifest, units, embeddingResult) {
     .eq("lifecycle_status", "active")
     .neq("id", documentId);
   if (previousError) fail(`이전 활성 문서 조회 실패: ${previousError.message}`);
+  const incomingFinal = isFinalDocument({ document_type: document.documentType });
+  assertNoDocumentDowngrade(document.documentType, previousActive ?? []);
 
   const { error: documentError } = await admin.from("ai_source_documents").upsert(
     {
@@ -578,11 +593,30 @@ async function syncManifest(manifest, units, embeddingResult) {
     if (supersedeError) fail(`이전 문서 superseded 처리 실패: ${supersedeError.message}`);
   }
 
+  // 새 최종 요강의 임베딩 적재·활성화가 성공한 이후에만 해당 범위의 기본계획을 삭제한다.
+  // 원본 PDF와 로컬 manifest는 남으며 재적재로 복원할 수 있다.
+  let removedBasicPlans = 0;
+  if (incomingFinal) {
+    const { data: obsolete, error: lookupError } = await admin.from("ai_source_documents")
+      .select("id,document_type,metadata")
+      .eq("exam_slug", document.examSlug).eq("university", document.university)
+      .eq("campus", document.campus).eq("admission_year", document.admissionYear)
+      .neq("id", documentId);
+    if (lookupError) fail(`기본계획 정리 조회 실패: ${lookupError.message}`);
+    const ids = (obsolete ?? []).filter(isPreliminaryDocument).map((row) => row.id);
+    if (ids.length) {
+      const { error: cleanupError } = await admin.from("ai_source_documents").delete().in("id", ids);
+      if (cleanupError) fail(`기본계획 정리 실패(새 모집요강은 활성): ${cleanupError.message}`);
+      removedBasicPlans = ids.length;
+    }
+  }
+
   return {
     documentId,
     units: unitRows.length,
     staleUnits: staleUnitIds.length,
     supersededDocuments: supersededIds.length,
+    removedBasicPlans,
   };
 }
 
@@ -646,6 +680,7 @@ async function main() {
   console.log(`- knowledgeUnits: ${result.units}`);
   console.log(`- staleUnitsRemoved: ${result.staleUnits}`);
   console.log(`- supersededDocuments: ${result.supersededDocuments}`);
+  console.log(`- removedBasicPlans: ${result.removedBasicPlans}`);
 }
 
 const isDirectExecution = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
