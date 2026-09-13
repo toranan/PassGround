@@ -17,8 +17,8 @@ export type CachedPayload = {
 };
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 14; // 14 days
-// Grounded-only 답변 정책 이전에 생성된 캐시가 다시 노출되지 않도록 버전을 올린다.
-const CACHE_VERSION = "v2-grounded-only";
+// 근거 유형과 부분 답변 정책 이전의 거절 응답이 다시 노출되지 않게 한다.
+const CACHE_VERSION = "v4-basic-plan-availability";
 
 function normalizeQuestionForCache(question: string): string {
   return question.replace(/\s+/g, " ").trim().toLowerCase().slice(0, 600);

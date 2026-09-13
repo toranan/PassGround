@@ -1,3 +1,5 @@
+import { classifyKnowledgeEvidence, EVIDENCE_POLICIES } from "@/lib/knowledgeEvidence";
+
 export type CoachingReason = "general_chat" | "study_coaching" | "profile_followup" | "none";
 
 export type CoachingHistoryMessage = {
@@ -185,6 +187,8 @@ export function inferDeterministicCoachingReason(
 }
 
 function isFactOnlyKnowledge(row: CoachingAdviceSourceRow): boolean {
+  const evidenceKind = classifyKnowledgeEvidence(row);
+  if (EVIDENCE_POLICIES[evidenceKind].coaching) return false;
   const tags = Array.isArray(row.tags) ? row.tags : [];
   if (tags.some((tag) => FACT_ONLY_TAGS.has(tag) || tag.startsWith("source:") || tag.startsWith("section:"))) {
     return true;

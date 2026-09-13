@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument } from "@/lib/transferDocumentPolicy";
+import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   createEmbedding,
   generateGroundedAnswer,
@@ -36,6 +36,11 @@ type TransferQueryPlan = {
   maxInterviewWeight: number | null;
   scheduleKeyword: string | null;
   semanticQuery: string;
+};
+
+type TransferCatalogHistoryMessage = {
+  role: "user" | "assistant";
+  text: string;
 };
 
 export type TransferCatalogAnswer = {
@@ -187,18 +192,46 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 function normalizeUniversity(value: string): string {
-  const normalized = value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대");
-  return ({ 연대: "연세대", 경상대: "경상국립대" } as Record<string, string>)[normalized] ?? normalized;
+  return normalizeTransferUniversityName(value);
 }
 
 function explicitUniversities(question: string): string[] {
-  const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{2,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|[?!.,]|$)/g);
+  const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{1,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|[?!.,]|$)/g);
   return uniqueStrings([...matches].map((match) => match[1]));
 }
 
 function explicitAdmissionYear(question: string): number | null {
   const match = question.match(/\b(20\d{2})\s*(?:학년도|년도|년)?/);
   return match?.[1] ? Number(match[1]) : null;
+}
+
+function latestHistoryUniversities(historyMessages: TransferCatalogHistoryMessage[]): string[] {
+  for (let index = historyMessages.length - 1; index >= 0; index -= 1) {
+    const matches = explicitUniversities(historyMessages[index].text);
+    if (matches.length) return matches;
+  }
+  return [];
+}
+
+function latestHistoryAdmissionYear(historyMessages: TransferCatalogHistoryMessage[]): number | null {
+  for (let index = historyMessages.length - 1; index >= 0; index -= 1) {
+    const year = explicitAdmissionYear(historyMessages[index].text);
+    if (year !== null) return year;
+  }
+  return null;
+}
+
+export function buildTransferCatalogQuestion(
+  question: string,
+  historyMessages: TransferCatalogHistoryMessage[] = []
+): string {
+  const recent = historyMessages.slice(-4);
+  if (!recent.length) return question;
+  return [
+    "최근 대화(현재 질문에서 생략된 학교·학년도·전형을 해석하는 용도):",
+    ...recent.map((message) => `${message.role === "user" ? "사용자" : "답변"}: ${message.text}`),
+    `현재 질문: ${question}`,
+  ].join("\n");
 }
 
 function selectAuthoritativeDocuments(documents: SourceDocumentRow[]): SourceDocumentRow[] {
@@ -345,14 +378,18 @@ async function createPlan(question: string, currentAdmissionYear: number): Promi
 
 function resolveScope(params: {
   question: string;
+  historyMessages: TransferCatalogHistoryMessage[];
   plan: TransferQueryPlan;
   documents: SourceDocumentRow[];
   currentAdmissionYear: number;
 }): { documents: SourceDocumentRow[]; year: number | null; missingUniversities: string[] } {
-  const requestedUniversities = uniqueStrings([
-    ...params.plan.universities,
-    ...explicitUniversities(params.question),
-  ]);
+  const directUniversities = explicitUniversities(params.question);
+  const contextUniversities = directUniversities.length
+    ? directUniversities
+    : latestHistoryUniversities(params.historyMessages);
+  const requestedUniversities = uniqueStrings(contextUniversities.length
+    ? contextUniversities
+    : params.plan.universities);
   const missingUniversities = requestedUniversities.filter(
     (requested) => !params.documents.some(
       (document) => normalizeUniversity(document.university) === normalizeUniversity(requested)
@@ -372,7 +409,8 @@ function resolveScope(params: {
     : [...params.documents];
 
   const explicitYear = explicitAdmissionYear(params.question);
-  let year = explicitYear ?? params.plan.admissionYear;
+  const contextYear = explicitYear ?? latestHistoryAdmissionYear(params.historyMessages);
+  let year = contextYear ?? params.plan.admissionYear;
   if (/(작년|지난해|전년도)/.test(params.question) || params.plan.yearReference === "previous") {
     year = params.currentAdmissionYear - 1;
   } else if (params.plan.yearReference === "current") {
@@ -635,6 +673,7 @@ async function answerSemantic(params: {
       `검색 범위: ${coveragePrefix(params.documents, params.year)}`,
       basicPlanNotice(params.documents),
       "기본계획은 확정 모집요강이 아니다. 검색 근거에 없으면 현재 확보한 문서에서 확인하지 못했다고 답하고, 공개되지 않았다고 추정하지 마라. 문서의 발표 예정 시기와 실제 공개 여부를 구분하라. 데이터 미보유를 대학 미공개로 단정하지 마라. 지원자격이나 전형별 예외를 추측하지 마라.",
+      "질문이 '바뀐 점'처럼 범위가 넓으면 근거에서 명시적으로 확인되는 내용을 먼저 알려라. 전년 대비 비교 근거가 없으면 비교할 수 없다고 밝히고, 답변 끝에 사용자가 궁금한 범위(전형방법·모집단위·지원자격 등)를 한 가지만 짧게 물어라.",
       "답변 끝에 아직 DB에 적재되지 않은 학교·학년도는 포함되지 않는다고 밝혀라.",
     ].join("\n"),
     contexts: rows.map((row) => ({
@@ -649,6 +688,7 @@ async function answerSemantic(params: {
 export async function tryAnswerTransferCatalogQuestion(params: {
   admin: SupabaseClient;
   question: string;
+  historyMessages?: TransferCatalogHistoryMessage[];
 }): Promise<TransferCatalogAnswer | null> {
   const { data: documentData, error: documentError } = await params.admin
     .from("ai_source_documents")
@@ -668,7 +708,10 @@ export async function tryAnswerTransferCatalogQuestion(params: {
 
   let plan: TransferQueryPlan;
   try {
-    plan = await createPlan(params.question, currentAdmissionYear);
+    plan = await createPlan(
+      buildTransferCatalogQuestion(params.question, params.historyMessages),
+      currentAdmissionYear
+    );
   } catch {
     return {
       answer: "모집요강 검색 조건을 안전하게 해석하지 못해 답변하지 않았습니다. 학교·학년도·전형 또는 학과를 조금 더 구체적으로 적어주세요.",
@@ -680,7 +723,9 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   }
   if (plan.domain !== "admission_guide") return null;
 
-  const requestedUniversities = explicitUniversities(params.question);
+  const requestedUniversities = explicitUniversities(params.question).length
+    ? explicitUniversities(params.question)
+    : latestHistoryUniversities(params.historyMessages ?? []);
   const crossSchoolOperation = plan.operation === "list"
     || plan.operation === "count"
     || plan.operation === "compare";
@@ -690,6 +735,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
 
   const scope = resolveScope({
     question: params.question,
+    historyMessages: params.historyMessages ?? [],
     plan,
     documents,
     currentAdmissionYear,

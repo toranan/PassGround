@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { chunkVerifiedSectionText } from "@/lib/knowledgeDoc";
+import { EVIDENCE_ANSWER_POLICY } from "@/lib/knowledgeEvidence";
 
 const OPENAI_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
@@ -496,8 +497,10 @@ function buildGroundedPrompts(params: {
   // 마크다운을 렌더링하지 않는다. 표를 그대로 뱉으면 파이프 문자가 그대로 노출된다.
   const systemPrompt = [
     "너는 편입/학습 상담 도우미 '합곰'이다. 친구처럼 친근한 반말로 답하되, 제공된 근거에 적힌 정보만 사용해 답하라.",
+    EVIDENCE_ANSWER_POLICY,
     "근거에 없는 대학, 수치, 일정, 지원 조건, 공부법, 과목·문법 세부 목록을 모델의 일반 상식으로 추가하거나 추측하지 마라.",
     "질문의 일부 또는 전부에 답할 근거가 없으면 무엇을 확인할 수 없는지 분명히 말하라.",
+    "참고용 모의고사 평균을 인용할 때는 출처를 밝히고 '참고용이며 정확한 합격 기준은 아니다'라고 짧게 설명하라. '러프한' 같은 표현은 쓰지 마라. 이를 본고사 점수·커트라인·합격확률로 환산하거나 학과 그룹 수치를 개별 학과의 독립적인 통계로 단정하지 마라. 원문의 '백분율'은 정의가 확인되지 않으면 백분위로 바꾸지 마라.",
     "사용자가 특정 대학을 말하지 않았다면 근거에 등장한다는 이유만으로 특정 대학을 골라 답하지 마라.",
     "근거에 표가 있어도 마크다운 표나 파이프(|) 기호로 출력하지 마라. 항목마다 줄을 바꿔 '구분: 값' 형태로 풀어써라.",
   ].join("\n");

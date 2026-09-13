@@ -4,6 +4,12 @@ type DocumentBasis = {
   metadata?: Record<string, unknown> | null;
 };
 
+export function normalizeTransferUniversityName(value: string): string {
+  const normalized = value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대");
+  return ({ 연대: "연세대", 성대: "성균관대", 경상대: "경상국립대" } as Record<string, string>)[normalized]
+    ?? normalized;
+}
+
 export function isBasicPlan(document: DocumentBasis): boolean {
   return document.metadata?.publicationStage === "basic_plan"
     || /기본계획|주요사항|예고사항/.test(document.document_type);
