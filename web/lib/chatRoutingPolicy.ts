@@ -13,7 +13,7 @@ export function smalltalkReply(question: string): string | null {
 
 type RoutingHistoryMessage = { role: "user" | "assistant"; text: string };
 
-const ADMISSION_FACT_PATTERN = /모집\s*(요강|인원)|기본\s*계획|전형\s*(방법|요소|일정|계획)|지원\s*자격|제출\s*서류|원서\s*접수|접수\s*(기간|마감)|시험\s*(과목|일정|시간)|반영\s*비율|선발\s*(인원|배수)|수학만\s*보|영어만\s*보/;
+const ADMISSION_FACT_PATTERN = /모집\s*(요강|인원)|기본\s*계획|전형\s*(방법|요소|일정|계획)|지원\s*자격|제출\s*서류|원서\s*접수|접수\s*(기간|마감)|시험\s*(과목|일정|시간)|반영\s*비율|선발\s*(인원|배수)|(?:몇\s*명|얼마나)\s*(?:뽑|선발|모집)|티오|수학만\s*보|영어만\s*보/;
 const ADMISSION_CHANGE_PATTERN = /바뀐|바뀌|바꿔|변경|달라진|달라졌|차이/;
 const UNIVERSITY_PATTERN = /[가-힣]{2,12}대학교|[가-힣]{1,8}대/;
 

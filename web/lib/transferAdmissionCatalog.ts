@@ -431,6 +431,12 @@ function coveragePrefix(documents: SourceDocumentRow[], year: number | null): st
   return `${yearLabel} 현재 적재·검증된 ${distinctSchoolCount(documents)}개교 ${documentBasisLabel(documents)} 기준`;
 }
 
+function addBasicPlanNoticeWhenMissing(answer: string, documents: SourceDocumentRow[]): string {
+  const notice = basicPlanNotice(documents);
+  if (!notice || /기본\s*계획/.test(answer)) return answer;
+  return `${notice}\n\n${answer}`;
+}
+
 function formatQuotaAnswer(
   rows: KnowledgeUnitRow[],
   plan: TransferQueryPlan,
@@ -781,7 +787,12 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     && plan.factKind === "selection" && ["lookup", "explain"].includes(plan.operation);
   if (structured && !retrySelectionInText) {
     return {
-      answer: [basicPlanNotice(scope.documents), structured.matched > 0 || plan.factKind === "recruitment_quota" ? structured.answer : missingAdmissionEvidence(scope.documents)].filter(Boolean).join("\n\n"),
+      answer: addBasicPlanNoticeWhenMissing(
+        structured.matched > 0 || plan.factKind === "recruitment_quota"
+          ? structured.answer
+          : missingAdmissionEvidence(scope.documents),
+        scope.documents
+      ),
       admissionYear: scope.year,
       coverageCount: distinctSchoolCount(scope.documents),
       matchedRuleCount: structured.matched,
@@ -809,7 +820,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   }
   if (semantic === "missing_catalog") return null;
   return {
-    answer: [basicPlanNotice(scope.documents), semantic.answer].filter(Boolean).join("\n\n"),
+    answer: addBasicPlanNoticeWhenMissing(semantic.answer, scope.documents),
     admissionYear: scope.year,
     coverageCount: distinctSchoolCount(scope.documents),
     matchedRuleCount: semantic.matched,

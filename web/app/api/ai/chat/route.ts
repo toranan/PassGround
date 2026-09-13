@@ -1094,11 +1094,15 @@ async function runChatWorkflow(params: {
     historyMessages,
     historyContext: cutoffHistoryContext,
   });
-  const cutoffFlow = createCutoffFlowState({
-    question,
-    routeDecision: messageRoute,
-    historyContext: cutoffHistoryContext,
-  });
+  // 모집인원·전형 등 공식 정보 질문은 이전 점수 상담 맥락이 남아 있어도
+  // 커트라인 슬롯 수집으로 되돌아가지 않고 모집요강 검색을 우선한다.
+  const cutoffFlow = admissionFacts
+    ? createInactiveCutoffFlow()
+    : createCutoffFlowState({
+        question,
+        routeDecision: messageRoute,
+        historyContext: cutoffHistoryContext,
+      });
   const isGeneralChat = messageRoute === "smalltalk" || isGeneralConversationQuestion(question);
   const intent = isMockExamCounseling ? "mixed" : directSmalltalk ? "emotion" : admissionFacts || cutoffFlow.active ? "fact" : coachingReason !== "none" ? "emotion" : await classifyIntent(question);
   const useCache =
