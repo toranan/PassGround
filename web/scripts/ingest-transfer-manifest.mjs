@@ -16,8 +16,8 @@ const EMBEDDING_BATCH_SIZE = 64;
 const DATABASE_UPSERT_BATCH_SIZE = 10;
 
 export const isFinalDocument = (row) => ["최종 모집요강", "모집요강"].includes(row.document_type);
-export const isPreliminaryDocument = (row) => row.metadata?.publicationStage === "basic_plan"
-  || /기본계획|주요사항|예고사항/.test(row.document_type);
+// 최종 모집요강이 아닌 문서(기본계획·주요사항·필기과목 안내 등)는 최종 요강 적재 시 정리 대상이다.
+export const isPreliminaryDocument = (row) => !isFinalDocument(row);
 
 // 본문 기본계획과 부속 문서(metadata.supplementOf)는 서로를 대체하지 않는다. 최종 요강은 모두 대체한다.
 const documentRole = (metadata) => (metadata?.supplementOf ? "supplement" : "main");

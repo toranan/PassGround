@@ -11,6 +11,7 @@ test("최종 요강에서 기본계획으로 역행하지 않는다", () => {
   assert.equal(isPreliminaryDocument(final), false);
   assert.equal(isPreliminaryDocument({ document_type: "전형 기본계획" }), true);
   assert.equal(isPreliminaryDocument({ document_type: "모집 주요사항(안)" }), true);
+  assert.equal(isPreliminaryDocument({ document_type: "필기고사 과목·출제범위(안)", metadata: { publicationStage: "written_subject_announcement_draft" } }), true);
 });
 
 for (const [slug, count] of [["yonsei", 23], ["incheon", 16], ["gnu", 22]]) {

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
 import { detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude, type TransferField } from "@/lib/transferFieldQuery";
-import { admissionScopeStatus, basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
+import { admissionScopeStatus, basicPlanNotice, documentBasisSummary, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   AiProviderUnavailableError,
   createEmbedding,
@@ -208,7 +208,10 @@ function explicitUniversities(question: string): string[] {
 
 function explicitAdmissionYear(question: string): number | null {
   const match = question.match(/\b(20\d{2})\s*(?:학년도|년도|년)?/);
-  return match?.[1] ? Number(match[1]) : null;
+  if (match?.[1]) return Number(match[1]);
+  // "27학년도"처럼 두 자리로 쓴 학년도
+  const short = question.match(/(?:^|[^\d])(\d{2})\s*학년도/);
+  return short?.[1] ? 2000 + Number(short[1]) : null;
 }
 
 function latestHistoryUniversities(historyMessages: TransferCatalogHistoryMessage[]): string[] {
@@ -830,7 +833,7 @@ async function answerField(params: {
     : "";
   if (!schoolKeys.size) {
     return {
-      answer: `${coverage}에서는 ${targetObject} 찾지 못했어요.${undisclosedNote} 아직 자료가 확보되지 않은 학교는 확인할 수 없어요.`,
+      answer: `현재까지 수집된 ${params.year}학년도 자료(${distinctSchoolCount(params.documents)}개교) 기준으로는 ${targetSubject} 아직 공개되지 않았어요.${undisclosedNote} 최종 모집요강이나 기본계획이 추가로 확인되면 다시 안내할게요.`,
       admissionYear: params.year,
       coverageCount: distinctSchoolCount(params.documents),
       matchedRuleCount: 0,
@@ -841,7 +844,8 @@ async function answerField(params: {
     const [university, campus] = key.split("|");
     return schoolCampusLabel(university, campus);
   });
-  const header = `${coverage} 중 ${targetSubject} 있는 곳은 ${schools.join(", ")}예요.${undisclosedNote} 대부분 기본계획 기준이라 최종 모집요강에서 바뀔 수 있고, 자료가 없는 학교는 포함되지 않아요.`;
+  const matchedDocuments = params.documents.filter((document) => schoolKeys.has(`${document.university}|${document.campus}`));
+  const header = `${coverage} 중 ${targetSubject} 있는 곳은 ${schools.join(", ")}예요.${undisclosedNote} ${documentBasisSummary(matchedDocuments)} 아직 자료가 수집되지 않은 학교는 포함되지 않아요.`;
   const contexts = [
     ...matchedRules.map((row) => ({ chunkText: row.content, similarity: 1 })),
     ...matchedSections.map((row) => ({ chunkText: row.content, similarity: 0.9 })),
@@ -893,8 +897,8 @@ export async function tryAnswerTransferCatalogQuestion(params: {
       admin: params.admin,
       question: params.question,
       field,
-      documents: documents.filter((document) => document.admission_year === currentAdmissionYear),
-      year: currentAdmissionYear,
+      documents: documents.filter((document) => document.admission_year === (explicitAdmissionYear(params.question) ?? currentAdmissionYear)),
+      year: explicitAdmissionYear(params.question) ?? currentAdmissionYear,
     });
     if (fieldAnswer) return fieldAnswer;
   }

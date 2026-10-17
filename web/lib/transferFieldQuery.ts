@@ -9,6 +9,8 @@ const FIELDS: Array<TransferField & { pattern: RegExp }> = [
     pattern: /의치한약수|의치한|의치약|메디컬/,
     terms: /(?<!수)의학과|의예|의과대학|치의|치과|한의|(?<!계)약학|제약|수의/,
   },
+  { key: "dentistry", label: "치의학 계열", pattern: /치대|치의|치과/, terms: /치의|치과/ },
+  { key: "korean-medicine", label: "한의학 계열", pattern: /한의/, terms: /한의/ },
   { key: "pe", label: "체육 계열", pattern: /체대|체육|스포츠/, terms: /체육|스포츠|운동건강/ },
   { key: "nursing", label: "간호 계열", pattern: /간호/, terms: /간호/ },
   { key: "pharmacy", label: "약학 계열", pattern: /약대|약학/, terms: /(?<!계)약학|제약/ },
@@ -20,7 +22,7 @@ const FIELDS: Array<TransferField & { pattern: RegExp }> = [
 ];
 
 // 대학 이름처럼 보이지만 계열을 뜻하는 줄임말.
-const FIELD_ABBREVIATIONS = new Set(["체대", "의대", "약대", "간호대", "수의대", "미대", "음대", "공대", "사대", "사범대", "법대", "예체대"]);
+const FIELD_ABBREVIATIONS = new Set(["체대", "의대", "치대", "한의대", "약대", "간호대", "수의대", "미대", "음대", "공대", "사대", "사범대", "법대", "예체대"]);
 
 const INFO_REQUEST = /정보|전형|모집|요강|어디|학교|뽑|알려|선발|과목|실기|일정|자격|반영|방법|비율/;
 

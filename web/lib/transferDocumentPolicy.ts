@@ -10,9 +10,9 @@ export function normalizeTransferUniversityName(value: string): string {
     ?? normalized;
 }
 
+// 최종 모집요강이 아닌 문서(기본계획·주요사항·필기과목 안내 등)는 모두 바뀔 수 있는 사전 안내로 본다.
 export function isBasicPlan(document: DocumentBasis): boolean {
-  return document.metadata?.publicationStage === "basic_plan"
-    || /기본계획|주요사항|예고사항/.test(document.document_type);
+  return !["최종 모집요강", "모집요강"].includes(document.document_type);
 }
 
 export function basicPlanNotice(documents: DocumentBasis[]): string {
@@ -28,8 +28,22 @@ export function missingAdmissionEvidence(documents: DocumentBasis[]): string {
     : "현재 확보한 모집요강 근거에서는 질문하신 내용을 확인하지 못했습니다. 대학 입학처의 해당 학년도 안내를 확인해주세요.";
 }
 
+// 안내 순서는 최종 모집요강 → 편입학 기본계획 → 없음이다. 없을 때도 '수집된 자료 기준'으로 범위를 한정한다.
 export function noAdmissionDocument(scope: string): string {
-  return `${scope}의 기본계획과 최종 모집요강이 아직 서비스에 확보·검증되지 않았습니다. 모집요강이 확보·검증되면 관련 정보를 안내할 수 있습니다. 대학의 실제 공개 여부는 입학처에서 확인해주세요.`;
+  return `현재까지 수집된 ${scope} 자료 기준으로는 최종 모집요강도 편입학 기본계획도 아직 공개된 정보가 없어요. 확인되는 대로 안내할게요. 정확한 공개 여부는 입학처 공지도 함께 확인해 주세요.`;
+}
+
+export function documentBasisSummary(documents: DocumentBasis[]): string {
+  const schools = [...new Set(documents.map((document) => document.university))];
+  const basicSchools = schools.filter((school) =>
+    documents.filter((document) => document.university === school).every(isBasicPlan)
+  );
+  const finalSchools = schools.filter((school) => !basicSchools.includes(school));
+  if (!finalSchools.length) {
+    return "아직 최종 모집요강이 나온 곳은 없어 모두 편입학 기본계획 기준이에요. 최종 모집요강이 나오면 그 기준으로 다시 안내할게요.";
+  }
+  if (!basicSchools.length) return "모두 최종 모집요강 기준이에요.";
+  return `최종 모집요강 기준: ${finalSchools.join("·")} / 편입학 기본계획 기준(변경 가능): ${basicSchools.join("·")}.`;
 }
 
 // 여러 학교를 한 번에 물으면 학교별로 최종 요강·기본계획·미확보 상태를 먼저 밝힌다.
@@ -45,13 +59,13 @@ export function admissionScopeStatus(params: {
   const finalSchools = schools.filter((school) => !basicSchools.includes(school));
   const yearLabel = params.year ? `${params.year}학년도 ` : "";
   const lines: string[] = [];
-  if (!finalSchools.length) lines.push(`물어보신 학교 중 ${yearLabel}최종 모집요강이 확보된 곳은 아직 없어요.`);
+  if (!finalSchools.length) lines.push(`물어보신 학교 중 ${yearLabel}최종 모집요강이 나온 곳은 아직 없어요.`);
   if (finalSchools.length) lines.push(`- ${finalSchools.join("·")}: 최종 모집요강 기준으로 안내해요.`);
   if (basicSchools.length) {
     lines.push(`- ${basicSchools.join("·")}: 기본계획이 나와 있어 기본계획 기준으로 확인되는 내용을 안내해요. 최종 모집요강에서 바뀔 수 있어요.`);
   }
   if (params.missingUniversities.length) {
-    lines.push(`- ${params.missingUniversities.join("·")}: 기본계획과 최종 모집요강 모두 아직 서비스에 확보·검증되지 않았어요. 입학처 공지를 확인해 주세요.`);
+    lines.push(`- ${params.missingUniversities.join("·")}: 현재까지 수집된 ${yearLabel}자료 기준으로는 최종 모집요강도 기본계획도 아직 공개된 정보가 없어요. 입학처 공지도 함께 확인해 주세요.`);
   }
   return lines.join("\n");
 }
