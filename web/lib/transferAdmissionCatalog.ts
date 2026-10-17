@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
 import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
+  AiProviderUnavailableError,
   createEmbedding,
   generateGroundedAnswer,
   generateStructuredJson,
@@ -787,7 +788,8 @@ export async function tryAnswerTransferCatalogQuestion(params: {
       buildTransferCatalogQuestion(params.question, params.historyMessages),
       currentAdmissionYear
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof AiProviderUnavailableError) throw error;
     return {
       answer: "모집요강 검색 조건을 안전하게 해석하지 못해 답변하지 않았습니다. 학교·학년도·전형 또는 학과를 조금 더 구체적으로 적어주세요.",
       admissionYear: null,

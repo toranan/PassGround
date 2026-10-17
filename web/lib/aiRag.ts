@@ -26,7 +26,41 @@ function getOpenAIKey(): string {
 
 function assertOpenAIKey() {
   if (!getOpenAIKey()) {
-    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
+    throw new AiProviderUnavailableError("OPENAI_API_KEY가 설정되어 있지 않습니다.");
+  }
+}
+
+export const AI_MAINTENANCE_MESSAGE = "AI 상담이 잠시 점검 중이에요. 잠시 후 다시 시도해 주세요.";
+
+// 크레딧 소진·키 오류·요청 한도·OpenAI 장애처럼 사용자가 해결할 수 없는 실패.
+// 사용자에게는 점검 안내만 보여주고 원문은 서버 로그에 남긴다.
+export class AiProviderUnavailableError extends Error {
+  readonly status = 503;
+  constructor(readonly detail: string) {
+    super(AI_MAINTENANCE_MESSAGE);
+    this.name = "AiProviderUnavailableError";
+  }
+}
+
+type OpenAIErrorBody = { error?: { message?: string; type?: string; code?: string } } | null;
+
+function openAIFailure(status: number, payload: OpenAIErrorBody, fallback: string): Error {
+  const detail = payload?.error?.message || fallback;
+  const code = payload?.error?.code || payload?.error?.type || "";
+  if (status === 401 || status === 403 || status === 429 || status >= 500 || code === "insufficient_quota") {
+    console.error(`[ai] OpenAI unavailable status=${status} code=${code}: ${detail}`);
+    return new AiProviderUnavailableError(detail);
+  }
+  return new Error(detail);
+}
+
+async function openAIFetch(path: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${OPENAI_API_BASE}${path}`, init);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error(`[ai] OpenAI unreachable: ${detail}`);
+    throw new AiProviderUnavailableError(detail);
   }
 }
 
@@ -160,7 +194,7 @@ export function buildKnowledgeChunks(items: RagKnowledgeItem[]): KnowledgeChunk[
 
 type OpenAIEmbeddingResponse = {
   data?: Array<{ embedding?: number[] }>;
-  error?: { message?: string };
+  error?: { message?: string; type?: string; code?: string };
 };
 
 export async function createEmbeddings(inputs: string[]): Promise<number[][]> {
@@ -170,7 +204,7 @@ export async function createEmbeddings(inputs: string[]): Promise<number[][]> {
     throw new EmbeddingsDisabledError("OPENAI_API_KEY가 설정되어 있지 않습니다.");
   }
 
-  const response = await fetch(`${OPENAI_API_BASE}/embeddings`, {
+  const response = await openAIFetch("/embeddings", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -187,7 +221,7 @@ export async function createEmbeddings(inputs: string[]): Promise<number[][]> {
 
   const payload = (await response.json().catch(() => null)) as OpenAIEmbeddingResponse | null;
   if (!response.ok) {
-    throw new Error(payload?.error?.message || "임베딩 생성에 실패했습니다.");
+    throw openAIFailure(response.status, payload, "임베딩 생성에 실패했습니다.");
   }
   const vectors = payload?.data?.map((row) => row.embedding ?? []) ?? [];
   if (vectors.length !== inputs.length || vectors.some((vector) => !vector.length)) {
@@ -211,14 +245,14 @@ type ResponsesApiResponse = {
     }>;
   }>;
   incomplete_details?: { reason?: string };
-  error?: { message?: string };
+  error?: { message?: string; type?: string; code?: string };
 };
 
 type StreamEvent = {
   type?: string;
   delta?: string;
   text?: string;
-  error?: { message?: string };
+  error?: { message?: string; type?: string; code?: string };
 };
 
 type GenerateParams = {
@@ -318,7 +352,7 @@ function parseResponsesText(payload: ResponsesApiResponse | null): string {
 export async function generateText(params: GenerateParams): Promise<string> {
   assertOpenAIKey();
 
-  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
+  const response = await openAIFetch("/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -329,7 +363,7 @@ export async function generateText(params: GenerateParams): Promise<string> {
 
   const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
   if (!response.ok) {
-    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+    throw openAIFailure(response.status, payload, "답변 생성에 실패했습니다.");
   }
   return parseResponsesText(payload);
 }
@@ -352,7 +386,7 @@ export async function generateStructuredJson<T>(params: StructuredGenerateParams
     },
   };
 
-  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
+  const response = await openAIFetch("/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -363,7 +397,7 @@ export async function generateStructuredJson<T>(params: StructuredGenerateParams
 
   const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
   if (!response.ok) {
-    throw new Error(payload?.error?.message || "구조화 응답 생성에 실패했습니다.");
+    throw openAIFailure(response.status, payload, "구조화 응답 생성에 실패했습니다.");
   }
 
   const raw = parseResponsesText(payload);
@@ -423,7 +457,7 @@ async function parseSseStream(
       if (!parsed) continue;
 
       if (parsed.type === "error") {
-        throw new Error(parsed.error?.message || "스트리밍 응답 생성에 실패했습니다.");
+        throw openAIFailure(200, { error: parsed.error }, "스트리밍 응답 생성에 실패했습니다.");
       }
 
       const delta = extractStreamDelta(parsed);
@@ -449,7 +483,7 @@ export async function streamText(
 ): Promise<string> {
   assertOpenAIKey();
 
-  const response = await fetch(`${OPENAI_API_BASE}/responses`, {
+  const response = await openAIFetch("/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -460,7 +494,7 @@ export async function streamText(
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as ResponsesApiResponse | null;
-    throw new Error(payload?.error?.message || "답변 생성에 실패했습니다.");
+    throw openAIFailure(response.status, payload, "답변 생성에 실패했습니다.");
   }
   if (!response.body) {
     throw new Error("스트리밍 응답 본문이 비어 있습니다.");

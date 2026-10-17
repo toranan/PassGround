@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
+  AiProviderUnavailableError,
   createEmbedding,
   createEmbeddings,
   EmbeddingsDisabledError,
@@ -1021,7 +1022,8 @@ async function generateEmotionAnswer(
   const prompts = buildEmotionPrompts(question, adviceSnippets, historyMessages);
   try {
     return (await generateText({ ...prompts, temperature: 0.5 })).trim() || COUNSELING_FALLBACK;
-  } catch {
+  } catch (error) {
+    if (error instanceof AiProviderUnavailableError) throw error;
     return COUNSELING_FALLBACK;
   }
 }
@@ -1182,8 +1184,9 @@ async function runChatWorkflow(params: {
         maxOutputTokens: 650,
         disableThinking: true,
       })).trim() || MOCK_EXAM_COACHING_FALLBACK;
-    } catch {
-      // 생성 API 장애 시에도 빈 근거 거절문 대신 기본 상담을 제공한다.
+    } catch (error) {
+      // 크레딧 소진 등 AI 제공자 장애는 점검 안내로 처리하고, 그 외 생성 실패는 기본 상담을 제공한다.
+      if (error instanceof AiProviderUnavailableError) throw error;
     }
     generationMs = Date.now() - generationStarted;
     stream?.onMeta({ intent, route: "mixed", cache: "bypass", mode: "mock_exam_coaching" });
@@ -1967,7 +1970,7 @@ export async function POST(request: Request) {
             controller.enqueue(toSseEvent("done", payload));
           } catch (error) {
             const message = error instanceof Error ? error.message : "AI 응답 생성에 실패했습니다.";
-            const status = error instanceof ChatHttpError ? error.status : 400;
+            const status = error instanceof ChatHttpError || error instanceof AiProviderUnavailableError ? error.status : 400;
             controller.enqueue(toSseEvent("error", { error: message, status, traceId }));
           } finally {
             controller.close();
@@ -1995,7 +1998,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(payload);
   } catch (error) {
-    if (error instanceof ChatHttpError) {
+    if (error instanceof ChatHttpError || error instanceof AiProviderUnavailableError) {
       return NextResponse.json({ error: error.message, traceId }, { status: error.status });
     }
     return NextResponse.json(
