@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
-import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
+import { admissionScopeStatus, basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   AiProviderUnavailableError,
   createEmbedding,
@@ -412,7 +412,7 @@ function resolveScope(params: {
       (document) => normalizeUniversity(document.university) === normalizeUniversity(requested)
     )
   );
-  if (missingUniversities.length) return {
+  if (requestedUniversities.length && missingUniversities.length === requestedUniversities.length) return {
     documents: [],
     year: explicitAdmissionYear(params.question) ?? params.plan.admissionYear
       ?? (params.plan.yearReference === "previous" ? params.currentAdmissionYear - 1 : params.currentAdmissionYear),
@@ -439,7 +439,13 @@ function resolveScope(params: {
   candidates = year === null
     ? latestDocumentPerSchool(candidates)
     : candidates.filter((document) => document.admission_year === year);
-  return { documents: candidates, year, missingUniversities: [] };
+  // 일부 학교만 자료가 있으면 있는 학교로 답하고, 해당 학년도 자료가 없는 학교는 따로 알린다.
+  const missingForYear = requestedUniversities.filter(
+    (requested) => !candidates.some(
+      (document) => normalizeUniversity(document.university) === normalizeUniversity(requested)
+    )
+  );
+  return { documents: candidates, year, missingUniversities: missingForYear };
 }
 
 function coveragePrefix(documents: SourceDocumentRow[], year: number | null): string {
@@ -711,19 +717,24 @@ async function answerSemantic(params: {
   plan: TransferQueryPlan;
   documents: SourceDocumentRow[];
   year: number | null;
+  statusShown?: boolean;
 }): Promise<{ answer: string; matched: number } | "missing_catalog"> {
   const queryEmbedding = await createEmbedding(params.plan.semanticQuery || params.question);
   const unitTypes = params.plan.unitTypes.length ? params.plan.unitTypes : null;
-  const documentGroups = params.plan.operation === "compare"
-    ? params.documents.map((document) => [document])
-    : [params.documents];
+  // 여러 학교를 함께 물으면 한 학교 근거가 상위권을 독식하지 않도록 학교별로 따로 검색한다.
+  const schoolGroups = [...params.documents.reduce((groups, document) => {
+    const key = `${document.university}|${document.campus}`;
+    return groups.set(key, [...(groups.get(key) ?? []), document]);
+  }, new Map<string, SourceDocumentRow[]>()).values()];
+  const perSchool = params.plan.operation === "compare" || (schoolGroups.length > 1 && schoolGroups.length <= 6);
+  const documentGroups = perSchool ? schoolGroups : [params.documents];
 
   const results = await Promise.all(documentGroups.map(async (documents) => {
     const { data, error } = await params.admin.rpc("match_transfer_knowledge_units", {
       query_embedding: queryEmbedding,
       query_document_ids: documents.map((document) => document.id),
       query_unit_types: unitTypes,
-      match_count: params.plan.operation === "compare" ? 4 : 8,
+      match_count: perSchool ? 5 : 8,
       min_similarity: 0.3,
     });
     if (error) {
@@ -733,8 +744,20 @@ async function answerSemantic(params: {
     return (data as unknown as KnowledgeUnitRow[] | null) ?? [];
   }));
   if (results.some((result) => result === "missing_catalog")) return "missing_catalog";
-  const rows = (results as KnowledgeUnitRow[][])
-    .flat()
+
+  // 학과를 물으면 그 학과를 명시하거나 전 모집단위에 적용되는 전형규칙은 유사도와 무관하게 근거에 넣는다.
+  let ruleRows: KnowledgeUnitRow[] = [];
+  if (params.plan.major) {
+    const loaded = await loadUnits(params.admin, params.documents.map((document) => document.id), "selection_rule");
+    ruleRows = loaded.rows
+      .filter((row) => (row.scope_value && textMatches(row.scope_value, params.plan.major))
+        || row.scope_type === "all"
+        || /^(전|모든)\s*모집단위/.test(row.scope_value ?? ""))
+      .map((row) => ({ ...row, similarity: 1 }));
+  }
+  const seen = new Set<string>();
+  const rows = [...ruleRows, ...(results as KnowledgeUnitRow[][]).flat()]
+    .filter((row) => !seen.has(row.id) && Boolean(seen.add(row.id)))
     .sort((a, b) => Number(b.similarity ?? 0) - Number(a.similarity ?? 0));
   if (!rows.length) {
     return {
@@ -750,13 +773,15 @@ async function answerSemantic(params: {
       basicPlanNotice(params.documents),
       "기본계획은 확정 모집요강이 아니다. 검색 근거에 없으면 현재 확보한 문서에서 확인하지 못했다고 답하고, 공개되지 않았다고 추정하지 마라. 문서의 발표 예정 시기와 실제 공개 여부를 구분하라. 데이터 미보유를 대학 미공개로 단정하지 마라. 지원자격이나 전형별 예외를 추측하지 마라.",
       "질문이 '바뀐 점'처럼 범위가 넓으면 근거에서 명시적으로 확인되는 내용을 먼저 알려라. 전년 대비 비교 근거가 없으면 비교할 수 없다고 밝히고, 답변 끝에 사용자가 궁금한 범위(전형방법·모집단위·지원자격 등)를 한 가지만 짧게 물어라.",
-      "답변 끝에 아직 DB에 적재되지 않은 학교·학년도는 포함되지 않는다고 밝혀라.",
+      params.statusShown
+        ? "학교별 자료 현황(기본계획·미확보 학교)은 답변 앞에 이미 안내되므로 반복하지 말고, 근거가 있는 학교의 내용만 학교별로 정리하라. '전 모집단위(… 제외)' 규칙은 제외 목록에 해당 학과가 없으면 그 학과에도 적용된다."
+        : "답변 끝에 아직 DB에 적재되지 않은 학교·학년도는 포함되지 않는다고 밝혀라.",
     ].join("\n"),
     contexts: rows.map((row) => ({
       chunkText: row.content,
       similarity: Number(row.similarity ?? 0),
     })),
-    maxContextCount: params.plan.operation === "compare" ? 12 : 8,
+    maxContextCount: ruleRows.length + (perSchool ? Math.min(24, schoolGroups.length * 5) : 8),
   });
   return { answer: generated, matched: rows.length };
 }
@@ -817,7 +842,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     documents,
     currentAdmissionYear,
   });
-  if (scope.missingUniversities.length) {
+  if (!scope.documents.length && scope.missingUniversities.length) {
     return {
       answer: noAdmissionDocument(`${scope.year ?? currentAdmissionYear}학년도 ${scope.missingUniversities.join(", ")}`),
       admissionYear: scope.year,
@@ -836,6 +861,10 @@ export async function tryAnswerTransferCatalogQuestion(params: {
       grounded: false,
     };
   }
+  const multiSchool = scope.missingUniversities.length > 0 || requestedUniversities.length > 1;
+  const withScopeNotice = (answer: string) => multiSchool
+    ? `${admissionScopeStatus({ year: scope.year, documents: scope.documents, missingUniversities: scope.missingUniversities })}\n\n${answer}`
+    : addBasicPlanNoticeWhenMissing(answer, scope.documents);
   if (unsupportedFact(plan.factKind)) {
     return {
       answer: "현재 모집요강 DB에는 모집정원만 있고 실제 합격자 수·등록자 수·경쟁률·합격선 자료는 없어 답변할 수 없습니다.",
@@ -858,11 +887,10 @@ export async function tryAnswerTransferCatalogQuestion(params: {
     && plan.factKind === "selection" && ["lookup", "explain"].includes(plan.operation);
   if (structured && !retrySelectionInText) {
     return {
-      answer: addBasicPlanNoticeWhenMissing(
+      answer: withScopeNotice(
         structured.matched > 0 || plan.factKind === "recruitment_quota"
           ? structured.answer
-          : missingAdmissionEvidence(scope.documents),
-        scope.documents
+          : missingAdmissionEvidence(scope.documents)
       ),
       admissionYear: scope.year,
       coverageCount: distinctSchoolCount(scope.documents),
@@ -879,8 +907,10 @@ export async function tryAnswerTransferCatalogQuestion(params: {
       plan: retrySelectionInText ? { ...plan, unitTypes: ["section", "selection_rule"] } : plan,
       documents: scope.documents,
       year: scope.year,
+      statusShown: multiSchool,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof AiProviderUnavailableError) throw error;
     return {
       answer: "검증된 모집요강 근거를 검색하지 못해 답변하지 않았습니다. 잠시 후 다시 시도해주세요.",
       admissionYear: scope.year,
@@ -891,7 +921,7 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   }
   if (semantic === "missing_catalog") return null;
   return {
-    answer: addBasicPlanNoticeWhenMissing(semantic.answer, scope.documents),
+    answer: withScopeNotice(semantic.answer),
     admissionYear: scope.year,
     coverageCount: distinctSchoolCount(scope.documents),
     matchedRuleCount: semantic.matched,
