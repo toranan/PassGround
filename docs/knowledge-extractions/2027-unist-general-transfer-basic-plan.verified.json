@@ -83,7 +83,9 @@
       "key": "all-programs-document-interview",
       "scopeType": "all",
       "scopeValue": "전 모집단위",
-      "transferTypes": ["일반편입"],
+      "transferTypes": [
+        "일반편입"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -95,12 +97,36 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 2,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4],
+      "sourcePages": [
+        4
+      ],
       "notes": "1단계 서류 100%로 2~5배수 내외 선발, 2단계 1단계 성적 60%+면접 40%. 모집단위별 배수는 달라질 수 있음.",
       "metadata": {
         "factStatus": "provisional",
         "stage1DocumentWeight": 100,
-        "englishScoreOptional": true
+        "englishScoreOptional": true,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4,
+            5
+          ],
+          "inDocumentReview": true,
+          "optionalSubmission": true,
+          "optionalTests": [
+            "TOEIC",
+            "TOEFL iBT",
+            "TEPS",
+            "IELTS"
+          ]
+        }
       }
     }
   ],
@@ -116,7 +142,10 @@
       "displayText": "2026년 11월 4주 ~ 5주 중",
       "details": "원서와 서류는 온라인 제출. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "stage1-result",
@@ -129,7 +158,10 @@
       "displayText": "2027년 1월 2주 중",
       "details": "입학안내 홈페이지 발표. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "interview",
@@ -142,7 +174,10 @@
       "displayText": "2027년 1월 3주 중",
       "details": "UNIST 캠퍼스에서 실시 예정. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "final-result",
@@ -155,7 +190,10 @@
       "displayText": "2027년 2월 1주 ~ 2주 중",
       "details": "입학안내 홈페이지 발표. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "registration",
@@ -168,7 +206,10 @@
       "displayText": "2027년 2월 1주 ~ 2주 중",
       "details": "등록방법은 합격자 발표 시 공고. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "additional-result-registration",
@@ -181,7 +222,10 @@
       "displayText": "2027년 2월 3주 중",
       "details": "입학안내 홈페이지 발표. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "original-documents",
@@ -194,7 +238,10 @@
       "displayText": "2027년 2월 4주 중",
       "details": "등기우편 제출. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 2,
-      "metadata": { "precision": "week", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "week",
+        "factStatus": "provisional"
+      }
     }
   ],
   "programs": [],

@@ -1,0 +1,547 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "부산대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 주요사항",
+    "title": "2027학년도 부산대학교 편입학 전형 주요사항",
+    "sourceFile": "2027부산대기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "4304332421627c01a80e2a0e63277fee56dd96e205c6273d465961b677450f4b",
+    "fileSizeBytes": 392276,
+    "pageCount": 24,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedAt": "2026년 9월",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "2026년 12월 초",
+      "notice": "2026년 9월 부산대학교 편입학 전형 주요사항이며 교육부 2027학년도 편입학 전형 기본계획에 따라 일부 변경될 수 있다. 확정 내용과 모집단위·모집인원은 2026년 12월 공고 예정인 최종 모집요강을 확인해야 한다.",
+      "extractionScope": "일정·지원자격·전형요소·반영방법·모집단위 변경·면접 출제과목·실기 과제 요약. 모든 참고도서 목록의 완전 전사는 아님.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027부산대기본계획.pdf",
+      "duplicateLocalCopies": [
+        "2027충남대기본계획.pdf (동일 SHA-256, 내용은 부산대학교 문서)"
+      ]
+    }
+  },
+  "sections": [
+    {
+      "key": "status-and-quota",
+      "heading": "전형 주요사항 상태와 모집인원 미공개",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "이 문서는 2026년 9월 부산대학교가 발표한 2027학년도 편입학 전형 주요사항이다. 교육부 2027학년도 편입학 전형 기본계획에 따라 일부 내용이 변경될 수 있다. 일반편입은 결원이 발생한 모집단위에 한해 교육부 산정 기준을 준수해 모집한다. 확정 내용과 모집단위·모집인원은 2026년 12월 공고 예정인 2027학년도 편입학 전형 모집요강에서 확인해야 한다. 이 문서에는 모집인원이 공개되지 않았다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "schedule",
+      "heading": "월 단위 전형일정",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "모집요강 확정 및 공고는 2026년 12월 초, 인터넷 원서접수와 구비서류 제출은 2026년 12월 중, 면접(실기)고사 대상자 발표와 면접(실기) 고사일은 2027년 1월 중, 합격자 발표와 합격자 등록은 2027년 2월 중으로 안내됐다. 세부일정은 추후 모집요강에서 공고하며 교육부 2027학년도 편입학 전형 기본계획 일정에 따라 변경될 수 있다. 정확한 날짜와 시간은 공개되지 않았다."
+    },
+    {
+      "key": "common-and-general-eligibility",
+      "heading": "공통 필수 자격과 일반편입학 지원자격",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "모든 지원자는 공인영어시험(토익, 텝스, 토플 중 택1)에 응시해 공식성적을 취득해야 한다. 원서접수 마감일 기준 23개월 이내 취득한 성적만 유효하며 TOEIC Bridge, TOEIC Speaking and Writing Tests, 기관 TOEIC(TOEFL) 성적은 인정하지 않는다. 일반편입학은 국내 4년제 이상 정규 대학교(방통대·산업대·사이버대 등 포함) 2학년(4학기) 이상 수료(예정)자, 국외 4년제 정규 대학교 2학년(4학기) 이상 수료(예정)하고 학사학위 최저학점의 1/2(3년제 2/3, 5년제 2/5) 이상 취득(예정)자, 국내·외 전문대학 졸업(예정)자 및 동등학력자(3년제 대학 2년 이수자는 지원 불가), 학점인정·평생교육법에 따른 전문학사 이상 학위 취득(예정)자 또는 학사학위 과정 80학점 이상 취득자, 교육부 지정 전문대학 간호학과 4년 과정 2학년(4학기) 이상 수료(예정)자 중 하나에 해당해야 한다. 수료예정증명서 제출자는 이수 예정 학점을 확인할 수 있는 수강신청서(인쇄물)를 제출해야 하며 외국대학 출신자는 졸업요구학점·이수학기·성적등급·평점기준 증빙서류를 제출해야 한다."
+    },
+    {
+      "key": "bachelor-special-linked-eligibility",
+      "heading": "학사편입·정원외 특별전형·전문대학 연계 편입학 지원자격",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "학사편입학은 국내·외 4년제 정규 대학교 졸업(예정)자로서 학사학위 취득(예정)자(학점인정제·독학학위제 포함) 또는 동등학력자가 지원할 수 있다. 정원외 특별전형은 일반편입학 지원자격을 갖추고 추가 자격을 충족해야 한다. 농어촌학생은 전적대학 신입학 당시 농어촌전형 입학자로 특별전형 신입학 확인서 제출이 가능한 사람, 저소득층학생은 원서접수 마감일 기준 국민기초생활 보장법 수급권자·수급자·차상위계층 또는 한부모가족지원법 지원대상자, 특성화고교 졸업자는 전적대학 신입학 당시 특성화고교졸업자전형 입학자로 특별전형 신입학 확인서 제출이 가능한 사람이다. 전문대학 연계 편입학은 본교와 연계교육과정 협약을 맺은 경남정보대학교 졸업(예정)자로 연계교육과정을 모두 이수해 이수 확인서를 제출할 수 있어야 한다."
+    },
+    {
+      "key": "contract-department-eligibility",
+      "heading": "계약학과 신·편입학 지원자격",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "계약학과 신·편입학은 필수자격과 선택자격을 모두 충족해야 한다. 필수자격은 상시 근로자 5인 이상 업체에 입학일(2027. 3. 2.) 기준 10개월 이상 재직, 우리 대학교와 협약을 체결한 업체의 추천, 4대 사회보험 가입이다. 기간의 정함이 없는 근로자이거나 계약기간이 계약학과 운영기간보다 길어야 한다. 선택자격은 일반편입학 학력 요건 중 하나 또는 신입학 지원자의 경우 고등학교 졸업 이상 학력이다."
+    },
+    {
+      "key": "application-restrictions",
+      "heading": "지원 제한 사항",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "2개 이상의 모집단위에 지원할 수 없다. 일반편입(일반·농어촌·저소득층·특성화·전문대학연계), 학사편입, 계약학과 신·편입학 간 중복 지원할 수 없다. 원서 접수일 현재 부산대학교 소속 재학생·휴학생·4학년 수료생(졸업유예 포함)은 지원할 수 없으며 부산대 제적생과 부산대 졸업(예정)자는 지원할 수 있다."
+    },
+    {
+      "key": "selection-elements",
+      "heading": "전형요소 및 반영비율",
+      "pageStart": 7,
+      "pageEnd": 8,
+      "content": "일반·학사편입학(정원외 특별전형, 전문대학 연계 편입학 포함)은 모두 단계별 전형이며 1단계에서 2~3배수를 선발한다. 자체 필기시험은 없다. 1단계는 공인영어·전적대 성적·서류평가, 2단계 대학별고사는 면접 또는 실기다. 인문대학·자연과학대학·공과대학·사범대학·경제통상대학·생명자원과학대학은 공인영어 30, 전적대 성적 30, 면접 40이다. 사회과학대학·경영대학·약학대학·생활과학대학·간호대학·학부대학(첨단융합학부)·AI대학과 예술대학 디자인학과·예술문화영상학과는 공인영어 30, 전적대 성적 30, 서류평가 20, 면접 20이다. 예술대학 음악학과·한국음악학과·무용학과·미술학과·조형학과는 공인영어 30, 전적대 성적 20, 실기 50이다. 계약학과 발전공학과 편입학은 전적대학 성적 30, 산업체 근무경력 30, 면접고사 40이고 신입학은 산업체 근무경력 30, 면접고사 70이다."
+    },
+    {
+      "key": "scoring-methods",
+      "heading": "전형요소별 반영방법",
+      "pageStart": 8,
+      "pageEnd": 8,
+      "content": "공인영어 반영점수는 (취득점수 ÷ 만점점수) × 30이며 소수점 셋째 자리에서 반올림한다. 전적대학 성적은 성적증명서의 100점 만점 환산점수를 30점(또는 20점) 만점으로 환산한다. 수료(졸업)예정자는 서류제출 마감일 기준 성적이 발급된 학기까지 반영하고 전적대학이 2개 이상이면 최종 소속 대학 성적만 반영한다(편입 후 현 소속 대학에서 한 학기도 이수하지 않은 경우 편입 전 대학 성적 반영). 서류평가는 전적대학 성적증명서를 기반으로 이수 과목 적절성을 포함한 학업 역량과 잠재 역량을 블라인드로 종합평가하며 과락 시 총점과 관계없이 불합격될 수 있다. 면접고사는 전공기초영역과 인성 및 사고영역을 평가하며 약학대학은 인성 및 사고영역만 평가한다. 제시문 면접이며 면접 전 제시문 검토 시간이 있고 개인별 10~30분이다. 면접 세부 영역 과락 시 불합격될 수 있다. 실기고사 시간은 모집단위별로 다르다."
+    },
+    {
+      "key": "program-restructuring",
+      "heading": "학사구조 개편에 따른 모집단위 변경",
+      "pageStart": 7,
+      "pageEnd": 22,
+      "content": "2027학년도에 모집단위가 변경된다. 나노과학기술대학 나노에너지공학과는 학부대학 첨단융합학부 미래에너지전공, 나노메카트로닉스공학과는 나노소자첨단제조전공, 광메카트로닉스공학과는 광메카트로닉스공학전공으로 바뀐다. 정보의생명공학대학 의생명융합공학부 의생명공학전공은 공과대학 바이오메디컬공학과로 바뀐다. 의생명융합공학부 데이터사이언스전공·첨단바이오공학전공은 AI대학 데이터사이언스학부로, 정보컴퓨터공학부 컴퓨터공학전공·인공지능전공은 AI대학 AI컴퓨터공학부로 바뀐다. 공과대학 산업공학과는 AI대학 산업공학부, 자연과학대학 통계학과는 AI대학 통계학과로 바뀐다."
+    },
+    {
+      "key": "interview-general-guidance",
+      "heading": "모집단위별 면접고사 과목 공통 안내",
+      "pageStart": 9,
+      "pageEnd": 9,
+      "content": "출제과목이 공지된 모집단위라도 모집하지 않을 수 있으며 모집인원은 12월 공고 예정인 모집요강에서 확인해야 한다. 인성 및 사고 영역은 전 모집단위에서 지원자의 인성과 사고를 판단하는 문제를 출제하며 참고도서는 없다. 수학교육과는 이를 교직적성으로 대체한다. 전공기초영역은 2학년까지 교육과정을 이수해 3학년 과정을 수행할 수 있는 수준을 평가한다. 참고도서는 참고용이며 미기재 과목은 해당 학과사무실에 문의해야 한다. ♣ 표시 모집단위는 공학용 계산기를 개인 준비물로 지참한다."
+    },
+    {
+      "key": "interview-humanities-social",
+      "heading": "인문대학·사회과학대학 면접 출제과목",
+      "pageStart": 9,
+      "pageEnd": 11,
+      "content": "인문대학: 국어국문학과 국어국문학개론, 중어중문학과 중국어학 및 문학개론·중국어강독, 일어일문학과 일본어학 및 문학 개론·일본어강독, 영어영문학과 영어영문학 일반 및 전공영어, 불어불문학과 프랑스어(DELF A2 수준 이상), 독어독문학과 독일어(A2 수준), 노어노문학과 러시아언어학개론 및 러시아문학개론·러시아어, 한문학과 전공기초·한국한문학사, 언어정보학과 언어학개론, 사학과 역사 인식·역사 일반, 철학과 철학의 기초, 고고학과 한국고고학개설·삼국시대고고학. 사회과학대학: 행정학과 인사행정 및 지방행정, 정치외교학과 정치학개론·국제정치, 사회복지학과 사회복지학개론, 사회학과 사회학개론, 심리학과 심리학개론·기초심리통계, 문헌정보학과 문헌정보학개론·지식분류론, 미디어커뮤니케이션학과 커뮤니케이션이론."
+    },
+    {
+      "key": "interview-natural-engineering",
+      "heading": "자연과학대학·공과대학 면접 출제과목",
+      "pageStart": 12,
+      "pageEnd": 14,
+      "content": "자연과학대학(공학용 계산기 지참 대상 포함): 수학과 미분적분학·선형대수, 통계학과 기초통계학, 물리학과 역학Ⅰ·역학Ⅱ·전자기학Ⅰ, 화학과 화학, 생명과학과 생명과학, 미생물학과 일반생물학·일반미생물학, 분자생물학과 생명과학, 지질환경과학과 지질학, 해양학과 해양학개론, 대기환경과학과 대기환경과학개론. 공과대학: 기계공학부 공학미분방정식·열역학·고체역학, 고분자공학과 고분자개론·유기화학·물리화학, 유기소재시스템공학과 일반화학, 환경공학과 일반화학·공학수학, 재료공학부 재료과학개론·열역학·재료역학, 전기전자공학부 전기공학전공 전자장·회로이론, 전자공학전공 전자회로(I)·신호 및 시스템, 반도체공학전공 물리전자·회로이론, 건축학과 서양건축사(I)·구조역학, 건축공학과 건축공학, 도시공학과 도시계획개론, 사회기반시스템공학과 재료역학·수리학, 항공우주공학과 공학수학, 조선·해양공학과 유체역학·동역학, 바이오메디컬공학전공 공학수학 II(미분방정식)·확률 및 통계."
+    },
+    {
+      "key": "interview-education",
+      "heading": "사범대학 면접 출제과목",
+      "pageStart": 15,
+      "pageEnd": 16,
+      "content": "국어교육과 국어, 영어교육과 영어독해·영어작문, 교육학과 교육학, 유아교육과 유아교육개론·유아교육과정·유아교사론, 특수교육과 특수교육학·장애학생통합교육, 일반사회교육과 경제학원론·사회학개론·정치학개론, 역사교육과 한국사·동양사·서양사, 지리교육과 인문지리학·자연지리학, 윤리교육과 서양윤리·정치사상·동양윤리, 수학교육과 미분적분학·선형대수학, 물리교육과 일반물리학, 화학교육과 화학, 생물교육과 일반생물학, 지구과학교육과 지질학·천문학·대기과학."
+    },
+    {
+      "key": "interview-economics-business-pharmacy-art-life-nursing",
+      "heading": "경제통상·경영·약학·예술·생활과학·간호·학부대학 면접 출제과목",
+      "pageStart": 17,
+      "pageEnd": 19,
+      "content": "경제통상대학: 무역학부 국제무역론 및 무역정책론·무역결제론, 경제학부 미시경제학·거시경제학, 국제학부 경제학원론·경영학원론(영어 구술 면접 포함 가능), 관광컨벤션학과 관광학원론·컨벤션산업론, 공공정책학부 정책학. 경영대학 경영학과 경영학원론(전 전공 기초 포함)·경영통계학. 약학대학은 전공기초영역 면접문항이 없다. 예술대학 디자인학과 디자인·영상, 예술문화영상학과 미학 입문·영화학 기초. 생활과학대학: 아동가족학과 가족관계학·아동발달, 의류학과 패션디자인·패션마케팅, 식품영양학과 영양학·식품학, 실내환경디자인학과 실내건축계획론. 간호대학 간호학과 기초간호과학. 학부대학 첨단융합학부: 미래에너지전공 물리학·화학·재료공학개론, 나노소자첨단제조전공 공학재료학·고체역학, 광메카트로닉스공학전공 공학수학·물리학·화학."
+    },
+    {
+      "key": "interview-life-resources-ai",
+      "heading": "생명자원과학대학·AI대학 면접 출제과목",
+      "pageStart": 20,
+      "pageEnd": 22,
+      "content": "생명자원과학대학: 식물생명과학과 재배학·육종학·식물생리학·전공기초과목, 원예생명과학과 원예학개론·작물생리학, 동물생명자원과학과 동물자원과학개론·생화학·생물학, 식품공학과 식품학개론, 생명환경화학과 일반생물학·분석화학, 바이오소재과학과 일반화학·생명과학, 바이오산업기계공학과 바이오시스템공학개론, IT응용공학과 전자회로·프로그래밍 기초·데이터구조, 바이오환경에너지학과 환경에너지개론, 조경학과 조경학, 식품자원경제학과 경제학원론·농업경제학. AI대학(공학용 계산기 지참): AI컴퓨터공학부 컴퓨터공학전공·인공지능전공 자료구조, 산업공학부 산업공학개론, 데이터사이언스학부 데이터사이언스전공 자료구조(코딩테스트 포함)·확률 및 통계, 첨단바이오공학전공 생명과학, 통계학과 기초통계학."
+    },
+    {
+      "key": "practical-exam-tasks",
+      "heading": "예술대학 모집단위별 실기고사 과제",
+      "pageStart": 23,
+      "pageEnd": 24,
+      "content": "음악학과 성악전공은 이태리·독일 예술가곡 1곡, 콘코네 40~50번 중 당일 추첨 1곡, 다른 언어의 오페라 아리아(반주자 동반), 피아노전공은 Beethoven Piano Sonata 1곡 전곡, 작곡전공은 주어진 동기로 3부 형식 피아노곡 작곡(70점)과 빠른 템포 자유곡 피아노 실기(30점), 관현악전공은 콘체르토 전악장 또는 15분 내외 자유곡(퍼커션은 Snare Drum·Marimba·Timpani 각 5분 내외, 반주 없이)이다. 한국음악학과는 현악(가야금·거문고 정악과 산조), 성악(가야금병창·경기민요·가곡·판소리), 관악·타악, 이론·작곡 전공별 과제가 있으며 악기 지참·지정 복장·암보 연주가 요구되고 반주자는 동반할 수 없다. 미술학과는 조소·한국화·서양화 실기, 조형학과는 도예 기물성형, 가구목조형 제도 및 렌더링, 섬유금속 텍스타일디자인 또는 렌더링 중 택1이다. 무용학과는 한국무용·발레·현대무용 전공별 수험생 준비 작품 및 과제를 실시하며 전공별 복장 규정이 있다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "interview40-colleges",
+      "scopeType": "college",
+      "scopeValue": "인문대학·자연과학대학·공과대학·사범대학·경제통상대학·생명자원과학대학",
+      "transferTypes": [
+        "일반편입",
+        "학사편입",
+        "정원외 특별전형",
+        "전문대학 연계 편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 2단계 제시문 면접(전공기초·인성 및 사고)",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 2,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        7,
+        8
+      ],
+      "notes": "단계별(1단계 2~3배수). 공인영어 30+전적대 성적 30+면접 40=100. 공인영어는 자체 필기시험이 아니다.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            7,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "key": "document20-interview20-colleges",
+      "scopeType": "college",
+      "scopeValue": "사회과학대학·경영대학·약학대학·생활과학대학·간호대학·학부대학(첨단융합학부)·AI대학",
+      "transferTypes": [
+        "일반편입",
+        "학사편입",
+        "정원외 특별전형",
+        "전문대학 연계 편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 2단계 제시문 면접(약학대학은 인성 및 사고영역만)",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 2,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        7,
+        8
+      ],
+      "notes": "단계별(1단계 2~3배수). 공인영어 30+전적대 성적 30+서류평가 20+면접 20=100.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            7,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "key": "art-practical",
+      "scopeType": "major",
+      "scopeValue": "예술대학 음악학과·한국음악학과·무용학과·미술학과·조형학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입",
+        "정원외 특별전형",
+        "전문대학 연계 편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 2단계 실기고사(모집단위별 과제·시간 상이)",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 50,
+      "stage1SelectionMinMultiple": 2,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        7,
+        8,
+        23,
+        24
+      ],
+      "notes": "단계별(1단계 2~3배수). 공인영어 30+전적대 성적 20+실기 50=100.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            7,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "key": "art-design-interview",
+      "scopeType": "major",
+      "scopeValue": "예술대학 디자인학과·예술문화영상학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입",
+        "정원외 특별전형",
+        "전문대학 연계 편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 2단계 면접",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 2,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        7,
+        18
+      ],
+      "notes": "단계별(1단계 2~3배수). 공인영어 30+전적대 성적 30+서류평가 20+면접 20=100.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            7,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "key": "contract-power-engineering",
+      "scopeType": "major",
+      "scopeValue": "계약학과 발전공학과",
+      "transferTypes": [
+        "계약학과 편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험 없음",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        5,
+        8
+      ],
+      "notes": "편입학: 전적대학 성적 30+산업체 근무경력 30+면접고사 40=100. 신입학은 산업체 근무경력 30+면접고사 70.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalPriorUniversityWeight": 30,
+        "finalWorkExperienceWeight": 30,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            5,
+            8
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "final-guide",
+      "audience": "전체",
+      "label": "모집요강 확정 및 공고",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 초",
+      "details": "세부일정은 추후 모집요강 공고. 정확한 날짜 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "인터넷 원서접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "documents",
+      "audience": "전체 지원자",
+      "label": "구비서류 제출",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "stage1-result",
+      "audience": "전체 지원자",
+      "label": "면접(실기)고사 대상자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "interview-practical",
+      "audience": "면접(실기)고사 대상자",
+      "label": "면접(실기) 고사일",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "final-result",
+      "audience": "전체 지원자",
+      "label": "합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "registration",
+      "audience": "합격자",
+      "label": "합격자 등록",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 5,
+    "expectedScheduleRows": 7,
+    "tablesChecked": [
+      "PDF 2페이지 전형일정 표",
+      "PDF 3~5페이지 지원자격",
+      "PDF 6페이지 지원 제한 사항",
+      "PDF 7페이지 전형요소 및 반영비율 표·모집단위 변경 표",
+      "PDF 8페이지 계약학과 반영비율·전형요소별 반영방법",
+      "PDF 9~22페이지 모집단위별 면접고사 과목",
+      "PDF 23~24페이지 예술대학 실기고사 과제"
+    ],
+    "notes": [
+      "파일명 2027부산대기본계획.pdf와 2027충남대기본계획.pdf는 동일 파일(SHA-256 동일)이며 내용은 부산대학교 2027학년도 편입학 전형 주요사항(2026. 9.)",
+      "최종 모집요강이 아니라 전형 주요사항(기본계획 단계)으로 분류",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "월 단위 일정에 임의의 일자와 시간을 생성하지 않음",
+      "자체 필기시험이 없으므로 writtenSubjects를 비움. 공인영어는 필기로 분류하지 않음"
+    ]
+  }
+}

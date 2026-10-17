@@ -106,7 +106,10 @@
       "key": "priority-selection",
       "scopeType": "all",
       "scopeValue": "우선선발 자격 충족 모집단위",
-      "transferTypes": ["일반편입 우선선발", "학사편입 우선선발"],
+      "transferTypes": [
+        "일반편입 우선선발",
+        "학사편입 우선선발"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -118,20 +121,42 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [3, 4],
+      "sourcePages": [
+        3,
+        4
+      ],
       "notes": "서류 30%+자격실적 30%+전적대학성적 30%+면접 10%. 우선선발 가능 모집단위와 자격은 별도 지원자격 규정을 따른다.",
       "metadata": {
         "factStatus": "provisional",
         "finalQualificationWeight": 30,
-        "finalPriorUniversityWeight": 30
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
       }
     },
     {
       "key": "general-english",
       "scopeType": "all",
       "scopeValue": "영어 지정 모집단위",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["영어"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
       "examMinutes": 60,
       "questionCount": 40,
       "examFormat": "40문항, 60분, 객관식 5지선다형",
@@ -142,16 +167,41 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "인문대학·사회과학대학·사범대학, 경영학부 경영학·글로벌금융, 광고홍보학과, 적십자간호대학, 공연영상창작학부 영화.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "general-math-a",
       "scopeType": "all",
       "scopeValue": "수학(가) 지정 모집단위",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["수학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
       "examMinutes": 60,
       "questionCount": 30,
       "examFormat": "미적분·통계학 등, 30문항, 60분, 객관식 5지선다형",
@@ -162,16 +212,40 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "경제학부·응용통계학과·국제물류학과.",
-      "metadata": { "factStatus": "provisional", "mathType": "가" }
+      "metadata": {
+        "factStatus": "provisional",
+        "mathType": "가",
+        "tracks": [
+          "인문"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "general-math-b",
       "scopeType": "all",
       "scopeValue": "수학(나) 지정 모집단위",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["수학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
       "examMinutes": 60,
       "questionCount": 30,
       "examFormat": "미적분·선형대수 등, 30문항, 60분, 객관식 5지선다형",
@@ -182,16 +256,41 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "첨단소재공학과를 제외한 공과대학, 창의ICT공과대학, 소프트웨어대학, 수학과, 산업보안학과.",
-      "metadata": { "factStatus": "provisional", "mathType": "나" }
+      "metadata": {
+        "factStatus": "provisional",
+        "mathType": "나",
+        "tracks": [
+          "자연",
+          "인문"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "general-physics",
       "scopeType": "major",
       "scopeValue": "자연과학대학 물리학과",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["일반물리학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "일반물리학"
+      ],
       "examMinutes": 60,
       "questionCount": 30,
       "examFormat": "30문항, 60분, 객관식 5지선다형",
@@ -202,16 +301,39 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "일반물리학 지식 평가.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "general-chemistry",
       "scopeType": "major",
       "scopeValue": "자연과학대학 화학과",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["일반화학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "일반화학"
+      ],
       "examMinutes": 60,
       "questionCount": 30,
       "examFormat": "30문항, 60분, 객관식 5지선다형",
@@ -222,16 +344,39 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "일반화학 및 유기·무기·물리·분석화학·생화학 등의 기초 이해 평가.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "general-biology",
       "scopeType": "major",
       "scopeValue": "자연과학대학 생명과학과",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["일반생물학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "일반생물학"
+      ],
       "examMinutes": 60,
       "questionCount": 30,
       "examFormat": "30문항, 60분, 객관식 5지선다형",
@@ -242,16 +387,40 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 5],
+      "sourcePages": [
+        4,
+        5
+      ],
       "notes": "일반생물학 지식 평가.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "pharmacy",
       "scopeType": "college",
       "scopeValue": "약학대학",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
-      "writtenSubjects": ["일반화학", "일반생물학"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
+      "writtenSubjects": [
+        "일반화학",
+        "일반생물학"
+      ],
       "examMinutes": null,
       "questionCount": 60,
       "examFormat": "일반화학 30문항·일반생물학 30문항, 각 시험유형 60분 객관식 5지선다형. 전체 시험 운영시간은 최종 모집요강 확인 필요",
@@ -262,15 +431,38 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": 10,
       "stage1SelectionMaxMultiple": 10,
-      "sourcePages": [2, 4, 5, 6],
+      "sourcePages": [
+        2,
+        4,
+        5,
+        6
+      ],
       "notes": "일반화학 50%+일반생물학 50%에 모두 응시. 2027학년도부터 서류 30%+면접 10%로 변경.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     },
     {
       "key": "document-language-gpa",
       "scopeType": "all",
       "scopeValue": "생명공학대학·예술공학대학·첨단소재공학과 및 지정 예체능 모집단위",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -282,19 +474,38 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [4],
+      "sourcePages": [
+        4
+      ],
       "notes": "서류 40%+공인어학성적 30%+전적대학성적 30%. 공연영상창작학부 문예창작·사진, 디자인학부 실내환경디자인·패션 포함.",
       "metadata": {
         "factStatus": "provisional",
         "finalLanguageWeight": 30,
-        "finalPriorUniversityWeight": 30
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
       }
     },
     {
       "key": "practical-selection",
       "scopeType": "all",
       "scopeValue": "실기고사 지정 예술대학·체육대학",
-      "transferTypes": ["일반편입 일반선발", "학사편입 일반선발"],
+      "transferTypes": [
+        "일반편입 일반선발",
+        "학사편입 일반선발"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -306,9 +517,27 @@
       "finalPracticalWeight": 60,
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
-      "sourcePages": [4, 6],
+      "sourcePages": [
+        4,
+        6
+      ],
       "notes": "모집 대상 예술대학 일부와 체육대학. 세부 실기내용은 최종 모집요강에서 안내.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
     }
   ],
   "scheduleEvents": [],

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { parseManifest, buildTransferKnowledgeUnits, assertNoDocumentDowngrade, isPreliminaryDocument } from "./ingest-transfer-manifest.mjs";
+import { parseManifest, buildTransferKnowledgeUnits, assertNoDocumentDowngrade, isPreliminaryDocument, selectSupersededDocuments } from "./ingest-transfer-manifest.mjs";
 
 test("최종 요강에서 기본계획으로 역행하지 않는다", () => {
   const final = { document_type: "최종 모집요강" };
@@ -40,3 +40,19 @@ for (const [slug, count] of [["yonsei", 23], ["incheon", 16], ["gnu", 22]]) {
     }
   });
 }
+
+test("필기 과목 미공개 전형을 필기 없음으로 쓰지 않는다", async () => {
+  const path = new URL("../../docs/knowledge-extractions/2027-jnu-transfer-basic-plan.verified.json", import.meta.url);
+  const manifest = parseManifest(await readFile(path, "utf8"), path.pathname);
+  const rule = buildTransferKnowledgeUnits(manifest).find((row) => row.unitKey === "rule:written-veterinary");
+  assert.match(rule.content, /필기시험 과목은 미공개\(필기 실시\)이다/);
+});
+
+test("부속 문서와 본문 기본계획은 서로 대체하지 않고 최종 요강은 모두 대체한다", () => {
+  const main = { id: "main", document_type: "전형 기본계획", metadata: {} };
+  const supplement = { id: "sup", document_type: "전공필기고사 시험과목 안내", metadata: { supplementOf: { sha256: "x" } } };
+  const ids = (incoming) => selectSupersededDocuments(incoming, [main, supplement]).map((row) => row.id);
+  assert.deepEqual(ids({ documentType: "전공필기고사 시험과목 안내", metadata: { supplementOf: { sha256: "x" } } }), ["sup"]);
+  assert.deepEqual(ids({ documentType: "전형 기본계획", metadata: {} }), ["main"]);
+  assert.deepEqual(ids({ documentType: "최종 모집요강", metadata: {} }), ["main", "sup"]);
+});

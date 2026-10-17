@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "숭실대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "모집 주요사항(안)",
+    "title": "2027학년도 숭실대학교 편입학 주요사항 사전 안내",
+    "sourceFile": "2027숭실대 편입학기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "02b73fa928a3de249175e5cdcd65ae5904f665477756174ff75d500dfb0d7051",
+    "fileSizeBytes": 92479,
+    "pageCount": 2,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "partial",
+        "detailedEligibility": "deferred",
+        "detailedSelection": "deferred",
+        "writtenSubjects": "available",
+        "examTime": "available"
+      },
+      "finalGuideExpected": "미공개(원서접수 2026년 12월 초순 이전)",
+      "notice": "숭실대학교 입학처의 2027학년도 편입학 주요사항 사전 안내이며 교육부 2027학년도 대학 편입학 전형 기본계획과 본교 사정에 따라 변경될 수 있다. 모집인원·지원자격·전형요소별 반영비율은 이 문서에 없으며 최종 모집요강을 확인해야 한다.",
+      "extractionScope": "전형일정·첨단학과 모집단위·필답고사 유형과 시간 전체 전사. 모집인원 수치는 원문에 없음.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027숭실대 편입학기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "document-status",
+      "heading": "주요사항 사전 안내 상태와 모집인원 미공개",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "이 문서는 2027학년도 숭실대학교 편입학 주요사항 사전 안내다. 내용은 교육부의 2027학년도 대학 편입학 전형 기본계획에 따라 변경될 수 있으며, 전형 일정도 본교 사정에 따라 변경될 수 있다. 원서접수 전 추후 공개되는 2027학년도 편입학 모집요강을 반드시 확인해야 한다. 모집단위별 모집인원, 지원자격, 전형요소별 반영비율은 이 문서에 공개되지 않았다."
+    },
+    {
+      "key": "schedule",
+      "heading": "전형 일정",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "인터넷 원서접수는 2026년 12월 초순이며 인터넷 접수만 가능하다. 필답고사는 2027년 1월 5일(화)이며 2026년 12월 말에 수험생 유의사항과 고사장 안내를 공지한다. 1단계 합격자 발표 및 서류제출은 2027년 1월 중순이고 1단계 합격자에 한해 온라인 PDF 업로드로 서류를 제출한다. 최초합격자 발표 및 등록금 납부는 2027년 2월 초순, 충원합격자 발표 및 등록금 납부는 2027년 2월 중순이다. 전형 일정은 본교 사정에 따라 변경될 수 있다."
+    },
+    {
+      "key": "advanced-majors",
+      "heading": "첨단학과 모집인원 확대(예정)",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2026년 첨단학과 신규 지정에 따라 일반편입학 모집인원 확대가 예정되어 있다. 첨단학과 모집단위는 경영대학 금융학부(신규 지정), 자연과학대학 물리학과·화학과·정보통계·보험수리학과(신규 지정)·의생명시스템학부, 공과대학 화학공학과(신규 지정)·신소재공학과·전기공학부·기계공학부·건축학부 건축공학전공, IT대학 컴퓨터학부(신규 지정)·지능전자공학부(전자정보공학부, 신규 지정), AI대학 AI소프트웨어학부(신규 지정)다. 교육부 승인을 받은 첨단학과는 4대 요건 확보율에 따른 산정비율을 적용하지 않고 전년도 1·2학년 결손인원의 100%를 편입학으로 선발할 수 있다. 구체적인 모집인원 수치는 공개되지 않았다."
+    },
+    {
+      "key": "intelligent-electronics",
+      "heading": "지능전자공학부 모집 방식",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "지능전자공학부는 2027학년도 신입학 신설 모집단위이므로 2027학년도 편입학에서는 기존 전자정보공학부(전자공학전공)와 전자정보공학부(IT융합전공)로 모집할 예정이다. 입학 후 희망자는 지능전자공학부로 소속 변경이 가능하며, 희망하지 않으면 2032년 2월 28일까지 입학 시의 학적을 유지할 수 있다."
+    },
+    {
+      "key": "written-exam",
+      "heading": "필답고사 유형과 시간",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "필답고사는 객관식 4지선다형이다. 인문계열·경상계열·건축학부(실내건축전공)는 영어 50문항이며 2027년 1월 5일(화) 9:30까지 입실, 10:00~11:30에 시험을 본다. 자연계열(건축학부 실내건축전공 제외)은 영어·수학 각 25문항 총 50문항이며 같은 날 13:30까지 입실, 14:00~15:30에 시험을 본다. 기출문제는 숭실대학교 입학홈페이지 '입학전형안내 > 편입학 > 기출문제' 게시판에서 확인할 수 있다. 필답고사 일정은 본교 사정 및 지원자 수에 따라 변경될 수 있으며 12월 말 공개되는 수험생 유의사항과 고사장 안내를 확인해야 한다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "humanities-business-english",
+      "scopeType": "category",
+      "scopeValue": "인문계열·경상계열·건축학부(실내건축전공)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 90,
+      "questionCount": 50,
+      "examFormat": "객관식 4지선다형",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2
+      ],
+      "notes": "영어 50문항, 2027.1.5.(화) 9:30까지 입실, 10:00~11:30. 1단계 합격자 발표가 있어 단계별 전형이나 반영비율·선발배수는 미공개. 필답고사 응시 대상 전형은 원문에 명시되지 않음.",
+      "metadata": {
+        "factStatus": "provisional",
+        "transferTypesSource": "원문 미명시. 필답고사 적용 전형은 최종 모집요강 확인 필요",
+        "tracks": [
+          "인문"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            2
+          ]
+        }
+      }
+    },
+    {
+      "key": "natural-english-math",
+      "scopeType": "category",
+      "scopeValue": "자연계열(건축학부 실내건축전공 제외)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 90,
+      "questionCount": 50,
+      "examFormat": "객관식 4지선다형, 영어·수학 각 25문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2
+      ],
+      "notes": "영어 25문항+수학 25문항, 2027.1.5.(화) 13:30까지 입실, 14:00~15:30. 반영비율·선발배수·수학 출제범위는 미공개. 필답고사 응시 대상 전형은 원문에 명시되지 않음.",
+      "metadata": {
+        "factStatus": "provisional",
+        "transferTypesSource": "원문 미명시. 필답고사 적용 전형은 최종 모집요강 확인 필요",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            2
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "인터넷 원서접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 초순",
+      "details": "인터넷 접수만 가능. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "period",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "exam-notice",
+      "audience": "전체 지원자",
+      "label": "수험생 유의사항·고사장 안내 공지",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 말",
+      "details": "정확한 날짜는 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "period",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "written-humanities",
+      "audience": "인문계열·경상계열·건축학부(실내건축전공)",
+      "label": "필답고사(영어)",
+      "startsAt": "2027-01-05T10:00:00+09:00",
+      "endsAt": "2027-01-05T11:30:00+09:00",
+      "startsOn": "2027-01-05",
+      "endsOn": "2027-01-05",
+      "displayText": "2027년 1월 5일(화) 9:30까지 입실, 10:00~11:30",
+      "details": "영어 50문항 객관식 4지선다형. 원문에 '예정' 표기는 없으나 본교 사정 및 지원자 수에 따라 변경될 수 있다고 안내.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled",
+        "checkInBy": "09:30",
+        "changeNotice": true
+      }
+    },
+    {
+      "key": "written-natural",
+      "audience": "자연계열(건축학부 실내건축전공 제외)",
+      "label": "필답고사(영어·수학)",
+      "startsAt": "2027-01-05T14:00:00+09:00",
+      "endsAt": "2027-01-05T15:30:00+09:00",
+      "startsOn": "2027-01-05",
+      "endsOn": "2027-01-05",
+      "displayText": "2027년 1월 5일(화) 13:30까지 입실, 14:00~15:30",
+      "details": "영어·수학 각 25문항 객관식 4지선다형. 원문에 '예정' 표기는 없으나 본교 사정 및 지원자 수에 따라 변경될 수 있다고 안내.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled",
+        "checkInBy": "13:30",
+        "changeNotice": true
+      }
+    },
+    {
+      "key": "stage1-result-documents",
+      "audience": "전체 지원자·1단계 합격자",
+      "label": "1단계 합격자 발표 및 서류제출",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중순",
+      "details": "1단계 합격자에 한해 온라인 PDF 업로드로 서류제출. 정확한 날짜는 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "period",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "initial-result-registration",
+      "audience": "전체 지원자·최초합격자",
+      "label": "최초합격자 발표 및 등록금 납부",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 초순",
+      "details": "정확한 날짜는 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "period",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "additional-result-registration",
+      "audience": "충원합격 대상자",
+      "label": "충원합격자 발표 및 등록금 납부",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중순",
+      "details": "정확한 날짜는 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "period",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 2,
+    "expectedScheduleRows": 7,
+    "tablesChecked": [
+      "PDF 1페이지 전형 일정 표",
+      "PDF 1페이지 첨단학과 모집단위 표",
+      "PDF 2페이지 필답고사 유형 표",
+      "PDF 2페이지 필답고사 일정 표"
+    ],
+    "notes": [
+      "문서 제목은 '2027학년도 숭실대학교 편입학 주요사항 사전 안내'이므로 모집 주요사항(안)으로 분류",
+      "첨단학과 모집단위는 있으나 모집인원 수치가 없어 program 행을 생성하지 않음",
+      "초순·중순·말 단위 일정에 임의의 일자를 생성하지 않음",
+      "필답고사만 일 단위 날짜·시간이 공개됨",
+      "필답고사 적용 전형(일반·학사)은 원문 미명시로 metadata에 표시"
+    ]
+  }
+}

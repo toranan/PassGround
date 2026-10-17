@@ -1,0 +1,664 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "충남대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 충남대학교 편입학전형 기본계획",
+    "sourceFile": "2027충남대 기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "70ef29c3bd1e7fbc152c43a0fd377f21c6f38094031771a3021b27794f71193e",
+    "fileSizeBytes": 312425,
+    "pageCount": 12,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedOn": "2026-09",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "2026년 12월 초",
+      "notice": "2026년 9월 공개된 2027학년도 편입학전형 기본계획 기준. 모집요강 확정 시 일부 변경될 수 있으며 정확한 모집단위·모집인원·일정은 2026년 12월 초 모집요강을 확인해야 한다.",
+      "extractionScope": "일정·모집인원 배정기준·지원자격·전형요소 배점·필답/실기/면접·공인영어 반영방법 요약. 공인영어 환산표와 간호과 지정 전문대학 목록은 요약.",
+      "pageNumbering": "sourcePage는 PDF 페이지 순번(표지 포함)이며 인쇄된 쪽번호는 PDF 페이지-1이다.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027충남대 기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status",
+      "heading": "기본계획 상태와 편입학 학년",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "2026년 9월 공개된 2027학년도 충남대학교 편입학전형 기본계획이다. 세부 전형일정은 교육부 「2027학년도 대학 편입학전형 기본계획」 및 충남대학교 학사일정을 고려하여 추후 2027학년도 편입학전형 모집요강에서 정한다. 편입학 학년은 3학년 1학기이며 수의학과는 1학년 1학기로 편입한다."
+    },
+    {
+      "key": "quota-basis",
+      "heading": "모집인원 배정기준",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "일부 미선발 모집단위가 발생할 수 있으며 정확한 모집단위 및 모집인원은 2026년 12월 초에 공지되는 모집요강을 반드시 확인해야 한다. 일반편입학은 2026학년도 4.1. 및 10.1.자 1·2학년 제적생(정원 내) 인원, 학사편입학은 2025학년도 신입생 입학정원의 2% 이내·모집단위별 입학정원의 4% 이내, 농어촌 지역 및 특성화고 학생 편입학은 같은 기준일 1·2학년 제적생(정원 외) 중 동일 전형 제적생 인원, 특성화 또는 산업수요 맞춤형 고교 졸업 산업체 재직자 편입학은 1·2학년 제적생(정원 외) 중 리더십과조직과학전공(야간반) 제적생 인원, 전문대학 교육과정 연계학생 편입학은 해당학과와 연계 협약된 인원(연계대학: 대덕대학교)으로 배정한다."
+    },
+    {
+      "key": "english-eligibility",
+      "heading": "공통 지원자격(공인영어)",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "모든 지원자는 TOEIC 381점 또는 TEPS 163점 또는 TOEFL iBT 36점 이상을 소지해야 한다. 2025년 1월부터 원서접수 마감일(2026년 12월 18일(예정))까지 취득한 정기시험만 반영하며 서류제출 마감일 전까지 성적표를 제출해야 한다. 기관 TOEFL, TOEIC Bridge, TOEIC Speaking and Writing, 기관 TOEIC은 인정하지 않는다. 국내 TOEIC은 제533회(2025.1.12.)~제583회(2026.11.29.), TEPS는 제375회(2025.1.11.)~제413회(2026.12.5.) 정기시험까지 인정하며 회차는 변경될 수 있다. 해외 TOEIC은 해외시행 정기시험(SECURE Program)만 인정하고 해외 특별시험(INSTITUTIONAL Program)은 인정하지 않는다. 공인영어성적 미반영 학과(예술대학 전 모집단위 및 무용학과)는 이 자격에서 제외된다."
+    },
+    {
+      "key": "eligibility-general",
+      "heading": "일반편입학 지원자격",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "전적 대학 전공과 관계없이 다음 중 하나에 해당하면 지원할 수 있다. 국내·외 4년제 정규대학(산업대·방송통신대·사이버대 포함) 2학년 이상 수료(2027년 2월 말 수료예정자 포함)자로 수료 기준은 출신 대학 규정을 따르며 충남대의 별도 학점 요건은 없다(외국대학 출신자는 학사학위 최저학점의 1/2 이상 취득 필요). 전문대학 졸업(예정)자 및 동등 학력 인정자(3년제 전문대 2년 이수자는 불가, 외국대학은 전문학사 취득자에 한함). 교육부 지정 81개 전문대학 간호학과 4년 과정 2학년 이상 수료(예정)자. 학점인정법·평생교육법에 의한 전문학사 이상 학위 취득(예정)자 또는 학점은행제 학사과정 80학점 이상 취득자. 교육부장관 지정 각종학교(4년제) 졸업자 및 2학년 이상 수료자."
+    },
+    {
+      "key": "eligibility-special",
+      "heading": "학사편입학·특별전형 지원자격",
+      "pageStart": 4,
+      "pageEnd": 5,
+      "content": "학사편입학(정원 외)은 국내·외 4년제 정규대학 학사학위 취득(2027년 2월 말 취득예정자 포함)자 및 동등 학력 인정자로 전공 무관 지원 가능하다. 농어촌 지역 학생 편입학(정원 외)과 특성화 고등학교 학생 편입학(정원 외)은 일반편입학 자격을 갖추고 전적대학 신입학 당시 해당 특별전형으로 입학해 입학확인서를 제출할 수 있어야 한다. 특성화 또는 산업수요 맞춤형 고교 졸업 산업체 재직자 편입학은 일반편입학 자격을 갖추고 고교 졸업 후 산업체 근무경력 3년 이상으로 2027.3.1. 기준 재직 중이며(산업체: 국가·지자체·공공단체, 4대보험 중 1개 이상 가입 사업체·창업·자영업 포함, 재직기간 합산하되 중복 불인정, 고교 졸업일 이후 산정·휴직기간 제외) 전적대학 신입학 당시 특성화고졸 재직자전형으로 입학해 입학확인서 제출이 가능해야 한다. 대학과 전문대학 교육과정 연계학생 편입학은 충남대와 연계 협약한 대덕대학교 졸업(예정)자로 적용시기 이후 입학해 연계교육과정을 모두 이수해야 한다: 기계공학부-총포광학과·K-방위산업과(2011학년도 이후 입학자), 응용화학공학과-국방탄약과·국방군사학과(2011학년도 이후), 컴퓨터융합학부-컴퓨터정보학과·컴퓨터소프트웨어학과·컴퓨터공학과(2015학년도 이후), 전기공학과-전기전자과·전기과·전기공학과(2019학년도 이후), 사회복지학과-사회복지과(2021학년도 이후)."
+    },
+    {
+      "key": "restrictions",
+      "heading": "지원자격 제한",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "각 전형에 복수(중복) 지원하거나 2개 이상의 모집단위에 지원한 자, 전적대학에서 징계로 제적된 자(학사경고 누적 제적 등), 원서접수 시작일 기준 충남대학교 학부 재학생·휴학생(제적생 및 졸업(예정)자 제외)은 지원할 수 없다. 합격자는 학력조회를 실시하며 자격 미달이 확인되면 재학 중이라도 합격 및 입학허가를 취소한다."
+    },
+    {
+      "key": "english-conversion",
+      "heading": "공인영어성적 반영방법과 환산표",
+      "pageStart": 7,
+      "pageEnd": 11,
+      "content": "공인영어성적은 [부록 1] 환산표 배점(100점 만점)×0.6으로 반영한다. 수학교육과는 ×0.1(10점), 컴퓨터융합학부·인공지능학과·식품공학과는 ×0.2(20점), 약학과는 ×0.4(40점), 수의학과는 ×0.5(50점)로 반영한다. 환산표 예: TOEIC 990점 100점, 890점 80점, 780~790점 60점, 630~640점 50점, 381~490점 40점. New TEPS 558~600점 100점, 362~365점 80점, 299~305점 60점, 237~242점 50점, 163~193점 40점. TOEFL iBT 119~120점 100점, 90점 80점, 70점 60점, 60점 50점, 36~50점 40점. 성적은 소수점 넷째 자리에서 반올림한다. 청각장애인용 시험은 [해당시험 만점×지원자 점수/청각장애인용 시험 만점]으로 환산한다."
+    },
+    {
+      "key": "written-exams",
+      "heading": "전공시험(필답고사)",
+      "pageStart": 7,
+      "pageEnd": 7,
+      "content": "식품공학과: 식품공학개론 객관식 25문항 60분(식품공학 전공기초 소양평가). 수의학과: 생명과학 객관식 40문항 60분. 약학과: 생명과학 객관식 20문항+화학(일반+유기) 객관식 30문항 70분. 수학교육과: 집합론·고등미적분학·선형대수 서술형 과목당 1문항(총 3문항) 60분, 대학 1·2학년 수준 전공 지식."
+    },
+    {
+      "key": "practical-exams",
+      "heading": "전공시험(실기고사)",
+      "pageStart": 7,
+      "pageEnd": 8,
+      "content": "컴퓨터융합학부·인공지능학과: 컴퓨터프로그래밍(Python·Java·C 중 택1), 컴퓨터프로그래밍 및 자료구조 교육내용 범위, 50분. 무용학과: 한국무용 기본(2분), 현대무용 작품(2분), 발레 작품(2분)을 호흡법·음악성·표현성·기능성·예술성으로 평가(의상 자유, 음악 본인 준비). 음악과: 성악(이탈리아 가곡·독일 가곡 자유곡 각 1곡, 오페라 아리아 1곡), 작곡(자유곡 포트폴리오 2부), 피아노(바흐 평균율 1곡, 베토벤 소나타 1곡 전악장, 쇼팽·리스트·드뷔시·라흐마니노프 연습곡 중 작곡가 다른 3곡). 관현악과: 10분 내외 자유곡 1곡(타악기는 마림바·스네어드럼·팀파니). 회화과: 한국화 인체연필소묘·서양화 유화(인물 사진, 4시간). 조소과: 소조 주제두상 4시간. 디자인창의학과: 기초디자인(3절 켄트지, 주제 당일발표) 5시간."
+    },
+    {
+      "key": "interview",
+      "heading": "면접고사",
+      "pageStart": 9,
+      "pageEnd": 9,
+      "content": "면접고사는 2027년 1월 중 실시 예정이며 장소는 모집단위별 지정 장소(추후 공지)이다. 평가항목은 지식의 양과 정확도, 경험의 질과 폭, 지원 동기 및 수학계획, 논리적 사고 등이며 면접위원 2인-지원자 1인 방식(예시)으로 이름·생년월일·출신학교 등을 블라인드 처리하여 실시한다. 배점은 40점(수학교육과 30점, 약학과 10점)이고 수의학과는 P/F로 평가해 F는 과락이다. 면접 자료는 지원자 제출서류(블라인드)이며 준비물은 수험표와 신분증이다. 건축학과(5년) 지원자는 작품 포트폴리오를 지참할 수 있고 면접위원이 평가에 반영할 수 있다."
+    },
+    {
+      "key": "other-notes",
+      "heading": "기타사항과 간호과 지정 전문대학",
+      "pageStart": 9,
+      "pageEnd": 12,
+      "content": "이 기본계획은 교육부 「2027학년도 대학 편입학전형 기본계획」 및 충남대학교 학사일정에 따라 모집요강 확정 시 일부 변경될 수 있다. 명시되지 않은 사항은 충남대학교 학칙·제반규정 및 대학입학전형관리위원회 결정에 따른다. 문의는 입학본부(042-821-6591). [부록 2]는 교육부 2026학년도 기본계획 자료 기준 학사학위(4년제)과정 간호과 지정 전문대학 81개교 목록이다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "general-interview",
+      "scopeType": "category",
+      "scopeValue": "전 모집단위(컴퓨터융합학부·인공지능학과·식품공학과·수학교육과·수의학과·약학과·예술대학 전 모집단위 및 무용학과 제외)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 60점(60%), 2단계 1단계 점수+면접 40점(40%) 총 100점. 대학 자체 필기·실기 없음. 선발 배수는 모집인원(안)에서 의견조회 예정.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 60,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        },
+        "tracksBasis": "inferred"
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "computer-ai",
+      "scopeType": "major",
+      "scopeValue": "컴퓨터융합학부, 인공지능학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": 50,
+      "questionCount": null,
+      "examFormat": "실기고사: 컴퓨터프로그래밍(Python·Java·C 중 택1), 컴퓨터프로그래밍 및 자료구조 교육내용 범위, 50분",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 40,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 20점, 2단계 1단계 점수+실기고사(컴퓨터프로그래밍) 40점+면접 40점 총 100점.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 20,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 20,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        },
+        "practicalSubject": "컴퓨터프로그래밍"
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "food-science",
+      "scopeType": "major",
+      "scopeValue": "식품공학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "식품공학개론"
+      ],
+      "examMinutes": 60,
+      "questionCount": 25,
+      "examFormat": "객관식 25문항, 60분. 식품공학 전공기초 과목에 대한 전반적인 소양평가",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 20점, 2단계 1단계 점수+필답고사(식품공학개론) 40점+면접 40점 총 100점.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 20,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 20,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        }
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "math-education",
+      "scopeType": "major",
+      "scopeValue": "수학교육과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "집합론",
+        "고등미적분학",
+        "선형대수"
+      ],
+      "examMinutes": 60,
+      "questionCount": 3,
+      "examFormat": "서술형, 과목당 1문항(총 3문항), 60분. 대학 1·2학년 수준의 전공 지식",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 30,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 10점, 2단계 1단계 점수+필답고사 60점+면접 30점 총 100점.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 10,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 10,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        }
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "veterinary",
+      "scopeType": "major",
+      "scopeValue": "수의학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "생명과학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항, 60분. 생명과학 전반의 지식",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 50,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2,
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 50점, 2단계 1단계 점수+필답고사(생명과학) 50점 총 100점, 3단계 면접 P/F(F는 과락). 수의학과는 1학년 1학기로 편입.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 50,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 50,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        },
+        "interviewPassFail": true
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "pharmacy",
+      "scopeType": "major",
+      "scopeValue": "약학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "생명과학",
+        "화학(일반+유기)"
+      ],
+      "examMinutes": 70,
+      "questionCount": 50,
+      "examFormat": "생명과학 객관식 20문항 + 화학(일반+유기) 객관식 30문항, 70분",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 50,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 10,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        9
+      ],
+      "notes": "1단계 공인영어 40점, 2단계 1단계 점수+필답고사 50점(총 90점), 3단계 면접 10점 총 100점.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "finalLanguageWeight": 40,
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 40,
+          "toeicMin": 381,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            6,
+            7,
+            10,
+            11
+          ],
+          "stage1Weight": 100
+        }
+      },
+      "englishToeicMin": 381,
+      "englishTepsMin": 163,
+      "englishToeflIbtMin": 36,
+      "englishScoreValidFrom": "2025-01-01",
+      "englishScoreValidThrough": "2026-12-18"
+    },
+    {
+      "key": "arts-dance",
+      "scopeType": "category",
+      "scopeValue": "예술대학 전 모집단위 및 무용학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "실기고사: 모집단위별 실기(음악과·관현악과·회화과·조소과·디자인창의학과·무용학과)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 60,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        6,
+        7,
+        8,
+        9
+      ],
+      "notes": "1단계 일괄: 실기고사 60점+면접 40점 총 100점. 공인영어 미반영 학과로 공통 영어 지원자격에서 제외.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "예체능"
+        ],
+        "transferTypesSource": "배점표는 전형 구분 없이 모집단위별로 제시됨(원문 미명시). 일반·학사편입으로 표기.",
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            3,
+            6
+          ],
+          "note": "공인영어성적 미반영 학과(공통 지원자격 제외)"
+        }
+      },
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "final-guide",
+      "audience": "전체 지원자",
+      "label": "모집요강(모집단위·모집인원) 공지",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 초",
+      "details": "정확한 모집단위 및 모집인원은 이 모집요강에서 확인. 정확한 날짜는 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "part-of-month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "입학지원서 인터넷 접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중 [예정]",
+      "details": "진학어플라이(http://www.jinhakapply.com). 정확한 날짜는 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "application-deadline",
+      "audience": "전체 지원자",
+      "label": "원서접수 마감",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2026-12-18",
+      "endsOn": "2026-12-18",
+      "displayText": "2026년 12월 18일(예정)",
+      "details": "공통 지원자격(공인영어) 안내에 표기된 원서접수 마감일. 이 날까지 취득한 정기시험 성적만 반영.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "exam-interview",
+      "audience": "1단계 합격자(모집단위별)",
+      "label": "전공시험(필답/실기) 및 면접고사",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중 [예정]",
+      "details": "세부사항은 추후 충남대학교 입학정보 홈페이지에 공지. 면접 장소는 모집단위별 지정 장소(추후 공지).",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "first-result",
+      "audience": "전체 지원자",
+      "label": "최초합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중 [예정]",
+      "details": "충남대학교 입학정보 홈페이지 조회, 개별 통보하지 않음.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "additional-result",
+      "audience": "충원합격 대상자",
+      "label": "충원합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중 [예정]",
+      "details": "1차 충원: 홈페이지 조회(개별 통보 없음), 2차 충원: 전화충원 개별 통보.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 7,
+    "expectedScheduleRows": 6,
+    "tablesChecked": [
+      "PDF 2페이지 모집일정 표",
+      "PDF 2페이지 모집인원 배정기준 표",
+      "PDF 3페이지 공통 지원자격(공인영어)",
+      "PDF 5페이지 연계교육 협약 표",
+      "PDF 6페이지 전형요소별 배점기준 표",
+      "PDF 7페이지 공인영어 반영방법·필답고사 표",
+      "PDF 7~8페이지 실기고사 표",
+      "PDF 9페이지 면접고사",
+      "PDF 10~11페이지 공인영어 환산표"
+    ],
+    "notes": [
+      "모집인원 미공개(12월 초 모집요강)이므로 program 행을 생성하지 않음",
+      "일정표는 모두 월 단위 [예정]. 원서접수 마감일 2026-12-18(예정)만 3페이지 공인영어 안내에 하루 단위로 표기됨",
+      "선발 배수는 의견조회 예정으로 미공개",
+      "수의학과 3단계 면접은 P/F라 finalInterviewWeight를 null로 둠",
+      "배점표는 전형 구분 없이 모집단위별로만 제시됨"
+    ]
+  }
+}

@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "숙명여자대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 숙명여자대학교 학사·일반편입학 전형 기본계획 안내",
+    "sourceFile": "2027_숙명여대_편입학기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "c5ea3f4ac03ebe7e0537a79184739322bcc5e567bc15da32b50a4c898253e426",
+    "fileSizeBytes": 75470,
+    "pageCount": 1,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedOn": "2026-09-22",
+      "publisher": "숙명여자대학교 입학처",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "provisional",
+        "selectionMultiple": "provisional",
+        "questionCount": "provisional",
+        "detailedEligibility": "deferred",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "원서접수 전 입학처 홈페이지 게재",
+      "notice": "교육부 2027학년도 대학 편입학 전형 기본계획에 따라 변경될 수 있다. 최종 확정 내용은 원서접수 전 숙명여자대학교 입학처 홈페이지의 2027학년도 편입학 모집요강에서 확인해야 한다.",
+      "extractionScope": "1페이지 기본계획 안내문의 모집전형·전형방법·필답고사 운영(안)·전형일정(안)·전형절차 전체. 모집인원·지원자격 세부는 원문에 없음.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_숙명여대_편입학기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status-and-scope",
+      "heading": "기본계획 상태와 모집전형",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2026년 9월 22일 숙명여자대학교 입학처가 안내한 2027학년도 학사·일반편입학 전형 기본계획이다. 교육부 「2027학년도 대학 편입학 전형 기본계획」에 따라 추후 변경될 수 있으며, 최종 확정 내용은 원서접수 전 입학처 홈페이지에 게재되는 「2027학년도 편입학 모집요강」에서 확인해야 한다. 인문계열 전체와 자연계열 전체(약학부 제외)는 일반편입학과 학사편입학을 모두 모집하고, 약학부는 일반편입학만 모집하며 학사편입학은 모집하지 않는다. 학과별 결원 등에 따라 모집 여부는 변경될 수 있다. 모집단위별 모집인원은 이 문서에 공개되지 않았다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "selection-method",
+      "heading": "전형방법",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "학사·일반편입은 1단계 필답고사(영어 또는 수학) 100%로 10배수를 선발하고, 2단계에서 1단계 성적 80%와 서류심사 20%를 반영한다. 약학부 일반편입은 1단계 필답고사(영어50+수학50) 100%로 20배수를 선발하고, 2단계에서 1단계 성적 30%, 서류심사 40%, 전적대학 성적 30%를 반영한다. 약학부 선수과목은 생물 또는 화학(단일과목 3학점)이다. 면접은 전형요소에 없다."
+    },
+    {
+      "key": "written-exam-operation",
+      "heading": "학사·일반편입학 필답고사 운영(안)",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "인문계열 전체는 60분 영어 33문항이다. 자연계열 중 화학과, 수학과, 통계학과, 화공생명공학부, 지능형전자시스템전공, 신소재물리전공, 기계시스템학부는 60분 수학 20문항이다. 자연계열 중 생명시스템학부, 인공지능공학부, 컴퓨터과학전공, 데이터사이언스전공, 의류학과, 식품영양학과는 60분 영어 33문항이다. 약학부는 100분 55문항으로 영어 33문항과 수학 22문항이다. 운영(안)으로 표시되어 있어 변경될 수 있다."
+    },
+    {
+      "key": "schedule-and-procedure",
+      "heading": "전형일정(안)과 전형절차",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "전형일정(안)은 원서접수 2026년 12월 1일(화)~12월 3일(목) 인터넷 원서접수, 필답시험 2026년 12월 19일(토), 1단계 합격자발표 2027년 1월 5일(화), 최종 합격자발표 2027년 2월 4일(목)이며 합격자 발표는 입학처 홈페이지에서 한다. 시간은 공개되지 않았다. 전형절차는 온라인 원서접수, 1단계 전 모집단위 필답시험, 1단계 합격자 서류제출, 2단계 서류심사, 최종 합격자발표 순이다. 서류는 1단계 합격자만 제출한다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "humanities",
+      "scopeType": "category",
+      "scopeValue": "인문계열 전체",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 33,
+      "examFormat": "영어 33문항",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 80,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 10,
+      "stage1SelectionMaxMultiple": 10,
+      "sourcePages": [
+        1
+      ],
+      "notes": "1단계 필답(영어) 100%로 10배수, 2단계 1단계 성적 80%+서류 20%. 필답고사 운영(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "natural-math",
+      "scopeType": "major",
+      "scopeValue": "화학과, 수학과, 통계학과, 화공생명공학부, 지능형전자시스템전공, 신소재물리전공, 기계시스템학부",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 20,
+      "examFormat": "수학 20문항",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 80,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 10,
+      "stage1SelectionMaxMultiple": 10,
+      "sourcePages": [
+        1
+      ],
+      "notes": "자연계열 수학 응시 모집단위. 1단계 필답(수학) 100%로 10배수, 2단계 1단계 성적 80%+서류 20%. 필답고사 운영(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "natural-english",
+      "scopeType": "major",
+      "scopeValue": "생명시스템학부, 인공지능공학부, 컴퓨터과학전공, 데이터사이언스전공, 의류학과, 식품영양학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 33,
+      "examFormat": "영어 33문항",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 80,
+      "finalDocumentWeight": 20,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 10,
+      "stage1SelectionMaxMultiple": 10,
+      "sourcePages": [
+        1
+      ],
+      "notes": "자연계열이지만 영어로 응시하는 모집단위. 1단계 필답(영어) 100%로 10배수, 2단계 1단계 성적 80%+서류 20%. 필답고사 운영(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "pharmacy-general",
+      "scopeType": "major",
+      "scopeValue": "약학부",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 100,
+      "questionCount": 55,
+      "examFormat": "영어 33문항, 수학 22문항 (영어50+수학50)",
+      "stage1WrittenWeight": 100,
+      "finalWrittenWeight": 30,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 20,
+      "stage1SelectionMaxMultiple": 20,
+      "sourcePages": [
+        1
+      ],
+      "notes": "약학부는 일반편입만 모집(학사편입 없음). 1단계 필답(영어50+수학50) 100%로 20배수, 2단계 1단계 성적 30%+서류 40%+전적대학 성적 30%. 선수과목 생물 또는 화학(단일과목 3학점).",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalPriorUniversityWeight": 30,
+        "prerequisiteCourses": "생물 또는 화학(단일과목 3학점)",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "원서접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2026-12-01",
+      "endsOn": "2026-12-03",
+      "displayText": "2026. 12. 1.(화) ~ 12. 3.(목)",
+      "details": "인터넷 원서접수. 전형일정(안) 기준이며 시간은 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "written-exam",
+      "audience": "전 모집단위 지원자",
+      "label": "필답시험",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2026-12-19",
+      "endsOn": null,
+      "displayText": "2026. 12. 19.(토)",
+      "details": "전형일정(안) 기준이며 시작 시간과 고사장은 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "stage1-result",
+      "audience": "전체 지원자",
+      "label": "1단계 합격자발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-05",
+      "endsOn": null,
+      "displayText": "2027. 1. 5.(화)",
+      "details": "입학처 홈페이지 발표. 1단계 합격자는 이후 서류를 제출한다. 서류제출 기간은 미공개.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "final-result",
+      "audience": "2단계 대상자",
+      "label": "최종 합격자발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-02-04",
+      "endsOn": null,
+      "displayText": "2027. 2. 4.(목)",
+      "details": "입학처 홈페이지 발표. 전형일정(안) 기준.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 4,
+    "expectedScheduleRows": 4,
+    "tablesChecked": [
+      "PDF 1페이지 모집전형 표",
+      "PDF 1페이지 전형방법 표",
+      "PDF 1페이지 학사·일반편입학 필답고사 운영(안) 표",
+      "PDF 1페이지 전형일정(안) 표",
+      "PDF 1페이지 전형절차"
+    ],
+    "notes": [
+      "최종 모집요강이 아니라 전형 기본계획으로 분류",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "전형일정·필답고사 운영이 '(안)'으로 표시되어 provisional 처리",
+      "시간이 공개되지 않은 일정에 임의의 시각을 생성하지 않음",
+      "면접은 전형요소에 없어 0으로 기록"
+    ]
+  }
+}

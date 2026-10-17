@@ -19,6 +19,13 @@ export const isFinalDocument = (row) => ["최종 모집요강", "모집요강"].
 export const isPreliminaryDocument = (row) => row.metadata?.publicationStage === "basic_plan"
   || /기본계획|주요사항|예고사항/.test(row.document_type);
 
+// 본문 기본계획과 부속 문서(metadata.supplementOf)는 서로를 대체하지 않는다. 최종 요강은 모두 대체한다.
+const documentRole = (metadata) => (metadata?.supplementOf ? "supplement" : "main");
+export function selectSupersededDocuments(incoming, previousActive) {
+  if (isFinalDocument({ document_type: incoming.documentType })) return previousActive;
+  return previousActive.filter((row) => documentRole(row.metadata) === documentRole(incoming.metadata));
+}
+
 export function assertNoDocumentDowngrade(documentType, previousActive) {
   if (!isFinalDocument({ document_type: documentType }) && previousActive.some(isFinalDocument)) {
     fail("동일 대학·캠퍼스·학년도에 최종 모집요강이 활성화되어 있어 기본계획으로 되돌릴 수 없습니다.");
@@ -80,6 +87,26 @@ function optionalDate(value, label) {
     fail(`${label}의 날짜 형식은 YYYY-MM-DD여야 합니다: ${normalized}`);
   }
   return normalized;
+}
+
+const RULE_TRACKS = new Set(["인문", "자연", "예체능"]);
+const ENGLISH_TEST_ROLES = new Set(["weighted", "eligibility", "weighted_and_eligibility", "none", "undisclosed"]);
+
+// 계열·공인영어 필터 값은 채팅 목록 질의의 근거라 형식이 틀리면 적재하지 않는다.
+function validateRuleFilters(rule) {
+  const { tracks, englishTest } = rule.metadata;
+  if (tracks !== undefined && (!Array.isArray(tracks) || !tracks.length || tracks.some((track) => !RULE_TRACKS.has(track)))) {
+    fail(`selection rule ${rule.key}의 metadata.tracks는 인문·자연·예체능 중 하나 이상이어야 합니다.`);
+  }
+  if (englishTest === undefined) return;
+  if (!englishTest || typeof englishTest !== "object" || !ENGLISH_TEST_ROLES.has(englishTest.role)) {
+    fail(`selection rule ${rule.key}의 metadata.englishTest.role이 올바르지 않습니다.`);
+  }
+  for (const field of ["weight", "toeicMin"]) {
+    if (englishTest[field] != null && !Number.isFinite(englishTest[field])) {
+      fail(`selection rule ${rule.key}의 metadata.englishTest.${field}가 숫자가 아닙니다.`);
+    }
+  }
 }
 
 export function parseManifest(raw, filename) {
@@ -194,6 +221,7 @@ export function parseManifest(raw, filename) {
     };
   });
   if (!selectionRules.length) fail("selectionRules가 하나 이상 필요합니다.");
+  for (const rule of selectionRules) validateRuleFilters(rule);
 
   const scheduleKeys = new Set();
   const scheduleEvents = (Array.isArray(parsed.scheduleEvents) ? parsed.scheduleEvents : []).map((row, index) => {
@@ -312,7 +340,9 @@ export function buildTransferKnowledgeUnits(manifest) {
 
   for (const rule of manifest.selectionRules) {
     const prefix = sourcePrefix(document, rule.sourcePages.map((page) => `${page}페이지`).join(", "), "전형요소 및 반영비율");
-    const subjects = rule.writtenSubjects.length ? rule.writtenSubjects.join("·") : "없음";
+    const subjects = rule.writtenSubjects.length
+      ? rule.writtenSubjects.join("·")
+      : rule.metadata.writtenSubjectsDisclosed === false ? "미공개(필기 실시)" : "없음";
     const finalWeights = [
       formatWeight("필기", rule.finalWrittenWeight),
       formatWeight("서류", rule.finalDocumentWeight),
@@ -584,7 +614,7 @@ async function syncManifest(manifest, units, embeddingResult) {
     .eq("id", documentId);
   if (activateError) fail(`문서 활성화 실패: ${activateError.message}`);
 
-  const supersededIds = (previousActive ?? []).map((row) => row.id);
+  const supersededIds = selectSupersededDocuments(document, previousActive ?? []).map((row) => row.id);
   if (supersededIds.length) {
     const { error: supersedeError } = await admin
       .from("ai_source_documents")

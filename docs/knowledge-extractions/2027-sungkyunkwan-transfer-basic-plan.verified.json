@@ -83,8 +83,12 @@
       "key": "general-type1-humanities",
       "scopeType": "category",
       "scopeValue": "인문계 일반편입 유형1",
-      "transferTypes": ["일반편입(유형1)"],
-      "writtenSubjects": ["영어"],
+      "transferTypes": [
+        "일반편입(유형1)"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
       "examMinutes": 90,
       "questionCount": null,
       "examFormat": "문항 수와 출제 형식은 추후 모집요강에서 안내",
@@ -95,16 +99,39 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7],
+      "sourcePages": [
+        7
+      ],
       "notes": "1단계 영어 100%, 2단계 1단계 성적 60%+서류 20%+면접 20%. 선발배수는 미공개.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ],
+          "inDocumentReview": true
+        }
+      }
     },
     {
       "key": "general-type1-natural",
       "scopeType": "category",
       "scopeValue": "자연계 일반편입 유형1",
-      "transferTypes": ["일반편입(유형1)"],
-      "writtenSubjects": ["영어", "수학"],
+      "transferTypes": [
+        "일반편입(유형1)"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
       "examMinutes": 90,
       "questionCount": null,
       "examFormat": "영어 50%+수학 50%, 문항 수와 출제 형식은 추후 모집요강에서 안내",
@@ -115,15 +142,36 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7],
+      "sourcePages": [
+        7
+      ],
       "notes": "1단계 영어 50%+수학 50%, 2단계 1단계 성적 60%+서류 20%+면접 20%. 선발배수는 미공개.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ],
+          "inDocumentReview": true
+        }
+      }
     },
     {
       "key": "general-type2-and-military",
       "scopeType": "all",
       "scopeValue": "일반편입 유형2·군위탁",
-      "transferTypes": ["일반편입(유형2)", "군위탁"],
+      "transferTypes": [
+        "일반편입(유형2)",
+        "군위탁"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -135,19 +183,41 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7, 8],
+      "sourcePages": [
+        7,
+        8
+      ],
       "notes": "1단계 서류 25%+전적대학 성적 75%, 2단계 1단계 성적 80%+면접 20%. 최종 환산은 서류 20%+전적대학 성적 60%+면접 20%.",
       "metadata": {
         "factStatus": "provisional",
-        "finalPriorUniversityWeight": 60
+        "finalPriorUniversityWeight": 60,
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ],
+          "inDocumentReview": true
+        }
       }
     },
     {
       "key": "bachelor-humanities",
       "scopeType": "category",
       "scopeValue": "인문계 학사편입",
-      "transferTypes": ["학사편입"],
-      "writtenSubjects": ["영어"],
+      "transferTypes": [
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
       "examMinutes": 90,
       "questionCount": null,
       "examFormat": "문항 수와 출제 형식은 추후 모집요강에서 안내",
@@ -158,16 +228,39 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7],
+      "sourcePages": [
+        7
+      ],
       "notes": "1단계 영어 100%, 2단계 1단계 성적 60%+서류 40%. 면접은 없고 선발배수는 미공개.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ],
+          "inDocumentReview": true
+        }
+      }
     },
     {
       "key": "bachelor-natural",
       "scopeType": "category",
       "scopeValue": "자연계 학사편입",
-      "transferTypes": ["학사편입"],
-      "writtenSubjects": ["영어", "수학"],
+      "transferTypes": [
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
       "examMinutes": 90,
       "questionCount": null,
       "examFormat": "영어 50%+수학 50%, 문항 수와 출제 형식은 추후 모집요강에서 안내",
@@ -178,15 +271,35 @@
       "finalPracticalWeight": 0,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7],
+      "sourcePages": [
+        7
+      ],
       "notes": "1단계 영어 50%+수학 50%, 2단계 1단계 성적 60%+서류 40%. 면접은 없고 선발배수는 미공개.",
-      "metadata": { "factStatus": "provisional" }
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ],
+          "inDocumentReview": true
+        }
+      }
     },
     {
       "key": "outside-quota-special",
       "scopeType": "all",
       "scopeValue": "정원외 특별전형",
-      "transferTypes": ["정원외 특별전형"],
+      "transferTypes": [
+        "정원외 특별전형"
+      ],
       "writtenSubjects": [],
       "examMinutes": null,
       "questionCount": null,
@@ -198,9 +311,28 @@
       "finalPracticalWeight": null,
       "stage1SelectionMinMultiple": null,
       "stage1SelectionMaxMultiple": null,
-      "sourcePages": [7],
+      "sourcePages": [
+        7
+      ],
       "notes": "세부 모집단위와 적용 유형은 최종 모집요강에서 안내한다. 특성화고졸재직자전형은 선발하지 않는다.",
-      "metadata": { "factStatus": "deferred" }
+      "metadata": {
+        "factStatus": "deferred",
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "tracksBasis": "inferred",
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            7
+          ]
+        }
+      }
     }
   ],
   "scheduleEvents": [
@@ -215,7 +347,10 @@
       "displayText": "2026년 12월 중",
       "details": "인터넷 원서접수, 서류 온라인 업로드. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 3,
-      "metadata": { "precision": "month", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "selection-period",
@@ -228,7 +363,10 @@
       "displayText": "2026년 12월 ~ 2027년 2월 중",
       "details": "정확한 일자와 시간은 최종 모집요강에서 안내.",
       "sourcePage": 3,
-      "metadata": { "precision": "range", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "range",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "written-exam",
@@ -241,7 +379,10 @@
       "displayText": "2027년 1월 중",
       "details": "인문계 영어 90분, 자연계 영어·수학 90분. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 7,
-      "metadata": { "precision": "month", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "interview",
@@ -254,7 +395,10 @@
       "displayText": "2027년 1월 중",
       "details": "인문사회과학캠퍼스에서 실시 예정. 정확한 날짜와 시간은 미공개.",
       "sourcePage": 8,
-      "metadata": { "precision": "month", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "final-result",
@@ -267,7 +411,10 @@
       "displayText": "2027년 2월 중",
       "details": "정확한 날짜와 시간은 미공개.",
       "sourcePage": 3,
-      "metadata": { "precision": "month", "factStatus": "provisional" }
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     }
   ],
   "programs": [],

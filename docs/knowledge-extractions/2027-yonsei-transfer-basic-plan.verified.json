@@ -25,7 +25,7 @@
       },
       "notice": "제공된 기본계획 기준. 최종 모집요강에서 변경될 수 있으며 현재의 실제 공개 여부는 별도 확인이 필요하다.",
       "extractionScope": "주요 일정·전형요소·지원자격 검증 요약. 전체 원문 및 모든 표의 완전한 구조화가 아님.",
-      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/2027_연세대학교_편입학 기본계획.pdf"
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_연세대학교_편입학 기본계획.pdf"
     }
   },
   "sections": [
@@ -104,7 +104,24 @@
       "stage1WrittenWeight": 100,
       "finalWrittenWeight": 60,
       "finalDocumentWeight": 40,
-      "notes": "필기 과목은 각 모집단위 규정을 확인해야 한다. 일반편입 모집 여부·인원은 최종 모집요강에서 확인."
+      "notes": "필기 과목은 각 모집단위 규정을 확인해야 한다. 일반편입 모집 여부·인원은 최종 모집요강에서 확인.",
+      "metadata": {
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ],
+          "note": "학과별 공인영어 추가지원자격 대상은 별도 규칙"
+        }
+      }
     },
     {
       "key": "ai-0",
@@ -128,7 +145,27 @@
       "englishToeicMin": 700,
       "englishTepsMin": 264,
       "englishToeflIbtMin": 79,
-      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "ai-1",
@@ -152,7 +189,27 @@
       "englishToeicMin": 700,
       "englishTepsMin": 264,
       "englishToeflIbtMin": 79,
-      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "ai-2",
@@ -176,7 +233,27 @@
       "englishToeicMin": 700,
       "englishTepsMin": 264,
       "englishToeflIbtMin": 79,
-      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "ai-3",
@@ -199,7 +276,27 @@
       "englishToeicMin": 700,
       "englishTepsMin": 264,
       "englishToeflIbtMin": 79,
-      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격."
+      "notes": "필기 과목 비중: 수학80%, 물리20%. 공인영어는 추가지원자격.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "ee",
@@ -223,7 +320,22 @@
       "englishToeicMin": 800,
       "englishTepsMin": 309,
       "englishToeflIbtMin": 91,
-      "notes": "필기 과목 비중: 수학50%, 물리40%, 화학10%."
+      "notes": "필기 과목 비중: 수학50%, 물리40%, 화학10%.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 800,
+          "tests": [],
+          "sourcePages": [
+            3
+          ]
+        }
+      }
     },
     {
       "key": "nursing",
@@ -244,7 +356,27 @@
       "finalDocumentWeight": 40,
       "englishToeicMin": 700,
       "englishTepsMin": 264,
-      "englishToeflIbtMin": 79
+      "englishToeflIbtMin": 79,
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            4,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "medicine",
@@ -267,7 +399,27 @@
       "englishToeicMin": 900,
       "englishTepsMin": 370,
       "englishToeflIbtMin": 105,
-      "notes": "필기 화학50%, 생물50%. 교수 또는 학장 추천서 필요. 결원 발생 시 선발."
+      "notes": "필기 화학50%, 생물50%. 교수 또는 학장 추천서 필요. 결원 발생 시 선발.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 900,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            4,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "pharmacy",
@@ -291,7 +443,27 @@
       "englishToeicMin": 900,
       "englishTepsMin": 370,
       "englishToeflIbtMin": 105,
-      "notes": "필기 수학40%, 화학30%, 생물30%. 선수과목5과목15학점 필수."
+      "notes": "필기 수학40%, 화학30%, 생물30%. 선수과목5과목15학점 필수.",
+      "metadata": {
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "eligibility",
+          "stage": null,
+          "weight": null,
+          "toeicMin": 900,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            4,
+            5
+          ]
+        }
+      }
     },
     {
       "key": "music",
@@ -308,7 +480,20 @@
       "writtenSubjects": [],
       "finalPracticalWeight": 40,
       "metadata": {
-        "finalPriorUniversityWeight": 60
+        "finalPriorUniversityWeight": 60,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
       },
       "notes": "전적대학성적60%+실기40%. 교회음악·성악·피아노·작곡은 학사편입 미선발. 일반편입 전공 제한은 원문 확인."
     }
@@ -321,7 +506,11 @@
       "displayText": "2026.12.1.~12.3.",
       "sourcePage": 1,
       "startsOn": "2026-12-01",
-      "endsOn": "2026-12-03"
+      "endsOn": "2026-12-03",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
     },
     {
       "key": "written",
@@ -330,7 +519,11 @@
       "displayText": "2026.12.19. 10:00~13:00 이내 예정(모집단위별 2시간 또는 3시간)",
       "sourcePage": 1,
       "startsOn": "2026-12-19",
-      "details": "모집단위별 시험시간 상이"
+      "details": "모집단위별 시험시간 상이",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "interview",
@@ -338,7 +531,11 @@
       "label": "면접시험",
       "displayText": "2027.1.16. 예정(해당자)",
       "sourcePage": 1,
-      "startsOn": "2027-01-16"
+      "startsOn": "2027-01-16",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "practical",
@@ -346,14 +543,22 @@
       "label": "음악대학 실기시험",
       "displayText": "2027.1.26. 예정",
       "sourcePage": 1,
-      "startsOn": "2027-01-26"
+      "startsOn": "2027-01-26",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "final-guide",
       "audience": "전체",
       "label": "최종 모집요강 발표",
       "displayText": "2026년 11월 말 예정",
-      "sourcePage": 1
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     }
   ],
   "programs": [],

@@ -1,0 +1,575 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "충북대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 충북대학교 대학 편입학전형 기본계획",
+    "sourceFile": "2027충북대 기본계획1.pdf",
+    "sourceUrl": null,
+    "sha256": "3a4958c30c7659eb8dffdc6083cd8f23649791483e3ac7e6500eb8cc505f0c79",
+    "fileSizeBytes": 391369,
+    "pageCount": 17,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "issuedAt": "2026-06",
+      "finalGuideExpected": "2026년 11월경",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial",
+        "writtenSubjects": "separate_notice"
+      },
+      "notice": "제공된 기본계획 기준. 모집요강(2026년 11월경)에서 변경될 수 있으며 정확한 모집인원·일정·구비서류 마감일은 미공개.",
+      "extractionScope": "전형일정·편입유형·지원자격·공인영어 최저점·환산표·전형방법 검증 요약. 전문대연계 협약표의 학과별 입학연도 조건은 요약만 함.",
+      "relatedDocuments": [
+        {
+          "sourceFile": "2027충북대 기본계획2.pdf",
+          "title": "2027학년도 대학 편입학전형 전공필기고사 시험과목 안내",
+          "relation": "전공필기고사 시험과목 별도 안내자료(PDF 15페이지에서 별도 공지 예고)"
+        }
+      ],
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027충북대 기본계획1.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status-and-overall-schedule",
+      "heading": "기본계획 상태와 전체 일정",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "이 문서는 2026년 6월 충북대학교 입학처 입학과가 작성한 2027학년도 대학 편입학전형 기본계획이며 교육부의 2027학년도 대학 편입학전형 기본계획과 대학 사정에 따라 변경될 수 있다. 모집은 매년 1회 전기(3월 편입생)로 한다. 원서접수는 2026년 12월 중 인터넷으로 하고 구비서류 제출 기한도 2026년 12월 중이다. 1단계전형 합격자 발표와 편입학고사는 2027년 1월 중, 합격자 발표·등록금 납부·충원합격자 발표는 2027년 2월 중이다. 세부 전형일정은 교육부 기본계획을 반영해 2026년 11월경 모집요강에서 정한다. 정확한 날짜와 시간은 공개되지 않았다."
+    },
+    {
+      "key": "transfer-types-and-quota",
+      "heading": "편입유형·편입학년과 모집인원 산정",
+      "pageStart": 2,
+      "pageEnd": 3,
+      "content": "편입유형은 정원내 일반편입학과 정원외 학사편입학, 전문대연계편입학, 농어촌지역 학생편입학, 기초생활수급자 및 차상위계층 학생편입학, 특성화고졸 학생편입학, 특성화고졸 재직자편입학(야간)이다. 편입학년은 3학년이며 수의학과만 2학년이다. 모집단위별 정확한 모집인원은 공개되지 않았다. 일반편입학 모집단위는 2025학년도 신입학 모집단위를 기준으로 정원내 1·2학년 제적자 등 결원이 있는 모집단위에 한해 선발하며, 모집인원은 결원에서 모집제재·재입학(예정) 인원을 빼고 국립대 3대 요건(교지·교사·교원 확보율) 산정비율을 곱한 뒤 신입학 미충원 이월인원을 더하고 첨단학과·비첨단학과 여석 활용(48명)과 자율전공학부 여석 활용(100명)을 조정해 산정한다. 2027학년도에 의과대학 의학과는 모집하지 않고 자율전공학부는 일반편입학 모집이 불가하다. 사범대 모집단위는 1·2학년 결원 중 전과 모집인원 등을 제외하고 일반편입학 모집 가능 인원이 있는 경우에만 모집한다. 수의학과는 학제 개편에 따라 2+4 학제 적용 학년은 예과 1·2학년 결원, 1+5 학제 적용 학년은 예과 1학년 및 본과 1학년 결원을 기준으로 한다. 학사편입학은 2025학년도 입학정원 25명 이상 모집단위에서 총입학정원의 2% 이내, 모집단위별 입학정원의 4% 이내로 모집하며 의학과·자율전공학부는 모집 불가, 수의학과·약학과·제약학과·간호학과는 모집하지 않는다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "associate-linkage-transfer",
+      "heading": "전문대연계편입학 모집단위와 인원",
+      "pageStart": 3,
+      "pageEnd": 5,
+      "content": "전문대연계편입학은 연계교육과정 협약을 맺은 충북보건과학대학교, 충청대학교, 충북도립대학교, 한양여자대학교, 강동대학교의 해당 학과에서 연계 교육 적용시기 이후 신입학해 연계교육과정을 모두 이수한 졸업(예정)자가 지원한다. 협약 모집단위는 사회과학대학 행정학과(강동대 보건의료행정과), 자연과학대학 생물학과(충북보건과학대 바이오제약과)·미생물학과(충북보건과학대 임상병리과), 경영대학 경영학부(충북보건과학대 창업경영과, 충청대 경영회계과)·경영정보학과(충북도립대 컴퓨터드론전공), 공과대학 기계공학부(충북보건과학대 미래자동차과·기계과, 충청대 항공자동차모빌리티학부 자동차기계전공, 충북도립대 미래자동차전공)·환경공학과(충북도립대 환경소방안전전공), 전자정보대학 전기공학부(충청대 전기전자학부 전기전공)·정보통신공학부(충북보건과학대, 충청대 전자컴퓨터학부 전자통신전공, 충북도립대, 한양여대)·컴퓨터공학과(충청대 전자컴퓨터학부 컴퓨터정보전공)·소프트웨어학부(충북보건과학대 바이오의료정보과, 충청대 전자컴퓨터학부 컴퓨터정보전공, 충북도립대 정보보안학과), 농업생명환경대학 목재·종이과학과(충북보건과학대 인테리어과, 충청대 호텔조리파티쉐과), 생활과학대학 의류학과(충북보건과학대 뷰티스타일리스트과 또는 뷰티코스메틱과, 충청대 패션디자인과)·주거환경학과(충북보건과학대 인테리어과, 충청대 인테리어디자인과)다. 학과별 지원 가능한 입학연도와 졸업시기 조건은 원문 표에 따로 있다. 협약 현황은 협약 체결·해지나 정원 조정에 따라 바뀔 수 있다. 모집인원은 3학년 총입학정원의 3% 이내, 모집단위별 3학년 입학정원의 10% 이내다. 2027년 2월까지 졸업이 불가하면 지원할 수 없고 전문대연계교육과정 이수확인서를 제출해야 한다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "special-admission-types",
+      "heading": "농어촌·기초생활·특성화고 편입학 모집단위와 인원",
+      "pageStart": 5,
+      "pageEnd": 6,
+      "content": "농어촌지역 학생편입학, 기초생활수급자 및 차상위계층 학생편입학, 특성화고졸 학생편입학, 특성화고졸 재직자편입학(야간)은 각각 해당 정원외 전형으로 입학한 1·2학년 신입생 중 2026학년도에 결원(제적자)이 있는 모집단위에서, 그 결원 인원(2026학년도 9월 및 2027학년도 3월 재입학 예정 인원 제외)만큼 모집한다. 특성화고졸 재직자편입학(야간)에서 컴퓨터공학과(야간)는 모집하지 않는다.",
+      "metadata": {
+        "recruitmentQuota": "deferred"
+      }
+    },
+    {
+      "key": "english-requirement",
+      "heading": "공통지원자격 공인영어성적",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "충북대학교 편입학 지원자는 모든 편입유형에서 공인영어성적 지원자격을 충족해야 지원할 수 있다. TOEIC, TEPS, TOEFL(iBT) 중 하나로 2025년 3월 1일 이후 응시해 취득하고 구비서류 제출 마감일까지 제출할 수 있는 성적이어야 하며 모집단위별 최저 점수를 충족해야 한다. 수의학과, 약학과, 제약학과는 TOEIC을 반영하지 않으므로 TEPS 또는 TOEFL 중 하나를 제출한다. 구비서류 제출 마감일까지 성적을 제출하지 않으면 지원할 수 없다. TOEIC 단체시험(군대·대학·기업 등 별도 시험) 성적과 TOEFL My Best Scores는 인정하지 않는다. 구비서류 제출 마감일은 모집요강에서 정한다."
+    },
+    {
+      "key": "english-minimum-by-major",
+      "heading": "모집단위별 공인영어 최저 점수",
+      "pageStart": 6,
+      "pageEnd": 8,
+      "content": "모집단위별 공인영어 지원 최저 점수(TOEIC/TEPS/TOEFL iBT, 이상)다. 성적 제한 없음: 국어국문학과, 중어중문학과, 영어영문학과, 독일언어문화학과, 프랑스언어문화학과, 러시아언어문화학과, 철학과, 사학과, 고고미술사학과, 사회학과, 행정학과, 정치외교학과, 경제학과, 수학과, 정보통계학과, 천문우주학과, 지구환경과학과, 환경공학과, 건축학과, 환경생명화학과, 식품생명공학과, 축산학과, 식물의학과, 특용식물학과, 원예과학과, 바이오시스템공학과, 교육학과, 국어교육과, 역사교육과, 지리교육과, 사회교육과, 윤리교육과, 물리교육과, 화학교육과, 생물교육과, 지구과학교육과, 수학교육과, 체육교육과, 소비자학과, 조형예술학과(미술학과) 동양화·서양화·조소전공, 디자인학과. 600/227/58: 심리학과, 물리학과, 화학공학과, 신소재공학과, 건축공학과, 공업화학과, 도시공학과, 전기공학부, 전자공학과, 반도체공학부, 정보통신공학부, 식물자원학과, 산림학과, 지역건설공학과, 목재·종이과학과, 지역건설공학과(농촌관광개발전공, 특성화고졸재직자편입학 야간과정), 식품영양학과, 아동복지학과, 의류학과, 주거환경학과, 창의융합대학 수의생명보건전공·바이오헬스케어전공·바이오헬스산업전공. 510/198/52: 농업경제학과. 645/243/61: 토목공학부, 기계공학부. 660/248/62: 컴퓨터공학과. 690/260/64: 화학과, 생물학과, 미생물학과, 생화학과, 소프트웨어학부(인공지능전공), 소프트웨어학부(소프트웨어전공), 지능로봇공학과. 705/266/65: 국제경영학과, 경영정보학과. 750/285/68: 안전공학과. 765/292/69: 경영학부. 840/330/80: 간호학과. 960/446/107: 영어교육과. 수의학과·약학과·제약학과는 TOEIC 미반영이며 TEPS 370점 이상 또는 TOEFL(iBT) 92점 이상이다. 생활과학대학 의류학과·주거환경학과 비고란에 전문대연계편입학은 성적 제한 없음으로 표시돼 있다."
+    },
+    {
+      "key": "general-eligibility",
+      "heading": "일반편입학 지원자격",
+      "pageStart": 9,
+      "pageEnd": 10,
+      "content": "일반편입학은 전적대학 학과와 관계없이 다음 중 하나에 해당하면 지원할 수 있다. 국내 4년제 대학(방송통신대·산업대 등 포함) 2학년 이상 수료(예정)하고 전적대학이 인정하는 소정의 학점을 취득한 자, 외국 4년제 대학 2학년 이상 과정을 수료하고 졸업학점의 1/2 이상을 취득한 자, 국내외 전문대학 졸업(예정)자(3년제 전문대학 2년 이수자는 지원 불가), 학점은행제 전문학사 학위 취득(예정)자 또는 학사학위과정 70학점 이상 취득(예정)자, 교육부 지정 83개 전문대학 간호학과 4년제 과정 2학년 이상 수료(예정)자, 기타 법령상 동등 이상 학력 인정자. 학사학위 취득(예정)자도 지원할 수 있다. 중어중문학과는 HSK 3급 이상(지원자격 확인용, 전형요소 미반영), 건축학과는 설계작품도면집 A4 5매 제출이 가능해야 한다. 2027년 2월 말까지 2학년 미수료자, 2027년 2월 말까지 졸업이 불가한 전문대 졸업예정자, 전적대학에서 징계로 제적된 자, 원서접수 마감일 현재 충북대 재학생·휴학생(2027년 2월 졸업예정자는 지원 가능)은 지원할 수 없다. 이수학점과 성적은 서류 제출 시 낸 성적표 기준으로 반영한다."
+    },
+    {
+      "key": "other-eligibility",
+      "heading": "학사·전문대연계·특별전형·외국인 지원자격",
+      "pageStart": 10,
+      "pageEnd": 11,
+      "content": "학사편입학은 전적대학 학과와 관계없이 국내외 4년제 대학 학사학위 취득(예정)자, 학점은행제 학사학위 또는 독학학위제 취득(예정)자(2027년 2월까지 취득 가능자 포함)가 지원할 수 있으며 타전공 학사학위 취득(예정)자도 지원 가능하다. 전문학사학위 취득(예정)자는 학사편입학에 지원할 수 없다. 중어중문학과는 HSK 3급 이상, 건축학과는 설계작품도면집 A4 5매 제출이 추가로 필요하다. 농어촌지역 학생편입학, 기초생활수급자 및 차상위계층 학생편입학, 특성화고졸 학생편입학, 특성화고졸 재직자편입학(야간)은 일반편입학 지원자격과 함께 전적대학 신입학 당시 해당 정원외 전형 입학(기초생활수급자 등은 충북대 2027학년도 사회적배려대상자전형 지원자격) 요건을 갖춰야 한다. 세부 지원자격은 모집요강에서 정한다. 순수외국인·외국인 및 재외국민 지원자는 TOPIK 3급 이상 또는 충북대 한국어학당 4단계 이상 수료가 필요하며 졸업 전까지 TOPIK 4급 이상(예체능계열 3급 이상)을 제출해야 한다. 정규대학 여부가 모호하면 지원자격 심사에서 결정한다."
+    },
+    {
+      "key": "selection-method",
+      "heading": "전형요소와 단계별 선발방법",
+      "pageStart": 12,
+      "pageEnd": 13,
+      "content": "모든 편입유형에서 1단계전형은 공인영어성적 60점만 반영한다. 2단계(최종)전형은 대부분의 모집단위가 공인영어 60점과 면접·전공구술고사 40점(총 100점), 수의학과·간호학과는 공인영어 60점, 면접·전공구술고사 20점, 전공필기고사 20점, 건축학과·체육교육과·조형예술학과(미술학과 동양화·서양화·조소전공)·디자인학과는 공인영어 60점, 면접·전공구술고사 10점, 실기고사 30점이다. 공인영어 반영점수는 30+(환산점수×0.3)로 실질 반영점수는 30점이며, 일반학과 면접·전공구술고사는 최고 40점, 최저 8점이다. 1단계는 수의학과·약학과·제약학과·간호학과를 제외하고 모집인원 8명 미만 모집단위는 공인영어 반영점수 고득점자 순으로 30명까지, 8명 이상 모집단위는 모집인원의 4배수를 선발한다. 수의학과·약학과·제약학과·간호학과는 모집인원 1명이면 20명까지, 2명 이상이면 40명까지 선발한다. 2단계는 전형요소 총점 고득점자 순으로 모집인원의 100%를 선발한다. 학사편입학은 총입학정원 2% 이내(63명), 모집단위별 입학정원 4% 이내에서 배정하며 합계가 63명을 넘으면 선발대상 모집단위에 1명씩 먼저 배정한 뒤 잔여 인원을 비례 배정한다. 1단계 합격자 중 사정제외자가 아닌 불합격자는 모두 예비후보자가 된다. 지원자격 미달자, 구비서류 미제출·포기자, 편입학고사 결시자와 과락자, 부정행위자는 사정에서 제외한다. 동점자는 1단계에서 전적대학 백분율점수, 취득학점 순으로, 2단계에서 일반 모집단위는 면접·전공구술고사, 공인영어, 전적대학 백분율점수 순으로, 실기 모집단위는 실기, 면접, 공인영어, 전적대학 백분율점수 순으로, 수의학과·간호학과는 전공필기, 면접, 공인영어, 전적대학 백분율점수 순으로 처리한다."
+    },
+    {
+      "key": "english-conversion",
+      "heading": "공인영어 환산점수표",
+      "pageStart": 14,
+      "pageEnd": 14,
+      "content": "공인영어 반영점수(60점 만점)는 30+(환산점수×0.3)이다. TOEIC 990점, TEPS 600점, TOEFL iBT 120점 만점이며 수의학과·약학과·제약학과는 TOEIC을 반영하지 않는다. 2025년 3월 1일 이후 응시해 모집요강의 구비서류 제출 마감일까지 제출한 성적을 반영한다. 환산점수표: TOEIC 990·TEPS 558~600·TOEFL 119~120=100, TOEIC 985·TEPS 526~557·TOEFL 117~118=99, TOEIC 980·TEPS 504~525·TOEFL 115~116=98, TOEIC 975·TEPS 486~503·TOEFL 113~114=97, TOEIC 970·TEPS 471~485·TOEFL 111~112=96, TOEIC 965·TEPS 458~470·TOEFL 109~110=95, TOEIC 960·TEPS 446~457·TOEFL 107~108=94, TOEIC 955·TEPS 437~445·TOEFL 105~106=93, TOEIC 950·TEPS 428~436·TOEFL 103~104=92, TOEIC 945·TEPS 420~427·TOEFL 101~102=91, TOEIC 940·TEPS 412~419·TOEFL 100=90, TOEIC 935·TEPS 406~411·TOEFL 99=89, TOEIC 930·TEPS 400~405·TOEFL 98=88, TOEIC 925·TEPS 394~399·TOEFL 97=87, TOEIC 920·TEPS 389~393·TOEFL 96=86, TOEIC 915·TEPS 384~388·TOEFL 95=85, TOEIC 910·TEPS 379~383·TOEFL 94=84, TOEIC 905·TEPS 375~378·TOEFL 93=83, TOEIC 900·TEPS 370~374·TOEFL 92=82, TOEIC 895·TEPS 366~369·TOEFL 91=81, TOEIC 890·TEPS 362~365·TOEFL 90=80, TOEIC 885·TEPS 359~361·TOEFL 89=79, TOEIC 880·TEPS 355~358·TOEFL 88=78, TOEIC 875·TEPS 352~354·TOEFL 87=77, TOEIC 870·TEPS 348~351·TOEFL 86=76, TOEIC 865·TEPS 345~347·TOEFL 85=75, TOEIC 860·TEPS 342~344·TOEFL 84=74, TOEIC 855·TEPS 339~341·TOEFL 83=73, TOEIC 850·TEPS 336~338·TOEFL 82=72, TOEIC 845·TEPS 333~335·TOEFL 81=71, TOEIC 840·TEPS 330~332·TOEFL 80=70, TOEIC 835·TEPS 327~329·TOEFL 79=69, TOEIC 830·TEPS 324~326·TOEFL 78=68, TOEIC 825·TEPS 322~323·TOEFL 77=67, TOEIC 820·TEPS 319~321·TOEFL 76=66, TOEIC 815·TEPS 316~318·TOEFL 75=65, TOEIC 810·TEPS 314~315·TOEFL 74=64, TOEIC 805·TEPS 311~313·TOEFL 73=63, TOEIC 800·TEPS 309~310·TOEFL 72=62, TOEIC 795·TEPS 306~308·TOEFL 71=61, TOEIC 780~790·TEPS 299~305·TOEFL 70=60, TOEIC 765~775·TEPS 292~298·TOEFL 69=59, TOEIC 750~760·TEPS 285~291·TOEFL 68=58, TOEIC 735~745·TEPS 279~284·TOEFL 67=57, TOEIC 720~730·TEPS 272~278·TOEFL 66=56, TOEIC 705~715·TEPS 266~271·TOEFL 65=55, TOEIC 690~700·TEPS 260~265·TOEFL 64=54, TOEIC 675~685·TEPS 254~259·TOEFL 63=53, TOEIC 660~670·TEPS 248~253·TOEFL 62=52, TOEIC 645~655·TEPS 243~247·TOEFL 61=51, TOEIC 630~640·TEPS 237~242·TOEFL 60=50, TOEIC 615~625·TEPS 232~236·TOEFL 59=49, TOEIC 600~610·TEPS 227~231·TOEFL 58=48, TOEIC 585~595·TEPS 222~226·TOEFL 57=47, TOEIC 570~580·TEPS 217~221·TOEFL 56=46, TOEIC 555~565·TEPS 212~216·TOEFL 55=45, TOEIC 540~550·TEPS 208~211·TOEFL 54=44, TOEIC 525~535·TEPS 203~207·TOEFL 53=43, TOEIC 510~520·TEPS 198~202·TOEFL 52=42, TOEIC 495~505·TEPS 194~197·TOEFL 51=41, TOEIC 380~490·TEPS 163~193·TOEFL 36~50=40, TOEIC 0~379·TEPS 0~162·TOEFL 0~35=0."
+    },
+    {
+      "key": "written-exam",
+      "heading": "전공필기고사",
+      "pageStart": 15,
+      "pageEnd": 15,
+      "content": "전공필기고사는 일반편입학 수의과대학 수의학과와 간호대학 간호학과에서 시행하며 해당 모집단위에서 농어촌지역 학생편입학, 기초생활수급자 및 차상위계층 학생편입학을 모집할 때도 같다. 1단계전형 합격자만 응시할 수 있다. 모집단위별로 출제·평가하고 과목별 100점 만점이며 반영점수는 (과목별 취득점수 합/과목수)×(20/100)이다. 한 과목이라도 40점 미만이면 과락이다. 시험과목 안내자료는 기본계획 확정 후 별도로 공지한다고 되어 있다."
+    },
+    {
+      "key": "interview",
+      "heading": "면접·전공구술고사",
+      "pageStart": 15,
+      "pageEnd": 15,
+      "content": "면접·전공구술고사는 모든 편입유형의 모든 모집단위에서 시행한다. 일반 모집단위(인문·사회과학·자연과학·경영·공과(건축학과 제외)·전자정보·농업생명환경·생활과학·약학대학, 창의융합대학 바이오헬스학부)는 전공적성·사고력과 기본소양을 각 20~4점 5등급으로 평가해 합계 40~8점이다. 사범대학(체육교육과 제외)은 전공적성·사고력과 교직적성·인성 각 20~4점, 건축학과와 조형예술학과·디자인학과는 각 5~1점(합계 10~2점), 체육교육과는 전공적성·사고력과 교직적성·인성 각 5~1점, 수의학과·간호학과는 각 10~2점(합계 20~4점)이다. 문항에 의한 문답평가이며 전적대학 성적증명서를 참고자료로 쓸 수 있다. 평가위원 3명의 6개 평가등급 중 3개 이상이 최저 등급(5등급)이면 과락이다."
+    },
+    {
+      "key": "practical-exam",
+      "heading": "실기고사",
+      "pageStart": 16,
+      "pageEnd": 16,
+      "content": "실기고사는 일반편입학, 학사편입학, 농어촌지역 학생편입학, 기초생활수급자 및 차상위계층 학생편입학, 특성화고졸 학생편입학에서 시행한다. 건축학과는 건축설계(평면도·단면도·입면도 기본설계 평가) 3시간이다. 체육교육과는 육상 높이뛰기(남녀 공통), 체조 마루, 수영 자유형 50m로 30점이며 종목별 실시방법과 배점은 모집요강에서 정한다. 조형예술학과(미술학과) 동양화전공은 정물 수묵담채화(반절 옥당지), 서양화전공은 정물화(10호 캔버스 유화 또는 아크릴화), 조소전공은 인물소조(두상), 디자인학과는 시사포스터 디자인(표어·레터링 포함, 4절)이며 4시간, 30점이다. 모집단위별 실기 배점의 40% 미만이면 과락이다."
+    },
+    {
+      "key": "other-notes",
+      "heading": "기타사항",
+      "pageStart": 17,
+      "pageEnd": 17,
+      "content": "사정제외자는 모집인원 이내에 들어도 합격자나 예비후보자로 선발하지 않는다. 편입 후 학점인정 결과 이수구분별 인정학점이 부족하면 모집단위가 지정한 교과목을 이수해야 하며 재학 기간이 연장될 수 있다. 수의학과는 예과 1년·본과 5년 학제로 본과 2학년으로 편입해도 본과 1학년 과목부터 이수해야 해 재학 기간이 연장된다. 기본계획에 없는 사항은 학칙과 대학입학전형관리위원회 결정에 따른다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "general-interview",
+      "scopeType": "category",
+      "scopeValue": "모든 모집단위(수의학과·간호학과·약학과·제약학과·건축학과·체육교육과·조형예술학과·디자인학과 제외)",
+      "transferTypes": [
+        "일반편입학",
+        "학사편입학",
+        "전문대연계편입학",
+        "농어촌지역 학생편입학",
+        "기초생활수급자 및 차상위계층학생편입학",
+        "특성화고졸 학생편입학",
+        "특성화고졸 재직자편입학(야간)"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 1단계 공인영어 60점, 2단계 공인영어 60점+면접·전공구술고사 40점.",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishScoreValidFrom": "2025-03-01",
+      "sourcePages": [
+        12,
+        13
+      ],
+      "notes": "공인영어 60%+면접·전공구술고사 40%. 공인영어는 자체 필기시험이 아니다. 1단계 선발: 모집인원 8명 미만 30명까지, 8명 이상 4배수. 모집단위별 공인영어 최저점은 별도 섹션 참조.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "stage1LanguageWeight": 100,
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            6,
+            12,
+            13,
+            14
+          ],
+          "stage1Weight": 100,
+          "minimumVariesByMajor": true,
+          "minimumRange": "TOEIC 510~960 또는 제한 없음(모집단위별)"
+        }
+      }
+    },
+    {
+      "key": "veterinary",
+      "scopeType": "major",
+      "scopeValue": "수의과대학 수의학과",
+      "transferTypes": [
+        "일반편입학",
+        "농어촌지역 학생편입학",
+        "기초생활수급자 및 차상위계층학생편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "전공필기고사 20점(과목별 100점 만점, 40점 미만 과락). 시험과목은 기본계획 확정 후 별도 안내자료로 공지.",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 20,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": null,
+      "englishTepsMin": 370,
+      "englishToeflIbtMin": 92,
+      "englishScoreValidFrom": "2025-03-01",
+      "sourcePages": [
+        8,
+        12,
+        13,
+        15
+      ],
+      "notes": "공인영어 60%+면접 20%+전공필기 20%. TOEIC 미반영, TEPS 370점 또는 TOEFL(iBT) 92점 이상. 1단계 모집인원 1명이면 20명까지, 2명 이상이면 40명까지 선발. 편입학년은 2학년. 학사편입학 미모집.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "stage1LanguageWeight": 100,
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": null,
+          "tests": [
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            6,
+            12,
+            13,
+            14
+          ],
+          "stage1Weight": 100,
+          "toeicAccepted": false,
+          "tepsMin": 370,
+          "toeflIbtMin": 92
+        }
+      }
+    },
+    {
+      "key": "nursing",
+      "scopeType": "major",
+      "scopeValue": "간호대학 간호학과",
+      "transferTypes": [
+        "일반편입학",
+        "농어촌지역 학생편입학",
+        "기초생활수급자 및 차상위계층학생편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "전공필기고사 20점(과목별 100점 만점, 40점 미만 과락). 시험과목은 기본계획 확정 후 별도 안내자료로 공지.",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 20,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": 840,
+      "englishTepsMin": 330,
+      "englishToeflIbtMin": 80,
+      "englishScoreValidFrom": "2025-03-01",
+      "sourcePages": [
+        8,
+        12,
+        13,
+        15
+      ],
+      "notes": "공인영어 60%+면접 20%+전공필기 20%. 1단계 모집인원 1명이면 20명까지, 2명 이상이면 40명까지 선발. 학사편입학 미모집.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "stage1LanguageWeight": 100,
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": 840,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            6,
+            12,
+            13,
+            14
+          ],
+          "stage1Weight": 100
+        }
+      }
+    },
+    {
+      "key": "pharmacy",
+      "scopeType": "major",
+      "scopeValue": "약학대학 약학과·제약학과",
+      "transferTypes": [
+        "일반편입학",
+        "전문대연계편입학",
+        "농어촌지역 학생편입학",
+        "기초생활수급자 및 차상위계층학생편입학",
+        "특성화고졸 학생편입학",
+        "특성화고졸 재직자편입학(야간)"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 1단계 공인영어 60점, 2단계 공인영어 60점+면접·전공구술고사 40점.",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": null,
+      "englishTepsMin": 370,
+      "englishToeflIbtMin": 92,
+      "englishScoreValidFrom": "2025-03-01",
+      "sourcePages": [
+        8,
+        12,
+        13
+      ],
+      "notes": "공인영어 60%+면접 40%. TOEIC 미반영, TEPS 370점 또는 TOEFL(iBT) 92점 이상. 1단계 모집인원 1명이면 20명까지, 2명 이상이면 40명까지 선발. 학사편입학 미모집. 실제 모집 여부와 인원은 모집요강 확인.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "stage1LanguageWeight": 100,
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": null,
+          "tests": [
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            6,
+            12,
+            13,
+            14
+          ],
+          "stage1Weight": 100,
+          "toeicAccepted": false,
+          "tepsMin": 370,
+          "toeflIbtMin": 92
+        }
+      }
+    },
+    {
+      "key": "practical",
+      "scopeType": "major",
+      "scopeValue": "공과대학 건축학과, 사범대학 체육교육과, 조형예술학과(미술학과 동양화·서양화·조소전공), 디자인학과",
+      "transferTypes": [
+        "일반편입학",
+        "학사편입학",
+        "농어촌지역 학생편입학",
+        "기초생활수급자 및 차상위계층학생편입학",
+        "특성화고졸 학생편입학"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자체 필기시험 없음. 실기고사 30점(건축설계 3시간, 미술·디자인 4시간, 체육 높이뛰기·마루·수영).",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 10,
+      "finalPracticalWeight": 30,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishScoreValidFrom": "2025-03-01",
+      "sourcePages": [
+        12,
+        13,
+        16
+      ],
+      "notes": "공인영어 60%+면접 10%+실기 30%. 해당 모집단위 공인영어 최저점 제한 없음. 건축학과는 설계작품도면집 A4 5매 제출 가능자. 1단계 선발: 모집인원 8명 미만 30명까지, 8명 이상 4배수.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "stage1LanguageWeight": 100,
+        "factStatus": "provisional",
+        "tracks": [
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 60,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            6,
+            12,
+            13
+          ],
+          "stage1Weight": 100,
+          "note": "해당 모집단위 공인영어 최저점 제한 없음"
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "final-guide",
+      "audience": "전체 지원자",
+      "label": "모집요강 공지",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 11월경",
+      "details": "세부 전형일정은 교육부 기본계획을 반영해 모집요강에서 정함. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "원서접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "인터넷 접수. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "document-deadline",
+      "audience": "전체 지원자",
+      "label": "구비서류 제출 기한",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "stage1-result",
+      "audience": "전체 지원자",
+      "label": "1단계전형 합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "exam",
+      "audience": "1단계전형 합격자",
+      "label": "편입학고사(면접·전공필기·실기)",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "final-result-registration",
+      "audience": "전체 지원자",
+      "label": "합격자 발표·등록금 납부·충원합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 5,
+    "expectedScheduleRows": 6,
+    "tablesChecked": [
+      "PDF 2페이지 전형일정",
+      "PDF 3~5페이지 전문대연계 협약표",
+      "PDF 6~8페이지 모집단위별 공인영어 최저점 표",
+      "PDF 12페이지 전형요소 및 반영점수 표",
+      "PDF 13페이지 단계별 선발·동점자 기준",
+      "PDF 14페이지 공인영어 환산점수표",
+      "PDF 15페이지 전공필기·면접 배점표",
+      "PDF 16페이지 실기고사 표"
+    ],
+    "notes": [
+      "전형 기본계획(2026.6.)으로 분류",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "월 단위 일정에 임의의 일자와 시간을 생성하지 않음",
+      "공인영어는 자체 필기시험이 아니므로 writtenSubjects에 넣지 않음",
+      "수의학과·간호학과 전공필기 시험과목은 별도 안내자료(기본계획2.pdf)에 있으며 이 manifest에는 넣지 않음"
+    ]
+  }
+}

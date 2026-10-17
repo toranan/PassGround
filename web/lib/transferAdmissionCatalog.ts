@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
 import { basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   createEmbedding,
@@ -32,6 +33,7 @@ type TransferQueryPlan = {
   college: string | null;
   category: "natural" | "humanities" | "unspecified";
   subjectMode: "math_only" | "english_only" | "both" | "none";
+  englishTestMode: "any" | "weighted" | "eligibility" | "unspecified";
   minDocumentWeight: number | null;
   maxInterviewWeight: number | null;
   scheduleKeyword: string | null;
@@ -141,6 +143,7 @@ const QUERY_PLAN_SCHEMA = {
     college: { type: ["string", "null"] },
     category: { type: "string", enum: ["natural", "humanities", "unspecified"] },
     subjectMode: { type: "string", enum: ["math_only", "english_only", "both", "none"] },
+    englishTestMode: { type: "string", enum: ["any", "weighted", "eligibility", "unspecified"] },
     minDocumentWeight: { type: ["number", "null"] },
     maxInterviewWeight: { type: ["number", "null"] },
     scheduleKeyword: { type: ["string", "null"] },
@@ -159,6 +162,7 @@ const QUERY_PLAN_SCHEMA = {
     "college",
     "category",
     "subjectMode",
+    "englishTestMode",
     "minDocumentWeight",
     "maxInterviewWeight",
     "scheduleKeyword",
@@ -234,9 +238,14 @@ export function buildTransferCatalogQuestion(
   ].join("\n");
 }
 
+function isSupplementDocument(document: SourceDocumentRow): boolean {
+  return Boolean(document.metadata?.supplementOf);
+}
+
+// 학교·학년도별 대표 문서 하나를 고르고, 대표가 최종 요강이 아니면 부속 문서(필기과목 안내 등)를 함께 쓴다.
 function selectAuthoritativeDocuments(documents: SourceDocumentRow[]): SourceDocumentRow[] {
   const selected = new Map<string, SourceDocumentRow>();
-  for (const document of documents) {
+  for (const document of documents.filter((row) => !isSupplementDocument(row))) {
     const key = `${document.university}|${document.campus}|${document.admission_year}`;
     const existing = selected.get(key);
     if (!existing) {
@@ -253,17 +262,23 @@ function selectAuthoritativeDocuments(documents: SourceDocumentRow[]): SourceDoc
       selected.set(key, document);
     }
   }
-  return [...selected.values()];
+  const supplements = documents.filter((document) => {
+    if (!isSupplementDocument(document)) return false;
+    const main = selected.get(`${document.university}|${document.campus}|${document.admission_year}`);
+    return !main || (DOCUMENT_TYPE_PRIORITY[main.document_type] ?? 0) < DOCUMENT_TYPE_PRIORITY.모집요강;
+  });
+  return [...selected.values(), ...supplements];
 }
 
 function latestDocumentPerSchool(documents: SourceDocumentRow[]): SourceDocumentRow[] {
-  const latest = new Map<string, SourceDocumentRow>();
+  const latestYear = new Map<string, number>();
   for (const document of documents) {
     const key = `${document.university}|${document.campus}`;
-    const previous = latest.get(key);
-    if (!previous || previous.admission_year < document.admission_year) latest.set(key, document);
+    latestYear.set(key, Math.max(latestYear.get(key) ?? 0, document.admission_year));
   }
-  return [...latest.values()];
+  return documents.filter(
+    (document) => document.admission_year === latestYear.get(`${document.university}|${document.campus}`)
+  );
 }
 
 function distinctSchoolCount(documents: SourceDocumentRow[]): number {
@@ -368,7 +383,8 @@ async function createPlan(question: string, currentAdmissionYear: number): Promi
       "학과별 티오처럼 행 목록을 원하는 질문은 operation=list로 둔다.",
       "정확한 모집인원은 program, 시험과목·반영비율·1단계 배수는 selection_rule, 일정은 schedule이다.",
       "지원자격·제출서류·전형료·기타 설명은 section을 사용한다.",
-      "수학만은 math_only, 영어만은 english_only, 영어와 수학 모두는 both다.",
+      "수학만은 math_only, 영어만은 english_only, 영어와 수학 모두는 both다. 자체 영어 필기시험은 subjectMode로, 토익·텝스·토플 같은 공인영어는 englishTestMode로 구분한다.",
+      "공인영어(토익 등)를 보는·쓰는·반영하는 학교는 englishTestMode=any, 공인영어 성적 반영비율은 weighted, 공인영어 지원자격·최저점은 eligibility, 언급이 없으면 unspecified다. 공인영어 질문은 factKind=selection이다.",
       "면접 없음은 maxInterviewWeight=0, 서류 N% 이상은 minDocumentWeight=N이다.",
       "semanticQuery는 검색에 충분하도록 학교·학년도·핵심 사실을 포함해 정규화한다.",
     ].join(" "),
@@ -494,7 +510,9 @@ function formatSelectionAnswer(
     const document = group[0];
     lines.push(`\n- ${schoolCampusLabel(document.university, document.campus)}`);
     for (const row of group) {
-      const subjects = row.written_subjects?.length ? row.written_subjects.join("·") : "없음";
+      const subjects = row.written_subjects?.length
+        ? row.written_subjects.join("·")
+        : row.metadata?.writtenSubjectsDisclosed === false ? "미공개(필기 실시)" : "없음";
       const multiple = row.stage1_selection_min_multiple && row.stage1_selection_max_multiple
         ? `, 1단계 ${row.stage1_selection_min_multiple}~${row.stage1_selection_max_multiple}배수`
         : "";
@@ -524,6 +542,53 @@ function formatSelectionAnswer(
   }
   lines.push("\n'수학만/영어만'은 필기시험 과목 기준이며 최종 서류·면접 반영은 별도로 표시했습니다.");
   lines.push("아직 DB에 적재되지 않은 학교·학년도는 결과에 포함되지 않습니다.");
+  return lines.join("\n");
+}
+
+function englishTestLabel(info: EnglishTestInfo): string {
+  const stage = info.stage === "stage1" ? "1단계 " : info.stage === "final" ? "최종 " : "";
+  const parts = [
+    typeof info.weight === "number" ? `${stage}공인영어 ${formatPercent(info.weight)} 반영` : null,
+    typeof info.bonusPointsMax === "number" ? `공인영어 가산점 최대 ${info.bonusPointsMax}점` : null,
+    typeof info.toeicMin === "number" ? `지원자격 TOEIC ${info.toeicMin}점 이상` : null,
+    info.minimumVariesByMajor ? "최저점은 모집단위별 상이" : null,
+  ].filter((value): value is string => value !== null);
+  const tests = info.tests?.length ? ` [인정: ${info.tests.join("·")}]` : "";
+  return `${parts.join(", ") || "공인영어 활용(세부 미공개)"}${tests}`;
+}
+
+export function formatEnglishTestAnswer(
+  rows: KnowledgeUnitRow[],
+  documents: SourceDocumentRow[],
+  year: number | null,
+  plan: Pick<TransferQueryPlan, "category">
+): string {
+  const prefix = coveragePrefix(documents, year);
+  const trackLabel = plan.category === "natural" ? "자연계 " : plan.category === "humanities" ? "인문계 " : "";
+  const confirmed = rows.filter((row) => ruleEnglishTest(row)?.role !== "undisclosed");
+  const undisclosed = rows.filter((row) => ruleEnglishTest(row)?.role === "undisclosed");
+  if (!confirmed.length && !undisclosed.length) {
+    return `${prefix}으로 공인영어(토익 등)를 활용하는 ${trackLabel}전형을 찾지 못했습니다.`;
+  }
+  const lines = [`${prefix}으로 공인영어(토익 등)를 활용하는 ${trackLabel}전형입니다.`];
+  const grouped = new Map<string, KnowledgeUnitRow[]>();
+  for (const row of confirmed) {
+    const key = `${row.university}|${row.campus}`;
+    grouped.set(key, [...(grouped.get(key) ?? []), row]);
+  }
+  for (const group of grouped.values()) {
+    lines.push(`\n- ${schoolCampusLabel(group[0].university, group[0].campus)}`);
+    for (const row of group) {
+      const info = ruleEnglishTest(row) ?? {};
+      const written = row.written_subjects?.length ? `, 자체 필기 ${row.written_subjects.join("·")}` : "";
+      lines.push(`  - ${row.scope_value}: ${englishTestLabel(info)}${written} (PDF ${pagesLabel(row.source_pages)}페이지)`);
+    }
+  }
+  if (undisclosed.length) {
+    const schools = uniqueStrings(undisclosed.map((row) => schoolCampusLabel(row.university, row.campus)));
+    lines.push(`\n공인영어 반영 여부가 아직 공개되지 않은 곳: ${schools.join(", ")}`);
+  }
+  lines.push("\n공인영어 성적 반영(점수에 포함)과 지원자격 최저점(넘기만 하면 됨)은 다릅니다. 아직 DB에 적재되지 않은 학교는 결과에 포함되지 않습니다.");
   return lines.join("\n");
 }
 
@@ -604,6 +669,8 @@ async function answerStructured(params: {
     if (loaded.missingCatalog) return "missing_catalog";
     const rows = loaded.rows.filter((row) =>
       subjectMatches(row.written_subjects, params.plan.subjectMode)
+      && trackMatches(row, params.plan.category)
+      && englishTestMatches(row, params.plan.englishTestMode, asksToeic(params.question))
       && selectionScopeMatches(row, params.plan)
       && transferTypeMatches(row.transfer_types, params.plan.transferType)
       && (params.plan.minDocumentWeight === null
@@ -612,7 +679,9 @@ async function answerStructured(params: {
         || Number(row.final_interview_weight ?? Number.POSITIVE_INFINITY) <= params.plan.maxInterviewWeight)
     );
     return {
-      answer: formatSelectionAnswer(rows, params.documents, params.year),
+      answer: params.plan.englishTestMode === "unspecified"
+        ? formatSelectionAnswer(rows, params.documents, params.year)
+        : formatEnglishTestAnswer(rows, params.documents, params.year, params.plan),
       matched: rows.length,
     };
   }

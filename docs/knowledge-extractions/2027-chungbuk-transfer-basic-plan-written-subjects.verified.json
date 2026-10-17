@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "충북대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전공필기고사 시험과목 안내",
+    "title": "2027학년도 충북대학교 대학 편입학전형 전공필기고사 시험과목 안내",
+    "sourceFile": "2027충북대 기본계획2.pdf",
+    "sourceUrl": null,
+    "sha256": "15bb034e61e3cecac1eb3329dc7e509ad8e63d9444749f26aa34c667d194febf",
+    "fileSizeBytes": 135748,
+    "pageCount": 2,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-17T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "issuedAt": "2026-07",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred"
+      },
+      "notice": "전공필기고사 시행 모집단위의 최종 모집 여부와 세부일정은 2026년 11월 중 공지되는 모집요강에서 확인해야 한다.",
+      "supplementOf": {
+        "sourceFile": "2027충북대 기본계획1.pdf",
+        "sha256": "3a4958c30c7659eb8dffdc6083cd8f23649791483e3ac7e6500eb8cc505f0c79"
+      },
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027충북대 기본계획2.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "written-exam-overview",
+      "heading": "전공필기고사 시행 개요",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "2026년 7월 충북대학교 입학처 입학과가 낸 2027학년도 편입학 전공필기고사 시험과목 안내자료다. 전공필기고사는 2027년 1월 중(예정) 모집단위별 지정장소에서 시행하며 세부일정은 모집요강에서 공지한다. 시행 모집단위의 최종 모집 여부는 2026년 11월 중 공지되는 모집요강에서 확인해야 한다. 응시대상은 시행 모집단위의 1단계전형 합격자이며 한 과목이라도 결시하면 사정에서 제외된다. 시험시간은 과목별 60분 이내이고(수의학과는 비고란에 시험시간 120분) 과목별 100점 만점으로 평가한다."
+    },
+    {
+      "key": "written-exam-subjects",
+      "heading": "모집단위별 전공필기 시험과목",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "수의과대학 수의학과(일반편입학, 043-261-3248)는 수의학입문 1과목, 주관식(단답형·논술형), 시험시간 120분이다. 수의학 기초교과목의 지식과 이해도, 생명과학·수의학 분야 최근 동향과 사회적 이슈에 대한 이해도와 견해를 평가한다. 참고도서는 미리 가보는 수의학교실(충북대학교 출판부, 2025년 개정판)이며 2028학년도 편입학부터 출제 기준 교재가 바뀔 예정이다. 간호대학 간호학과(일반편입학, 043-249-1710)는 간호학기초 1과목, 혼합형(주관식·객관식·단답형·논술형)이며 생물학 기초지식을 평가한다. 참고도서는 인체생물학(김성현 외, 2023년, 수문사)이다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "veterinary-written",
+      "scopeType": "major",
+      "scopeValue": "수의과대학 수의학과",
+      "transferTypes": [
+        "일반편입학"
+      ],
+      "writtenSubjects": [
+        "수의학입문"
+      ],
+      "examMinutes": 120,
+      "questionCount": null,
+      "examFormat": "주관식(단답형·논술형), 100점 만점",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 20,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "sourcePages": [
+        2
+      ],
+      "notes": "전공필기 20점은 기본계획 기준. 1단계 합격자만 응시, 결시 시 사정제외.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTestSource": "본문 기본계획(2027충북대 기본계획1.pdf) 규칙을 따른다. 목록 중복 방지를 위해 여기서는 englishTest를 두지 않는다."
+      }
+    },
+    {
+      "key": "nursing-written",
+      "scopeType": "major",
+      "scopeValue": "간호대학 간호학과",
+      "transferTypes": [
+        "일반편입학"
+      ],
+      "writtenSubjects": [
+        "간호학기초"
+      ],
+      "examMinutes": 60,
+      "questionCount": null,
+      "examFormat": "혼합형(주관식·객관식·단답형·논술형), 생물학 기초지식평가, 100점 만점. 시험시간은 과목별 60분 이내",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 20,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "sourcePages": [
+        2
+      ],
+      "notes": "시험시간은 공통 안내의 과목별 60분 이내. 1단계 합격자만 응시, 결시 시 사정제외.",
+      "metadata": {
+        "finalLanguageWeight": 60,
+        "factStatus": "provisional",
+        "examMinutesIsUpperBound": true,
+        "tracks": [
+          "자연"
+        ],
+        "englishTestSource": "본문 기본계획(2027충북대 기본계획1.pdf) 규칙을 따른다. 목록 중복 방지를 위해 여기서는 englishTest를 두지 않는다."
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "written-exam",
+      "audience": "수의학과·간호학과 1단계전형 합격자",
+      "label": "전공필기고사",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 1월 중 (예정)",
+      "details": "모집단위별 지정장소. 세부일정은 모집요강에서 공지. 정확한 날짜와 시간은 미공개.",
+      "sourcePage": 2,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 2,
+    "expectedScheduleRows": 1,
+    "tablesChecked": [
+      "PDF 2페이지 모집단위별 시험과목 표"
+    ],
+    "notes": [
+      "PDF 1페이지는 표지",
+      "주 문서는 2027충북대 기본계획1.pdf"
+    ]
+  }
+}

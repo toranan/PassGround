@@ -25,7 +25,7 @@
       },
       "notice": "제공된 기본계획 기준. 최종 모집요강에서 변경될 수 있으며 현재의 실제 공개 여부는 별도 확인이 필요하다.",
       "extractionScope": "주요 일정·전형요소·지원자격 검증 요약. 전체 원문 및 모든 표의 완전한 구조화가 아님.",
-      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/2027_인천대학교_편입학 기본계획.pdf"
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_인천대학교_편입학 기본계획.pdf"
     }
   },
   "sections": [
@@ -101,7 +101,27 @@
       "writtenSubjects": [],
       "finalInterviewWeight": 40,
       "metadata": {
-        "finalLanguageWeight": 60
+        "finalLanguageWeight": 60,
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "single",
+          "weight": 60,
+          "toeicMin": 500,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            4
+          ]
+        }
       },
       "notes": "공인영어60%+면접40%, 일괄합산. 공인영어는 자체 필기시험이 아니다. 적용 전형: 일반·학사·농어촌·특성화고·기회균형·유치원교사양성."
     },
@@ -118,7 +138,23 @@
       ],
       "writtenSubjects": [],
       "finalPracticalWeight": 60,
-      "finalInterviewWeight": 40
+      "finalInterviewWeight": 40,
+      "metadata": {
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            3,
+            4
+          ]
+        }
+      }
     },
     {
       "key": "exercise",
@@ -135,7 +171,25 @@
       "finalPracticalWeight": 30,
       "finalInterviewWeight": 40,
       "metadata": {
-        "finalLanguageWeight": 30
+        "finalLanguageWeight": 30,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": 500,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            3,
+            4
+          ]
+        }
       },
       "notes": "공인영어30%+실기30%+면접40%."
     },
@@ -153,7 +207,21 @@
       "writtenSubjects": [],
       "finalInterviewWeight": 40,
       "metadata": {
-        "finalPriorUniversityWeight": 60
+        "finalPriorUniversityWeight": 60,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            3,
+            4
+          ]
+        }
       },
       "notes": "전적대학성적60%+면접40%."
     }
@@ -164,7 +232,11 @@
       "audience": "전체",
       "label": "최종 모집요강 발표",
       "displayText": "2026년12월 초~중순 예정",
-      "sourcePage": 1
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "range",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "interview",
@@ -172,21 +244,33 @@
       "label": "면접고사",
       "displayText": "2027.1.14. 예정",
       "sourcePage": 1,
-      "startsOn": "2027-01-14"
+      "startsOn": "2027-01-14",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "practical",
       "audience": "전체",
       "label": "실기고사",
       "displayText": "2027년1월 초~말 예정",
-      "sourcePage": 1
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "range",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "results",
       "audience": "전체",
       "label": "합격자 발표",
       "displayText": "2027년2월 초~중순 예정",
-      "sourcePage": 1
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "range",
+        "factStatus": "provisional"
+      }
     }
   ],
   "programs": [],

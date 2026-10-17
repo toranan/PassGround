@@ -25,7 +25,7 @@
       },
       "notice": "제공된 기본계획 기준. 최종 모집요강에서 변경될 수 있으며 현재의 실제 공개 여부는 별도 확인이 필요하다.",
       "extractionScope": "주요 일정·전형요소·지원자격 검증 요약. 전체 원문 및 모든 표의 완전한 구조화가 아님.",
-      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/2027_경상국립대학교_편입학기본계획.pdf"
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_경상국립대학교_편입학기본계획.pdf"
     }
   },
   "sections": [
@@ -108,7 +108,23 @@
       "writtenSubjects": [],
       "finalInterviewWeight": 40,
       "metadata": {
-        "finalPriorUniversityWeight": 60
+        "finalPriorUniversityWeight": 60,
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "tracksBasis": "inferred",
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            13
+          ],
+          "bonusPointsMax": 20
+        }
       },
       "notes": "전적대60점+면접40점, 공인영어가산점 최대20점 별도."
     },
@@ -126,7 +142,23 @@
       ],
       "writtenSubjects": [],
       "metadata": {
-        "finalPriorUniversityWeight": 100
+        "finalPriorUniversityWeight": 100,
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            13
+          ],
+          "bonusPointsMax": 20
+        }
       },
       "notes": "전적대100점+공인영어가산점 최대20점. 정확한 학과 목록은 면접 미시행 모집단위 절을 확인."
     },
@@ -144,7 +176,21 @@
       ],
       "writtenSubjects": [],
       "metadata": {
-        "finalPriorUniversityWeight": 100
+        "finalPriorUniversityWeight": 100,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            13
+          ],
+          "bonusPointsMax": 20
+        }
       },
       "notes": "면접 없음. 전적대100점+공인영어가산점 최대20점."
     },
@@ -164,7 +210,24 @@
       "finalInterviewWeight": 40,
       "metadata": {
         "finalPriorUniversityWeight": 20,
-        "finalLanguageWeight": 40
+        "finalLanguageWeight": 40,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "final",
+          "weight": 40,
+          "toeicMin": 700,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            12
+          ]
+        }
       },
       "stage1SelectionMinMultiple": 3,
       "stage1SelectionMaxMultiple": 3,
@@ -196,7 +259,25 @@
       "finalInterviewWeight": 25,
       "metadata": {
         "finalPriorUniversityWeight": 10,
-        "finalMajorCourseWeight": 15
+        "finalMajorCourseWeight": 15,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "stage1",
+          "weight": null,
+          "toeicMin": 900,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            12
+          ],
+          "stage1Points": "20/70"
+        }
       },
       "stage1SelectionMinMultiple": 5,
       "stage1SelectionMaxMultiple": 5,
@@ -228,7 +309,25 @@
       "finalInterviewWeight": 25,
       "metadata": {
         "finalPriorUniversityWeight": 10,
-        "finalMajorCourseWeight": 15
+        "finalMajorCourseWeight": 15,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "stage1",
+          "weight": null,
+          "toeicMin": 900,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            12
+          ],
+          "stage1Points": "20/70"
+        }
       },
       "stage1SelectionMinMultiple": 10,
       "stage1SelectionMaxMultiple": 10,
@@ -252,7 +351,21 @@
       "finalInterviewWeight": 20,
       "finalPracticalWeight": 20,
       "metadata": {
-        "finalPriorUniversityWeight": 60
+        "finalPriorUniversityWeight": 60,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            13
+          ],
+          "bonusPointsMax": 20
+        }
       },
       "notes": "공인영어가산점 최대20점 별도."
     },
@@ -270,7 +383,24 @@
       ],
       "writtenSubjects": [],
       "finalDocumentWeight": 100,
-      "notes": "공인영어 가산점 없음. 산업체3년 이상 근무경력 등 지원자격 확인."
+      "notes": "공인영어 가산점 없음. 산업체3년 이상 근무경력 등 지원자격 확인.",
+      "metadata": {
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "tracksBasis": "inferred",
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            13
+          ]
+        }
+      }
     }
   ],
   "scheduleEvents": [
@@ -279,14 +409,22 @@
       "audience": "전체",
       "label": "최종 모집요강 공고",
       "displayText": "2026년11월 말 예정",
-      "sourcePage": 17
+      "sourcePage": 17,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "application",
       "audience": "전체",
       "label": "원서접수 및 서류제출",
       "displayText": "2026년12월 예정",
-      "sourcePage": 6
+      "sourcePage": 6,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "written",
@@ -294,21 +432,33 @@
       "label": "수의학과·약학과 필기고사",
       "displayText": "2026.12.22. 예정",
       "sourcePage": 6,
-      "startsOn": "2026-12-22"
+      "startsOn": "2026-12-22",
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "interview",
       "audience": "전체",
       "label": "면접 및 실기고사",
       "displayText": "2027년1월 예정",
-      "sourcePage": 6
+      "sourcePage": 6,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     },
     {
       "key": "results",
       "audience": "전체",
       "label": "합격자 발표 및 등록",
       "displayText": "2027년2월 예정",
-      "sourcePage": 6
+      "sourcePage": 6,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
     }
   ],
   "programs": [],
