@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
-import { detectTransferField, isFieldAbbreviation, scopeMatchesField, type TransferField } from "@/lib/transferFieldQuery";
+import { detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude, type TransferField } from "@/lib/transferFieldQuery";
 import { admissionScopeStatus, basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   AiProviderUnavailableError,
@@ -800,13 +800,22 @@ async function answerField(params: {
     loadUnits(params.admin, documentIds, "section"),
   ]);
   if (rules.missingCatalog || sections.missingCatalog) return null;
-  const matchedRules = rules.rows.filter((row) => scopeMatchesField(row.scope_value, params.field));
+  const fieldRules = rules.rows.filter((row) => scopeMatchesField(row.scope_value, params.field));
+  // 필기 과목 조건이 있으면 그 과목을 보는 전형만 남기고, 과목 미공개 전형은 따로 알린다.
+  const subject = detectWrittenSubject(params.question);
+  const subjectUndisclosed = subject
+    ? fieldRules.filter((row) => !row.written_subjects?.length && row.metadata?.writtenSubjectsDisclosed === false)
+    : [];
+  const matchedRules = subject
+    ? fieldRules.filter((row) => writtenSubjectsInclude(row.written_subjects, subject))
+    : fieldRules;
   const schoolKeys = new Set(matchedRules.map((row) => `${row.university}|${row.campus}`));
   // 전형규칙에 계열이 없더라도 설명 섹션에 나오는 학교는 근거로 포함하되, 학교당 2개까지만 쓴다.
   const sectionCount = new Map<string, number>();
   const matchedSections = sections.rows.filter((row) => {
     if (!params.field.terms.test(row.content)) return false;
     const key = `${row.university}|${row.campus}`;
+    if (subject && !schoolKeys.has(key)) return false;
     const count = sectionCount.get(key) ?? 0;
     if (count >= 2) return false;
     sectionCount.set(key, count + 1);
@@ -814,9 +823,14 @@ async function answerField(params: {
     return true;
   });
   const coverage = `${params.year}학년도 현재 서비스에 확보된 ${distinctSchoolCount(params.documents)}개교 자료`;
+  const target = subject ? `${params.field.label}에서 ${subject} 필기를 보는 전형` : `${params.field.label} 정보`;
+  const [targetSubject, targetObject] = subject ? [`${target}이`, `${target}을`] : [`${target}가`, `${target}를`];
+  const undisclosedNote = subjectUndisclosed.length
+    ? ` 필기 과목이 아직 공개되지 않아 확인할 수 없는 곳: ${uniqueStrings(subjectUndisclosed.map((row) => schoolCampusLabel(row.university, row.campus))).join(", ")}.`
+    : "";
   if (!schoolKeys.size) {
     return {
-      answer: `${coverage}에서는 ${params.field.label} 모집 정보를 찾지 못했어요. 아직 자료가 확보되지 않은 학교는 확인할 수 없어요.`,
+      answer: `${coverage}에서는 ${targetObject} 찾지 못했어요.${undisclosedNote} 아직 자료가 확보되지 않은 학교는 확인할 수 없어요.`,
       admissionYear: params.year,
       coverageCount: distinctSchoolCount(params.documents),
       matchedRuleCount: 0,
@@ -827,7 +841,7 @@ async function answerField(params: {
     const [university, campus] = key.split("|");
     return schoolCampusLabel(university, campus);
   });
-  const header = `${coverage} 중 ${params.field.label} 정보가 있는 곳은 ${schools.join(", ")}예요. 대부분 기본계획 기준이라 최종 모집요강에서 바뀔 수 있고, 자료가 없는 학교는 포함되지 않아요.`;
+  const header = `${coverage} 중 ${targetSubject} 있는 곳은 ${schools.join(", ")}예요.${undisclosedNote} 대부분 기본계획 기준이라 최종 모집요강에서 바뀔 수 있고, 자료가 없는 학교는 포함되지 않아요.`;
   const contexts = [
     ...matchedRules.map((row) => ({ chunkText: row.content, similarity: 1 })),
     ...matchedSections.map((row) => ({ chunkText: row.content, similarity: 0.9 })),
@@ -835,7 +849,7 @@ async function answerField(params: {
   const body = await generateGroundedAnswer({
     question: [
       params.question,
-      `${params.field.label} 편입 정보를 학교별로 정리하라. 각 학교마다 모집단위, 전형방법·반영비율, 실기·필기·면접, 공인영어 기준처럼 근거에 있는 것만 적는다.`,
+      `${targetObject} 학교별로 정리하라. 각 학교마다 모집단위, 필기 과목, 전형방법·반영비율, 실기·면접, 공인영어 기준처럼 근거에 있는 것만 적는다.`,
       "'모든 모집단위(… 제외)' 규칙에서 제외된 학과에는 그 규칙을 적용하지 않는다. 근거에 없는 학교나 내용은 추측하지 않는다.",
       "학교 목록과 기본계획 안내는 답변 앞에 이미 있으므로 반복하지 말라.",
     ].join("\n"),

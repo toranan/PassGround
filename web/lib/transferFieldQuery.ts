@@ -3,9 +3,15 @@
 export type TransferField = { key: string; label: string; terms: RegExp };
 
 const FIELDS: Array<TransferField & { pattern: RegExp }> = [
+  {
+    key: "medical",
+    label: "의치한약수 계열",
+    pattern: /의치한약수|의치한|의치약|메디컬/,
+    terms: /(?<!수)의학과|의예|의과대학|치의|치과|한의|(?<!계)약학|제약|수의/,
+  },
   { key: "pe", label: "체육 계열", pattern: /체대|체육|스포츠/, terms: /체육|스포츠|운동건강/ },
   { key: "nursing", label: "간호 계열", pattern: /간호/, terms: /간호/ },
-  { key: "pharmacy", label: "약학 계열", pattern: /약대|약학/, terms: /약학|제약/ },
+  { key: "pharmacy", label: "약학 계열", pattern: /약대|약학/, terms: /(?<!계)약학|제약/ },
   { key: "veterinary", label: "수의 계열", pattern: /수의/, terms: /수의/ },
   { key: "medicine", label: "의학 계열", pattern: /의대|(?<!수)의학과|의예/, terms: /(?<!수)의학과|의예|의과대학/ },
   { key: "art", label: "미술·디자인 계열", pattern: /미대|미술|디자인/, terms: /미술|디자인|조형/ },
@@ -32,4 +38,14 @@ export function detectTransferField(question: string): TransferField | null {
 export function scopeMatchesField(scopeValue: string | null, field: TransferField): boolean {
   const withoutExclusions = (scopeValue ?? "").replace(/\([^)]*제외[^)]*\)/g, "");
   return field.terms.test(withoutExclusions);
+}
+
+// "수학 반영", "수학 보는"처럼 필기 과목 조건을 함께 물으면 그 과목을 보는 전형만 남긴다.
+export function detectWrittenSubject(question: string): string | null {
+  const match = question.match(/(수학|영어|화학|생물|물리|논술)\s*(?:만\s*)?(?:반영|보는|봐|시험|필기|과목|치는)/);
+  return match?.[1] ?? null;
+}
+
+export function writtenSubjectsInclude(subjects: string[] | null, subject: string): boolean {
+  return (subjects ?? []).some((value) => value.replace(/\s+/g, "").includes(subject));
 }
