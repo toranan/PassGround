@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
+import { detectTransferField, isFieldAbbreviation, scopeMatchesField, type TransferField } from "@/lib/transferFieldQuery";
 import { admissionScopeStatus, basicPlanNotice, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   AiProviderUnavailableError,
@@ -202,7 +203,7 @@ function normalizeUniversity(value: string): string {
 
 function explicitUniversities(question: string): string[] {
   const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{1,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|[?!.,]|$)/g);
-  return uniqueStrings([...matches].map((match) => match[1]));
+  return uniqueStrings([...matches].map((match) => match[1]).filter((name) => !isFieldAbbreviation(name)));
 }
 
 function explicitAdmissionYear(question: string): number | null {
@@ -786,6 +787,70 @@ async function answerSemantic(params: {
   return { answer: generated, matched: rows.length };
 }
 
+async function answerField(params: {
+  admin: SupabaseClient;
+  question: string;
+  field: TransferField;
+  documents: SourceDocumentRow[];
+  year: number;
+}): Promise<TransferCatalogAnswer | null> {
+  const documentIds = params.documents.map((document) => document.id);
+  const [rules, sections] = await Promise.all([
+    loadUnits(params.admin, documentIds, "selection_rule"),
+    loadUnits(params.admin, documentIds, "section"),
+  ]);
+  if (rules.missingCatalog || sections.missingCatalog) return null;
+  const matchedRules = rules.rows.filter((row) => scopeMatchesField(row.scope_value, params.field));
+  const schoolKeys = new Set(matchedRules.map((row) => `${row.university}|${row.campus}`));
+  // 전형규칙에 계열이 없더라도 설명 섹션에 나오는 학교는 근거로 포함하되, 학교당 2개까지만 쓴다.
+  const sectionCount = new Map<string, number>();
+  const matchedSections = sections.rows.filter((row) => {
+    if (!params.field.terms.test(row.content)) return false;
+    const key = `${row.university}|${row.campus}`;
+    const count = sectionCount.get(key) ?? 0;
+    if (count >= 2) return false;
+    sectionCount.set(key, count + 1);
+    schoolKeys.add(key);
+    return true;
+  });
+  const coverage = `${params.year}학년도 현재 서비스에 확보된 ${distinctSchoolCount(params.documents)}개교 자료`;
+  if (!schoolKeys.size) {
+    return {
+      answer: `${coverage}에서는 ${params.field.label} 모집 정보를 찾지 못했어요. 아직 자료가 확보되지 않은 학교는 확인할 수 없어요.`,
+      admissionYear: params.year,
+      coverageCount: distinctSchoolCount(params.documents),
+      matchedRuleCount: 0,
+      grounded: false,
+    };
+  }
+  const schools = [...schoolKeys].map((key) => {
+    const [university, campus] = key.split("|");
+    return schoolCampusLabel(university, campus);
+  });
+  const header = `${coverage} 중 ${params.field.label} 정보가 있는 곳은 ${schools.join(", ")}예요. 대부분 기본계획 기준이라 최종 모집요강에서 바뀔 수 있고, 자료가 없는 학교는 포함되지 않아요.`;
+  const contexts = [
+    ...matchedRules.map((row) => ({ chunkText: row.content, similarity: 1 })),
+    ...matchedSections.map((row) => ({ chunkText: row.content, similarity: 0.9 })),
+  ];
+  const body = await generateGroundedAnswer({
+    question: [
+      params.question,
+      `${params.field.label} 편입 정보를 학교별로 정리하라. 각 학교마다 모집단위, 전형방법·반영비율, 실기·필기·면접, 공인영어 기준처럼 근거에 있는 것만 적는다.`,
+      "'모든 모집단위(… 제외)' 규칙에서 제외된 학과에는 그 규칙을 적용하지 않는다. 근거에 없는 학교나 내용은 추측하지 않는다.",
+      "학교 목록과 기본계획 안내는 답변 앞에 이미 있으므로 반복하지 말라.",
+    ].join("\n"),
+    contexts,
+    maxContextCount: contexts.length,
+  });
+  return {
+    answer: `${header}\n\n${body}`,
+    admissionYear: params.year,
+    coverageCount: distinctSchoolCount(params.documents),
+    matchedRuleCount: matchedRules.length,
+    grounded: true,
+  };
+}
+
 export async function tryAnswerTransferCatalogQuestion(params: {
   admin: SupabaseClient;
   question: string;
@@ -806,6 +871,19 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   const currentAdmissionYear = documents.length
     ? Math.max(...documents.map((document) => document.admission_year))
     : new Date().getFullYear() + 1;
+
+  // 학교 없이 계열(체대·간호·약대 등)을 물으면 보유한 모든 학교에서 그 계열 전형을 모은다.
+  const field = detectTransferField(params.question);
+  if (field && !explicitUniversities(params.question).length) {
+    const fieldAnswer = await answerField({
+      admin: params.admin,
+      question: params.question,
+      field,
+      documents: documents.filter((document) => document.admission_year === currentAdmissionYear),
+      year: currentAdmissionYear,
+    });
+    if (fieldAnswer) return fieldAnswer;
+  }
 
   let plan: TransferQueryPlan;
   try {
