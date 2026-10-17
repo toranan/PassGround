@@ -494,68 +494,6 @@ function isGeneralConversationQuestion(question: string): boolean {
   return false;
 }
 
-function parseCoachingFallbackAiResult(raw: string): CoachingFallbackAiResult | null {
-  const direct = raw.trim();
-  const jsonCandidate = direct.startsWith("{") ? direct : (direct.match(/\{[\s\S]*\}/)?.[0] ?? "");
-  if (!jsonCandidate) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonCandidate);
-  } catch {
-    return null;
-  }
-  if (!parsed || typeof parsed !== "object") return null;
-
-  const row = parsed as Record<string, unknown>;
-  const shouldCoaching = row.shouldCoaching === true;
-  const reasonRaw = normalizeText(row.reason, 40).toLowerCase();
-  const reason: CoachingFallbackAiResult["reason"] =
-    reasonRaw === "general_chat" ||
-    reasonRaw === "study_coaching" ||
-    reasonRaw === "profile_followup" ||
-    reasonRaw === "none"
-      ? reasonRaw
-      : "none";
-  const confidenceRaw =
-    typeof row.confidence === "number"
-      ? row.confidence
-      : typeof row.confidence === "string"
-      ? Number(row.confidence)
-      : NaN;
-  const confidence =
-    Number.isFinite(confidenceRaw) && confidenceRaw >= 0 && confidenceRaw <= 1 ? confidenceRaw : null;
-
-  return {
-    shouldCoaching,
-    reason,
-    confidence,
-  };
-}
-
-function normalizeIntentLabel(raw: string): IntentRoute | null {
-  const value = raw.toLowerCase();
-  if (value.includes("mixed") || value.includes("혼합") || value.includes("둘")) return "mixed";
-  if (value.includes("emotion") || value.includes("감성") || value.includes("정서") || value.includes("위로")) {
-    return "emotion";
-  }
-  if (value.includes("fact") || value.includes("정보") || value.includes("근거")) return "fact";
-  return null;
-}
-
-function classifyIntentHeuristics(question: string): IntentRoute | null {
-  const text = question.toLowerCase();
-  const emotionHits = countKeywordHits(text, EMOTION_KEYWORDS);
-  const factHits = countKeywordHits(text, FACT_KEYWORDS);
-
-  if (emotionHits >= 2 && factHits === 0) return "emotion";
-  if (factHits >= 2 && emotionHits === 0) return "fact";
-  if (emotionHits >= 1 && factHits >= 1) return "mixed";
-  if (emotionHits >= 1 && text.length <= 80) return "emotion";
-  if (factHits >= 1 && text.includes("?")) return "fact";
-  return null;
-}
-
 function normalizeToken(value: string): string {
   return value
     .toLowerCase()
@@ -884,103 +822,26 @@ async function decomposeQuestionForRetrieval(question: string): Promise<string[]
   }
 }
 
-async function classifyIntent(question: string): Promise<IntentRoute> {
-  try {
-    const classifier = await generateText({
-      systemPrompt:
-        "너는 사용자 질문의 의도를 분류한다. 반드시 fact, emotion, mixed 중 하나의 단어만 출력해라.",
-      userPrompt: [
-        `질문: ${question}`,
-        "",
-        "분류 기준:",
-        "- fact: 입시/학습 정보, 기준, 절차, 일정 등 사실 중심",
-        "- emotion: 불안/위로/동기부여 등 감정 지원 중심",
-        "- mixed: 사실 정보와 감정 지원이 동시에 필요한 경우",
-      ].join("\n"),
-      temperature: 0,
-      maxOutputTokens: 8,
-      disableThinking: true,
-    });
-    const intent = normalizeIntentLabel(classifier);
-    if (intent) return intent;
-    return classifyIntentHeuristics(question) ?? "fact";
-  } catch {
-    return classifyIntentHeuristics(question) ?? "fact";
-  }
-}
+// 검색 전에는 잡담·코칭 신호만 코칭으로 보내고, 검색 후 근거가 없으면
+// 학교·전형 같은 사실 질문이 아닌 한 정보부족 안내 대신 코칭으로 답한다.
+const FACT_SIGNAL = /[가-힣]{1,8}대(?:학교)?(?=[\s가-힣]|$)|경쟁률|커트|합격선|모집|전형|일정|인원|과목|자격|서류|등록금|전형료|학과|학부|캠퍼스|요강/;
 
-async function resolveCoachingFallbackWithAI(params: {
+function resolveCoachingFallback(params: {
   question: string;
   historyMessages: ChatHistoryMessage[];
   intent: IntentRoute;
   hasEnoughContext: boolean;
   isGeneralChat: boolean;
-}): Promise<{ shouldFallback: boolean; reason: CoachingFallbackAiResult["reason"] }> {
-  const { question, historyMessages, intent, hasEnoughContext, isGeneralChat } = params;
+  beforeRetrieval: boolean;
+}): { shouldFallback: boolean; reason: CoachingFallbackAiResult["reason"] } {
+  const { question, historyMessages, intent, hasEnoughContext, isGeneralChat, beforeRetrieval } = params;
   if (asksAdmissionFacts(question, historyMessages)) return { shouldFallback: false, reason: "none" };
-  if (intent !== "fact" || hasEnoughContext) {
-    return { shouldFallback: false, reason: "none" };
-  }
-
+  if (intent !== "fact" || hasEnoughContext) return { shouldFallback: false, reason: "none" };
+  if (isGeneralChat) return { shouldFallback: true, reason: "general_chat" };
   const deterministicReason = inferDeterministicCoachingReason(question, historyMessages);
-  const heuristicReason: CoachingFallbackAiResult["reason"] = isGeneralChat
-    ? "general_chat"
-    : deterministicReason;
-  const heuristicFallback = heuristicReason !== "none";
-  if (heuristicFallback) return { shouldFallback: true, reason: heuristicReason };
-  const historyText = buildConversationHistoryText(historyMessages);
-
-  try {
-    const raw = await generateText({
-      systemPrompt: [
-        "너는 코칭 fallback 분기 판정기다.",
-        "현재 질문이 사실 근거 부족 상태일 때, 정보부족 안내 대신 코칭 답변으로 전환할지 판단한다.",
-        "판정 기준:",
-        "- general_chat: 인사/가벼운 잡담/짧은 안부",
-        "- study_coaching: 공부법, 전략, 루틴, 멘탈 관리처럼 코칭이 유효한 질문",
-        "- profile_followup: 직전 코칭 대화에서 사용자가 짧게 본인 상태(등급/베이스/점수 등)만 답한 후속 입력",
-        "- none: 위에 해당하지 않음",
-        "출력은 JSON만 허용. 코드블록 금지.",
-        'JSON 스키마: {"shouldCoaching":true,"reason":"general_chat|study_coaching|profile_followup|none","confidence":0.0}',
-      ].join("\n"),
-      userPrompt: [
-        `현재 intent: ${intent}`,
-        `RAG 근거 충분 여부: ${hasEnoughContext ? "yes" : "no"}`,
-        `일반대화 휴리스틱 신호: ${isGeneralChat ? "yes" : "no"}`,
-        historyText ? `최근 대화:\n${historyText}` : "최근 대화: 없음",
-        "",
-        `현재 사용자 메시지: ${question}`,
-      ].join("\n"),
-      temperature: 0,
-      maxOutputTokens: 120,
-      disableThinking: true,
-    });
-
-    const ai = parseCoachingFallbackAiResult(raw);
-    if (!ai || (ai.confidence !== null && ai.confidence < 0.55)) {
-      return {
-        shouldFallback: heuristicFallback,
-        reason: heuristicReason,
-      };
-    }
-
-    if (!ai.shouldCoaching) {
-      return {
-        shouldFallback: heuristicFallback,
-        reason: heuristicReason,
-      };
-    }
-
-    return {
-      shouldFallback: true,
-      reason: ai.reason === "none" ? "study_coaching" : ai.reason,
-    };
-  } catch {
-    return {
-      shouldFallback: heuristicFallback,
-      reason: heuristicReason,
-    };
-  }
+  if (deterministicReason !== "none") return { shouldFallback: true, reason: deterministicReason };
+  if (beforeRetrieval || FACT_SIGNAL.test(question)) return { shouldFallback: false, reason: "none" };
+  return { shouldFallback: true, reason: "study_coaching" };
 }
 
 function buildEmotionPrompts(
@@ -1095,7 +956,9 @@ async function runChatWorkflow(params: {
   const coachingReason = admissionFacts ? "none" : inferDeterministicCoachingReason(question, historyMessages);
   const isMockExamCounseling = exam === "transfer" && isMockExamCounselingQuestion(question, historyMessages);
   const cutoffHistoryContext = deriveCutoffHistoryContext(historyMessages);
-  const messageRoute = directSmalltalk ? "smalltalk" : isMockExamCounseling || admissionFacts || coachingReason !== "none" ? "fact_or_emotion" : await resolveMessageRouteWithAI({
+  // AI 라우팅은 여러 턴에 걸쳐 학교·점수를 모으는 커트라인 흐름 판정에만 쓴다.
+  const cutoffSignal = cutoffHistoryContext.active || isCutoffQuestion(question) || isLikelyCutoffStartQuestion(question);
+  const messageRoute = directSmalltalk ? "smalltalk" : isMockExamCounseling || admissionFacts || coachingReason !== "none" || !cutoffSignal ? "fact_or_emotion" : await resolveMessageRouteWithAI({
     question,
     historyMessages,
     historyContext: cutoffHistoryContext,
@@ -1110,7 +973,7 @@ async function runChatWorkflow(params: {
         historyContext: cutoffHistoryContext,
       });
   const isGeneralChat = messageRoute === "smalltalk" || isGeneralConversationQuestion(question);
-  const intent = isMockExamCounseling ? "mixed" : directSmalltalk ? "emotion" : admissionFacts || cutoffFlow.active ? "fact" : coachingReason !== "none" ? "emotion" : await classifyIntent(question);
+  const intent = isMockExamCounseling ? "mixed" : directSmalltalk ? "emotion" : admissionFacts || cutoffFlow.active ? "fact" : coachingReason !== "none" || countKeywordHits(question, EMOTION_KEYWORDS) > 0 ? "emotion" : "fact";
   const useCache =
     shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
@@ -1431,12 +1294,13 @@ async function runChatWorkflow(params: {
 
   // 공부법과 학생 프로필 후속 답변은 모집요강 검색보다 먼저 코칭으로 보낸다.
   // "학사·인문" 같은 프로필 단어 때문에 특정 대학 자료가 끼어드는 것을 막는다.
-  const preRetrievalCoaching = await resolveCoachingFallbackWithAI({
+  const preRetrievalCoaching = resolveCoachingFallback({
     question,
     historyMessages,
     intent,
     hasEnoughContext: false,
     isGeneralChat,
+    beforeRetrieval: true,
   });
 
   if (intent === "emotion" || preRetrievalCoaching.shouldFallback) {
@@ -1747,12 +1611,13 @@ async function runChatWorkflow(params: {
   }));
   const topChunkIds = contexts.map((ctx) => ctx.id);
   const topKnowledgeIds = [...new Set(contexts.map((ctx) => ctx.knowledgeItemId))];
-  const coachingFallback = await resolveCoachingFallbackWithAI({
+  const coachingFallback = resolveCoachingFallback({
     question,
     historyMessages,
     intent,
     hasEnoughContext,
     isGeneralChat,
+    beforeRetrieval: false,
   });
   const useGeneralCoachingFallback = coachingFallback.shouldFallback;
   const questionWithHistory = buildQuestionWithHistory(question, historyMessages);

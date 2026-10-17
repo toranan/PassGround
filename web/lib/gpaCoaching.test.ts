@@ -10,6 +10,7 @@ test("학점 상담 질문을 알아본다", () => {
     "학점 낮은데 편입에 영향 커?",
     "학점 2점대인데 괜찮아?",
     "편입할 때 학점도 봐?",
+    "F학점있으면 지원못하는 인서울 대학교 있음?",
   ]) assert.equal(isGpaQuestion(question), true, question);
   for (const question of ["충북대 지원자격 몇 학점 필요해?", "토익 보는 자연계 학교 알려줘", "if문 공부법"]) {
     assert.equal(isGpaQuestion(question), false, question);
@@ -22,4 +23,6 @@ test("필기 중심 원칙과 F학점의 이수학점 문제, 전적대 성적 �
   assert.match(guide, /학점을 취득하지 못했다는 점/);
   assert.match(guide, /전적대 성적 100%/);
   assert.match(guide, /지어내지 않는다/);
+  assert.match(guide, /지원을 막는 학교는 없다/);
+  assert.match(guide, /학사편입이면 학사학위/);
 });
