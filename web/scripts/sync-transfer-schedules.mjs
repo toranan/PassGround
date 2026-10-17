@@ -29,7 +29,6 @@ export function buildScheduleRows(manifest) {
       const provisional = !isFinal && event.metadata?.factStatus !== "scheduled";
       const school = schoolLabel(document);
       const baseTitle = `${document.admissionYear}학년도 ${school} 편입 ${event.label}`;
-      const basis = isFinal ? "최종 모집요강" : "기본계획";
       return {
         exam_slug: document.examSlug,
         university: school,
@@ -42,12 +41,8 @@ export function buildScheduleRows(manifest) {
         organizer: `${document.university} 입학처`,
         link_url: document.sourceUrl ?? null,
         is_official: true,
-        // 달력에는 대상이 일부일 때의 대상과, 잠정 일정 안내만 짧게 보여준다.
-        note: [
-          /^(전체|전 모집단위)/.test(event.audience) ? null
-            : /대상(자)?$/.test(event.audience) ? event.audience : `${event.audience} 대상`,
-          isFinal ? null : "기본계획 기준, 변경될 수 있어요",
-        ].filter(Boolean).join(" · ") || null,
+        // 잠정 여부는 제목의 (예정)으로 드러내고 비고는 달력 UI에 띄우지 않는다.
+        note: null,
       };
     });
 }
