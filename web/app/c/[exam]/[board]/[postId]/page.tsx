@@ -41,8 +41,8 @@ type PostResource = {
 };
 
 const LINK_TOKEN_REGEX = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/gi;
-const RESOURCE_MARKDOWN_LINE_REGEX = /^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/i;
-const RESOURCE_URL_LINE_REGEX = /^(?:[🔗📎]\s*)?(https?:\/\/\S+)\s*$/i;
+const RESOURCE_MARKDOWN_LINE_REGEX = /^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/iu;
+const RESOURCE_URL_LINE_REGEX = /^(?:[🔗📎]\s*)?(https?:\/\/\S+)\s*$/iu;
 const FILE_EXTENSIONS = new Set([
   "pdf", "zip", "hwp", "hwpx", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
   "jpg", "jpeg", "png", "gif", "webp", "heic", "txt", "csv",

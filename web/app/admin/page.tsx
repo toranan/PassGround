@@ -1015,7 +1015,8 @@ export default function AdminPage() {
       content: item.content ?? "",
       linkUrl: item.linkUrl ?? "",
     });
-    setNewsAttachment(item.attachments?.[0] ?? null);
+    // 첨부는 1개만 관리한다. 수정으로 덧붙은 경우 가장 최근(마지막) 파일을 유지한다.
+    setNewsAttachment(item.attachments?.at(-1) ?? null);
     setMessage("수정 모드로 불러왔습니다. 내용 수정 후 저장을 눌러주세요.");
   };
 

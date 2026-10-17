@@ -9,8 +9,8 @@ export type ParsedNewsContent = {
   attachments: NewsAttachment[];
 };
 
-const RESOURCE_MARKDOWN_LINE_REGEX = /^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/i;
-const RESOURCE_URL_LINE_REGEX = /^(?:[🔗📎]\s*)?(https?:\/\/\S+)\s*$/i;
+const RESOURCE_MARKDOWN_LINE_REGEX = /^(?:[🔗📎]\s*)?\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\s*$/iu;
+const RESOURCE_URL_LINE_REGEX = /^(?:[🔗📎]\s*)?(https?:\/\/\S+)\s*$/iu;
 
 const FILE_EXTENSIONS = new Set([
   "pdf", "zip", "hwp", "hwpx", "doc", "docx", "xls", "xlsx", "ppt", "pptx",

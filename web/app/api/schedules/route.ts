@@ -74,6 +74,18 @@ function parseExam(value: string | null): Exam | null {
   return null;
 }
 
+// 지난 일정은 삭제하지 않고 숨긴다. 종료시각이 지났거나, 종료시각 없는 일정은 한국시간 기준 당일이 지나면 제외한다.
+function upcomingCutoffs(now = new Date()) {
+  const kstToday = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return { nowIso: now.toISOString(), todayStartIso: new Date(`${kstToday}T00:00:00+09:00`).toISOString() };
+}
+
+function isUpcoming(row: Pick<ScheduleRow, "starts_at" | "ends_at">, cutoffs = upcomingCutoffs()): boolean {
+  return row.ends_at
+    ? Date.parse(row.ends_at) >= Date.parse(cutoffs.nowIso)
+    : Date.parse(row.starts_at) >= Date.parse(cutoffs.todayStartIso);
+}
+
 function withCache(response: NextResponse) {
   response.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return response;
@@ -90,11 +102,14 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseServer();
+  const cutoffs = upcomingCutoffs();
+  const upcomingFilter = `ends_at.gte.${cutoffs.nowIso},and(ends_at.is.null,starts_at.gte.${cutoffs.todayStartIso})`;
   const primary = await supabase
     .from("exam_schedules")
     .select("id,exam_slug,university,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
     .eq("exam_slug", exam)
     .eq("is_official", true)
+    .or(upcomingFilter)
     .order("starts_at", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(200);
@@ -107,6 +122,7 @@ export async function GET(request: Request) {
       .select("id,exam_slug,title,category,starts_at,ends_at,location,organizer,link_url,is_official,note")
       .eq("exam_slug", exam)
       .eq("is_official", true)
+      .or(upcomingFilter)
       .order("starts_at", { ascending: true })
       .order("created_at", { ascending: true })
       .limit(200);
@@ -117,8 +133,9 @@ export async function GET(request: Request) {
     }));
   }
 
-  if (queryError || !rows?.length) {
-    const fallback = SCHEDULE_FALLBACK.filter((item) => item.exam_slug === exam);
+  // 예시 일정은 조회 실패 시에만 쓴다. 남은 일정이 0건이면 빈 목록이 정답이다.
+  if (queryError) {
+    const fallback = SCHEDULE_FALLBACK.filter((item) => item.exam_slug === exam && isUpcoming(item, cutoffs));
     return withCache(
       NextResponse.json({
         ok: true,
@@ -128,7 +145,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const mappedRows = (rows as ScheduleRow[]).map((item) => ({
+  const mappedRows = (rows ?? []).map((item) => ({
     ...item,
     is_official: item.is_official ?? true,
     university: item.university ?? null,
