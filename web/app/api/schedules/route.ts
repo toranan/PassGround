@@ -87,7 +87,7 @@ function isUpcoming(row: Pick<ScheduleRow, "starts_at" | "ends_at">, cutoffs = u
 }
 
 function withCache(response: NextResponse) {
-  response.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+  response.headers.set("Cache-Control", "public, s-maxage=15, stale-while-revalidate=15");
   return response;
 }
 
