@@ -1,5 +1,5 @@
 import { classifyKnowledgeEvidence, EVIDENCE_POLICIES } from "@/lib/knowledgeEvidence";
-import { isStartTimingQuestion } from "@/lib/startTimingCoaching";
+import { isCoachingTopicQuestion } from "@/lib/coachingTopics";
 
 export type CoachingReason = "general_chat" | "study_coaching" | "profile_followup" | "none";
 
@@ -173,7 +173,7 @@ export function inferDeterministicCoachingReason(
   const profileHits = countPatternHits(text, STUDY_PROFILE_PATTERNS);
   const admissionFactHits = countPatternHits(text, ADMISSION_FACT_PATTERNS);
 
-  if (coachingHits > 0 || isStartTimingQuestion(question)) return "study_coaching";
+  if (coachingHits > 0 || isCoachingTopicQuestion(question)) return "study_coaching";
   if (profileHits >= 2) return "profile_followup";
 
   const recentHistory = historyMessages
@@ -181,7 +181,7 @@ export function inferDeterministicCoachingReason(
     .map((message) => normalizedText(message.text))
     .join(" ");
   const historyWasCoaching = countPatternHits(recentHistory, STUDY_COACHING_PATTERNS) > 0
-    || historyMessages.slice(-4).some((message) => message.role === "user" && isStartTimingQuestion(message.text));
+    || historyMessages.slice(-4).some((message) => message.role === "user" && isCoachingTopicQuestion(message.text));
   if (profileHits > 0 && historyWasCoaching) return "profile_followup";
 
   if (admissionFactHits > 0) return "none";

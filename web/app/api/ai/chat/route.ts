@@ -35,7 +35,7 @@ import {
   type CutoffEvidenceKnowledgeItem,
 } from "@/lib/cutoffEvidence";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
-import { buildStartTimingGuide, isStartTimingQuestion } from "@/lib/startTimingCoaching";
+import { buildCoachingTopicGuides, matchCoachingTopics } from "@/lib/coachingTopics";
 import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
 import { EVIDENCE_ANSWER_POLICY, formatEvidenceContext, type EvidenceInput } from "@/lib/knowledgeEvidence";
 import { COUNSELING_ANSWER_POLICY, COUNSELING_FALLBACK } from "@/lib/counselingPolicy";
@@ -990,21 +990,20 @@ function buildEmotionPrompts(
 ) {
   const adviceReference = buildAdviceReferenceText(adviceSnippets);
   const historyText = buildConversationHistoryText(historyMessages);
-  // 시작 시기 상담은 후속 답변(계열·베이스 보충)에도 질문 시점 방침을 유지한다.
-  const startTiming = isStartTimingQuestion(question)
-    || historyMessages.slice(-4).some((message) => message.role === "user" && isStartTimingQuestion(message.text));
+  // 운영자 상담 방침(시작 시기·학점 등)은 후속 답변(계열·베이스 보충)에도 유지한다.
+  const coachingTopics = matchCoachingTopics(question, historyMessages);
 
   return {
     systemPrompt: [
       "너는 편입 수험생 전담 코치 '합곰'이다.",
       "말투는 친구처럼 친근하고 다정하게 유지하고, 반드시 반말만 사용한다. 존댓말은 금지한다.",
-      startTiming ? "답변은 6~9문장으로 유지한다." : "답변은 4~6문장으로 짧게 유지한다.",
+      coachingTopics.length ? "답변은 6~9문장으로 유지한다." : "답변은 4~6문장으로 짧게 유지한다.",
       EVIDENCE_ANSWER_POLICY,
       COUNSELING_ANSWER_POLICY,
       "사용자 입력이 인사/잡담(예: 안녕, 하이, 반가워) 성격이면 첫 문장을 '안녕! 나는 너의 편입 고민을 들어줄 합곰이야.'로 시작한다.",
       "구체적인 정보는 제공된 레퍼런스로만 설명하고, 그 밖의 상담은 기본 상담 원칙 범위 안에서 제공한다.",
       "과장이나 근거 없는 단정은 금지한다.",
-      startTiming ? buildStartTimingGuide() : "",
+      buildCoachingTopicGuides(coachingTopics),
     ].filter(Boolean).join("\n"),
     userPrompt: [
       historyText ? `이전 대화 맥락:\n${historyText}` : "",
