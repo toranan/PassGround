@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
@@ -12,8 +12,13 @@ type CommentComposerProps = {
   onSuccess?: () => void;
 };
 
+export const OPTIMISTIC_COMMENT_EVENT = "hapgyeokpan:comment-optimistic";
+export const OPTIMISTIC_COMMENT_FAILED_EVENT = "hapgyeokpan:comment-failed";
+
 export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }: CommentComposerProps) {
   const router = useRouter();
+  const pendingIdRef = useRef("");
+  const contentValueRef = useRef("");
   const [authorName, setAuthorName] = useState("익명");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [content, setContent] = useState("");
@@ -49,6 +54,11 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
   }, []);
 
   const handleSubmit = async () => {
+    const rollback = () => {
+      window.dispatchEvent(new CustomEvent(OPTIMISTIC_COMMENT_FAILED_EVENT, { detail: { postId, commentId: pendingIdRef.current } }));
+      setContent(contentValueRef.current);
+      setIsFocused(true);
+    };
     setMessage("");
     if (!isLoggedIn || !userId || !accessToken) {
       setMessage("로그인 후 댓글을 작성할 수 있어요.");
@@ -56,11 +66,25 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
     }
     const nameValue = isLoggedIn && !isAnonymous ? authorName.trim() : "익명";
     const contentValue = content.trim();
+    contentValueRef.current = contentValue;
 
     if (!contentValue) {
       setMessage("댓글 내용을 입력해 주세요.");
       return;
     }
+
+    // 서버 응답을 기다리지 않고 댓글을 먼저 목록에 붙인다(CommentList가 이벤트를 받는다). 실패하면 되돌린다.
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    pendingIdRef.current = pendingId;
+    window.dispatchEvent(new CustomEvent(OPTIMISTIC_COMMENT_EVENT, {
+      detail: {
+        postId,
+        comment: { id: pendingId, author_name: nameValue, content: contentValue, created_at: new Date().toISOString(), parent_id: parentId },
+      },
+    }));
+    setContent("");
+    setIsFocused(false);
+    if (onSuccess) onSuccess();
 
     setIsSubmitting(true);
     try {
@@ -81,14 +105,13 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
       });
       const data = await res.json();
       if (!res.ok) {
+        rollback();
         setMessage(data?.error ?? "댓글 작성에 실패했습니다.");
         return;
       }
-      setContent("");
-      setIsFocused(false);
       router.refresh();
-      if (onSuccess) onSuccess();
     } catch {
+      rollback();
       setMessage("댓글 작성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);

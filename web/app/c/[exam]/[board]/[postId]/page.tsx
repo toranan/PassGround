@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
+import { cache } from "react";
 import { Navbar } from "@/components/Navbar";
 import { TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { CommentComposer } from "@/components/CommentComposer";
@@ -221,29 +223,50 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
-export async function generateMetadata({ params }: PostDetailPageProps): Promise<Metadata> {
-  const { exam, board, postId } = await params;
-  if (!isValidUUID(postId)) return {};
+type LoadedPost = {
+  id: string;
+  title: string;
+  content: string;
+  author_name: string | null;
+  author_id?: string | null;
+  created_at: string | null;
+  view_count?: number;
+};
 
+// 메타데이터와 본문이 같은 게시판·글 조회를 한 번만 하도록 요청 단위로 캐시한다.
+const loadBoardAndPost = cache(async (exam: string, board: string, postId: string) => {
   const supabase = getSupabaseServer();
-
   const { data: boardData } = await supabase
     .from("boards")
     .select("id,name,exams!inner(slug)")
     .eq("slug", board)
     .eq("exams.slug", exam)
     .maybeSingle();
+  if (!boardData?.id || !isValidUUID(postId)) return { boardData, postData: null as LoadedPost | null };
 
-  if (!boardData?.id) return {};
-
-  const { data: postData } = await supabase
+  const { data, error } = await supabase
     .from("posts")
-    .select("title,content")
+    .select("id,title,content,author_name,author_id,created_at,view_count")
     .eq("id", postId)
     .eq("board_id", boardData.id)
-    .maybeSingle();
+    .maybeSingle<LoadedPost>();
+  if (data || !error?.message?.includes("view_count")) return { boardData, postData: data ?? null };
 
-  if (!postData) return {};
+  const { data: legacyData } = await supabase
+    .from("posts")
+    .select("id,title,content,author_name,created_at")
+    .eq("id", postId)
+    .eq("board_id", boardData.id)
+    .maybeSingle<LoadedPost>();
+  return { boardData, postData: legacyData ? { ...legacyData, author_id: null, view_count: 0 } : null };
+});
+
+export async function generateMetadata({ params }: PostDetailPageProps): Promise<Metadata> {
+  const { exam, board, postId } = await params;
+  if (!isValidUUID(postId)) return {};
+
+  const { boardData, postData } = await loadBoardAndPost(exam, board, postId);
+  if (!boardData?.id || !postData) return {};
 
   const rawText = postData.content ? postData.content.replace(/\s+/g, " ").trim() : "";
   const description = rawText.length > 150 ? `${rawText.slice(0, 150)}...` : rawText;
@@ -272,26 +295,9 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   }
   const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
-  const supabase = getSupabaseServer();
+  const { boardData, postData: loadedPost } = await loadBoardAndPost(exam, board, postId);
 
-  const { data: boardData } = await supabase
-    .from("boards")
-    .select("id,name,exams!inner(slug)")
-    .eq("slug", board)
-    .eq("exams.slug", exam)
-    .maybeSingle();
-
-  let postData:
-    | {
-      id: string;
-      title: string;
-      content: string;
-      author_name: string | null;
-      author_id?: string | null;
-      created_at: string | null;
-      view_count?: number;
-    }
-    | null = null;
+  let postData = loadedPost;
   let commentsData: CommentRow[] = [];
   const isMergedTransferBoard = exam === "transfer" && TRANSFER_MERGED_BOARD_SLUGS.includes(board);
   const boardName = isMergedTransferBoard ? "자유게시판" : (boardData?.name ?? "게시판");
@@ -300,153 +306,116 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   let postVerificationLevel = "none";
   const isSamplePost = false;
 
-  if (boardData?.id && isValidUUID(postId)) {
+  if (postData?.id) {
+    const supabase = getSupabaseServer();
     const admin = getSupabaseAdmin();
-    try {
-      const { data: viewData } = await admin
-        .from("posts")
-        .select("view_count")
-        .eq("id", postId)
-        .maybeSingle<{ view_count: number | null }>();
+    const currentPostId = postData.id;
+    const currentViews = postData.view_count ?? 0;
 
-      await admin
-        .from("posts")
-        .update({ view_count: (viewData?.view_count ?? 0) + 1 })
-        .eq("id", postId);
-    } catch {
-      // view_count column may not exist yet in legacy schema
-    }
+    // 조회수는 화면을 보낸 뒤에 올린다(기다리지 않음). 화면에는 이번 방문을 포함한 값을 보여준다.
+    after(async () => {
+      try {
+        await admin.from("posts").update({ view_count: currentViews + 1 }).eq("id", currentPostId);
+      } catch {
+        // view_count column may not exist yet in legacy schema
+      }
+    });
+    postData = { ...postData, view_count: currentViews + 1 };
 
-    const { data, error: postSelectError } = await supabase
-      .from("posts")
-      .select("id,title,content,author_name,author_id,created_at,view_count")
-      .eq("id", postId)
-      .eq("board_id", boardData.id)
-      .maybeSingle();
-    postData = data;
-
-    if (!postData && postSelectError?.message?.includes("view_count")) {
-      const { data: legacyData } = await supabase
-        .from("posts")
-        .select("id,title,content,author_name,created_at")
-        .eq("id", postId)
-        .eq("board_id", boardData.id)
-        .maybeSingle();
-
-      postData = legacyData
-        ? {
-          ...legacyData,
-          author_id: null,
-          view_count: 0,
-        }
-        : null;
-    }
-
-    if (postData?.id) {
-      const { data: comments } = await supabase
+    // 서로 상관없는 조회는 한 번에 보낸다.
+    const [{ data: comments }, { count }, { data: adoptionData }] = await Promise.all([
+      supabase
         .from("comments")
         .select("id,author_name,author_id,content,created_at,parent_id")
-        .eq("post_id", postData.id)
-        .order("created_at", { ascending: true });
+        .eq("post_id", currentPostId)
+        .order("created_at", { ascending: true }),
+      admin.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", currentPostId),
+      supabase.from("answer_adoptions").select("comment_id").eq("post_id", currentPostId).maybeSingle<{ comment_id: string }>(),
+    ]);
+    likeCount = count ?? 0;
+    adoptedCommentId = adoptionData?.comment_id ?? null;
 
-      const rawComments = comments ?? [];
-      const authorNames = Array.from(new Set(
-        [postData.author_name, ...rawComments.map((comment) => comment.author_name)]
-          .map((name) => (typeof name === "string" ? name.trim() : ""))
-          .filter((value): value is string => value.length > 0)
-      ));
-      const authorProfileIds = Array.from(
-        new Set(
-          [postData.author_id, ...rawComments.map((comment) => comment.author_id)]
-            .map((authorId) => (typeof authorId === "string" ? authorId.trim() : ""))
-            .filter((value): value is string => isValidUUID(value))
-        )
-      );
+    const rawComments = comments ?? [];
+    const authorNames = Array.from(new Set(
+      [postData.author_name, ...rawComments.map((comment) => comment.author_name)]
+        .map((name) => (typeof name === "string" ? name.trim() : ""))
+        .filter((value): value is string => value.length > 0)
+    ));
+    const authorProfileIds = Array.from(
+      new Set(
+        [postData.author_id, ...rawComments.map((comment) => comment.author_id)]
+          .map((authorId) => (typeof authorId === "string" ? authorId.trim() : ""))
+          .filter((value): value is string => isValidUUID(value))
+      )
+    );
 
-      const verificationMap = new Map<string, string>();
-      const verificationByProfileId = new Map<string, string>();
-      if (authorNames.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("display_name,verification_level")
-          .in("display_name", authorNames);
-
-        (profiles ?? []).forEach((profile: { display_name: string | null; verification_level: string | null }) => {
-          if (profile.display_name) {
-            verificationMap.set(profile.display_name, profile.verification_level ?? "none");
-          }
-        });
-      }
-      if (authorProfileIds.length > 0) {
-        const { data: profileRows } = await supabase
-          .from("profiles")
-          .select("id,verification_level")
-          .in("id", authorProfileIds);
-
-        (profileRows ?? []).forEach((profile: { id: string; verification_level: string | null }) => {
-          verificationByProfileId.set(profile.id, profile.verification_level ?? "none");
-        });
-
-        const { data: approvedRows } = await admin
+    type NameProfile = { display_name: string | null; verification_level: string | null };
+    type IdProfile = { id: string; verification_level: string | null };
+    type ApprovedRow = { profile_id: string | null; memo: string | null };
+    const [profilesByName, profilesById, approved] = await Promise.all([
+      authorNames.length
+        ? supabase.from("profiles").select("display_name,verification_level").in("display_name", authorNames)
+        : Promise.resolve({ data: [] as NameProfile[] }),
+      authorProfileIds.length
+        ? supabase.from("profiles").select("id,verification_level").in("id", authorProfileIds)
+        : Promise.resolve({ data: [] as IdProfile[] }),
+      authorProfileIds.length
+        ? admin
           .from("verification_requests")
           .select("profile_id,memo,reviewed_at,created_at")
           .in("profile_id", authorProfileIds)
           .eq("status", "approved")
           .order("reviewed_at", { ascending: false })
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] as ApprovedRow[] }),
+    ]);
 
-        (approvedRows as { profile_id: string | null; memo: string | null }[] | null | undefined)?.forEach((row) => {
-          const profileId = row.profile_id?.trim() ?? "";
-          if (!profileId || !verificationByProfileId.has(profileId)) return;
-          const parsed = (() => {
-            if (!row.memo) return null;
-            try {
-              const memoObject = JSON.parse(row.memo) as { verifiedUniversity?: unknown };
-              const university = typeof memoObject.verifiedUniversity === "string" ? memoObject.verifiedUniversity.trim() : "";
-              return university || null;
-            } catch {
-              return null;
-            }
-          })();
-          if (!parsed) return;
-          verificationByProfileId.set(profileId, `${parsed} 합격자`);
-        });
+    const verificationMap = new Map<string, string>();
+    const verificationByProfileId = new Map<string, string>();
+    ((profilesByName.data ?? []) as NameProfile[]).forEach((profile) => {
+      if (profile.display_name) {
+        verificationMap.set(profile.display_name, profile.verification_level ?? "none");
       }
+    });
+    ((profilesById.data ?? []) as IdProfile[]).forEach((profile) => {
+      verificationByProfileId.set(profile.id, profile.verification_level ?? "none");
+    });
+    ((approved.data ?? []) as ApprovedRow[]).forEach((row) => {
+      const profileId = row.profile_id?.trim() ?? "";
+      if (!profileId || !verificationByProfileId.has(profileId)) return;
+      const parsed = (() => {
+        if (!row.memo) return null;
+        try {
+          const memoObject = JSON.parse(row.memo) as { verifiedUniversity?: unknown };
+          const university = typeof memoObject.verifiedUniversity === "string" ? memoObject.verifiedUniversity.trim() : "";
+          return university || null;
+        } catch {
+          return null;
+        }
+      })();
+      if (!parsed) return;
+      verificationByProfileId.set(profileId, `${parsed} 합격자`);
+    });
 
-      commentsData = rawComments.map((comment) => ({
-        id: comment.id,
-        author_name: comment.author_name,
-        author_id: comment.author_id ?? null,
-        content: comment.content,
-        created_at: comment.created_at,
-        parent_id: comment.parent_id,
-        verification_level:
-          (typeof comment.author_id === "string" ? verificationByProfileId.get(comment.author_id) : undefined) ??
-          verificationMap.get(comment.author_name) ??
-          "none",
-      }));
+    commentsData = rawComments.map((comment) => ({
+      id: comment.id,
+      author_name: comment.author_name,
+      author_id: comment.author_id ?? null,
+      content: comment.content,
+      created_at: comment.created_at,
+      parent_id: comment.parent_id,
+      verification_level:
+        (typeof comment.author_id === "string" ? verificationByProfileId.get(comment.author_id) : undefined) ??
+        verificationMap.get(comment.author_name) ??
+        "none",
+    }));
 
-      const postAuthorId = typeof postData.author_id === "string" ? postData.author_id.trim() : "";
-      const postAuthorName = (postData.author_name ?? "").trim();
-      postVerificationLevel =
-        (postAuthorId ? verificationByProfileId.get(postAuthorId) : undefined) ??
-        (postAuthorName ? verificationMap.get(postAuthorName) : undefined) ??
-        "none";
-
-      const { count } = await admin
-        .from("post_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", postData.id);
-      likeCount = count ?? 0;
-
-      const { data: adoptionData } = await supabase
-        .from("answer_adoptions")
-        .select("comment_id")
-        .eq("post_id", postData.id)
-        .maybeSingle<{ comment_id: string }>();
-
-      adoptedCommentId = adoptionData?.comment_id ?? null;
-    }
+    const postAuthorId = typeof postData.author_id === "string" ? postData.author_id.trim() : "";
+    const postAuthorName = (postData.author_name ?? "").trim();
+    postVerificationLevel =
+      (postAuthorId ? verificationByProfileId.get(postAuthorId) : undefined) ??
+      (postAuthorName ? verificationMap.get(postAuthorName) : undefined) ??
+      "none";
   }
 
   if (!postData) {

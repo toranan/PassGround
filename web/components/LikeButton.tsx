@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Heart } from "lucide-react";
 
 type LikeButtonProps = {
@@ -12,32 +12,26 @@ type LikeButtonProps = {
 export function LikeButton({ postId, initialCount, isSample = false }: LikeButtonProps) {
     const [liked, setLiked] = useState(false);
     const [count, setCount] = useState(initialCount);
-    const [isLoading, setIsLoading] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
-    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [message, setMessage] = useState("");
+    // 연달아 눌러도 화면은 바로 바뀌고, 마지막 요청의 응답만 반영한다.
+    const requestSeq = useRef(0);
 
-    useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (token) {
-            setAccessToken(token);
+    // 로그인 정보는 누르는 순간 읽는다.
+    const readAuth = () => {
+        const accessToken = localStorage.getItem("access_token");
+        let userId: string | null = null;
+        try {
+            const user = JSON.parse(localStorage.getItem("user") ?? "null") as { id?: string } | null;
+            userId = typeof user?.id === "string" ? user.id : null;
+        } catch {
+            userId = null;
         }
-        const stored = localStorage.getItem("user");
-        if (stored) {
-            try {
-                const user = JSON.parse(stored);
-                if (user.id) {
-                    setUserId(user.id);
-                }
-            } catch {
-                // ignore
-            }
-        }
-    }, []);
+        return { accessToken, userId };
+    };
 
     const handleLike = async () => {
         if (isSample) return;
-        if (isLoading) return;
+        const { accessToken, userId } = readAuth();
         if (!userId || !accessToken) {
             setMessage("로그인 후 이용 가능합니다.");
             return;
@@ -49,8 +43,8 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
 
         setLiked(optimisticLiked);
         setCount(Math.max(0, previousCount + (optimisticLiked ? 1 : -1)));
-        setIsLoading(true);
         setMessage("");
+        const seq = ++requestSeq.current;
         try {
             const res = await fetch("/api/posts/like", {
                 method: "POST",
@@ -62,6 +56,7 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
             });
 
             const data = await res.json();
+            if (seq !== requestSeq.current) return;
             if (res.ok) {
                 setLiked(data.liked);
                 if (typeof data.likeCount === "number") {
@@ -75,11 +70,10 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
                 setMessage(data?.error ?? "좋아요 처리에 실패했습니다.");
             }
         } catch {
+            if (seq !== requestSeq.current) return;
             setLiked(previousLiked);
             setCount(previousCount);
             setMessage("좋아요 처리 중 오류가 발생했습니다.");
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -87,7 +81,7 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
         <div className="flex flex-col">
             <button
                 onClick={handleLike}
-                disabled={isSample || isLoading}
+                disabled={isSample}
                 className={`flex items-center gap-2 transition-colors ${liked ? "text-rose-500" : "text-gray-600 hover:text-rose-500"
                     } ${isSample ? "cursor-not-allowed opacity-50" : ""}`}
             >

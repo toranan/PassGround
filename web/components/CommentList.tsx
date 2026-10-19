@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Heart, BadgeCheck } from "lucide-react";
-import { CommentComposer } from "@/components/CommentComposer";
+import { CommentComposer, OPTIMISTIC_COMMENT_EVENT, OPTIMISTIC_COMMENT_FAILED_EVENT } from "@/components/CommentComposer";
 
 type Comment = {
   id: string;
@@ -64,13 +64,41 @@ function verificationLabel(level: string | null | undefined): string | null {
 
 export function CommentList({
   postId,
-  comments,
+  comments: serverComments,
   postAuthorName,
   adoptedCommentId = null,
   isSamplePost = false,
   disableInteractions = false,
 }: CommentListProps) {
   const router = useRouter();
+  // 방금 쓴 댓글은 서버 목록이 새로 올 때까지 먼저 보여준다.
+  const [pendingComments, setPendingComments] = useState<Comment[]>([]);
+  const [syncedComments, setSyncedComments] = useState(serverComments);
+  if (syncedComments !== serverComments) {
+    setSyncedComments(serverComments);
+    setPendingComments([]);
+  }
+  const comments = useMemo(() => [...serverComments, ...pendingComments], [serverComments, pendingComments]);
+
+  useEffect(() => {
+    const onAdd = (event: Event) => {
+      const detail = (event as CustomEvent<{ postId: string; comment: Comment }>).detail;
+      if (detail?.postId !== postId) return;
+      setPendingComments((prev) => [...prev, detail.comment]);
+    };
+    const onFail = (event: Event) => {
+      const detail = (event as CustomEvent<{ postId: string; commentId: string }>).detail;
+      if (detail?.postId !== postId) return;
+      setPendingComments((prev) => prev.filter((comment) => comment.id !== detail.commentId));
+    };
+    window.addEventListener(OPTIMISTIC_COMMENT_EVENT, onAdd);
+    window.addEventListener(OPTIMISTIC_COMMENT_FAILED_EVENT, onFail);
+    return () => {
+      window.removeEventListener(OPTIMISTIC_COMMENT_EVENT, onAdd);
+      window.removeEventListener(OPTIMISTIC_COMMENT_FAILED_EVENT, onFail);
+    };
+  }, [postId]);
+
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState("");
   const [adoptingCommentId, setAdoptingCommentId] = useState<string | null>(null);
