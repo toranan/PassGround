@@ -126,7 +126,7 @@ export async function sendNewsPush(params: { title: string; postId: string }): P
     return;
   }
   const result = await sendPushToDevices((data ?? []) as PushDevice[], {
-    title: "📰 합격판 최신뉴스",
+    title: "합격판 최신뉴스",
     body: params.title,
     data: { type: "news", postId: params.postId, boardSlug: "news" },
   });
