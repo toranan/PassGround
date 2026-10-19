@@ -76,3 +76,13 @@ export function groupPastExamsBySchool(files: PastExamFile[]): PastExamSchool[] 
     })
     .sort((a, b) => a.school.localeCompare(b.school, "ko"));
 }
+
+export function pastExamSchoolPath(school: string): string {
+  return `/past-exams/${encodeURIComponent(school)}`;
+}
+
+// "건국대학교" → "건국대". 뉴스·일정 제목에서 학교를 찾을 때 줄임말도 함께 본다.
+export function schoolAliases(school: string): string[] {
+  const short = school.replace(/대학교$/, "대").replace(/여자대$/, "여대");
+  return [...new Set([school, short])];
+}

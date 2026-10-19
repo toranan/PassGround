@@ -3,6 +3,7 @@ import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_TRANSFER } from "@/lib/featureFlags";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { groupPastExamsBySchool, loadPastExams, pastExamSchoolPath } from "@/lib/pastExams";
 
 type BoardRel = {
   slug: string | null;
@@ -33,7 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return false;
   }).flatMap((group) => group.boards.map((board) => `/c/${group.examSlug}/${board.slug}`));
 
-  const allRoutes = Array.from(new Set([...staticRoutes, ...boardRoutes]));
+  const pastExamRoutes = groupPastExamsBySchool(await loadPastExams()).map((entry) => pastExamSchoolPath(entry.school));
+  const allRoutes = Array.from(new Set([...staticRoutes, ...boardRoutes, ...pastExamRoutes]));
 
   const sitemapEntries: MetadataRoute.Sitemap = allRoutes.map((route) => ({
     url: `${siteUrl}${route}`,

@@ -5,6 +5,7 @@ import { TransferAiAssistantPanel } from "@/components/TransferAiAssistantPanel"
 type TransferAiPageProps = {
   searchParams: Promise<{
     tab?: string;
+    q?: string;
   }>;
 };
 
@@ -21,7 +22,7 @@ export default async function TransferAiPage({ searchParams }: TransferAiPagePro
       <main className="flex-1">
         <section className="py-4 md:py-6">
           <div className="container mx-auto px-4 max-w-6xl">
-            <TransferAiAssistantPanel />
+            <TransferAiAssistantPanel initialQuestion={params?.q?.slice(0, 200) ?? ""} />
           </div>
         </section>
       </main>

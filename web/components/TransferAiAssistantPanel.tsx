@@ -60,7 +60,7 @@ function findSseSeparator(buffer: string): { index: number; length: number } | n
   };
 }
 
-export function TransferAiAssistantPanel() {
+export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQuestion?: string } = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: makeId(),
@@ -68,7 +68,7 @@ export function TransferAiAssistantPanel() {
       text: "안녕하세요. 편입 상담을 함께 정리해드리는 합곰입니다. 궁금한 점을 편하게 말씀해 주세요.",
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialQuestion);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
