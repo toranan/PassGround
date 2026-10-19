@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { emitAuthChange, getUserSnapshot, resolveUsableAccessToken, subscribeAuthChange } from "@/lib/authClient";
@@ -14,6 +14,18 @@ interface User {
   nickname?: string;
 }
 
+const NAV_TABS = [
+  { href: "/transfer", label: "홈", match: (path: string) => path === "/" || path === "/transfer" },
+  { href: "/news", label: "최신뉴스", match: (path: string) => path.startsWith("/news") || path.startsWith("/c/transfer/news") },
+  { href: "/schedule", label: "일정", match: (path: string) => path.startsWith("/schedule") },
+  { href: "/c/transfer/free", label: "커뮤니티", match: (path: string) => path.startsWith("/c/transfer") && !path.startsWith("/c/transfer/news") },
+  { href: "/transfer/ai", label: "AI 상담", match: (path: string) => path.startsWith("/transfer/ai") },
+];
+
+function tabClass(active: boolean) {
+  return `shrink-0 rounded-lg px-3 py-1.5 transition-colors ${active ? "bg-primary/10 font-semibold text-primary" : "text-gray-600 hover:text-primary"}`;
+}
+
 type AdminMeResponse = {
   ok: boolean;
   isAdmin: boolean;
@@ -21,6 +33,8 @@ type AdminMeResponse = {
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const isActive = (tab: (typeof NAV_TABS)[number]) => tab.match(pathname);
   const [isAdmin, setIsAdmin] = useState(false);
   const user = useSyncExternalStore(
     subscribeAuthChange,
@@ -98,22 +112,12 @@ export function Navbar() {
           </Link>
         </div>
 
-        <div className="hidden items-center space-x-5 text-sm font-medium lg:flex">
-          <Link href="/transfer/ai" className="transition-colors hover:text-primary">
-            AI 상담
-          </Link>
-          <Link href="/c/transfer/free" className="transition-colors hover:text-primary">
-            커뮤니티
-          </Link>
-          <Link href="/transfer/data-center" className="transition-colors hover:text-primary">
-            커트라인
-          </Link>
-          <Link href="/mypage" className="transition-colors hover:text-primary">
-            마이페이지
-          </Link>
-          <Link href="/verification" className="transition-colors hover:text-primary">
-            인증
-          </Link>
+        <div className="hidden items-center gap-1 text-sm font-medium md:flex">
+          {NAV_TABS.map((tab) => (
+            <Link key={tab.href} href={tab.href} className={tabClass(isActive(tab))}>
+              {tab.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center space-x-4">
@@ -138,6 +142,13 @@ export function Navbar() {
             </Button>
           )}
         </div>
+      </div>
+      <div className="container mx-auto flex gap-1 overflow-x-auto px-4 pb-2 text-sm font-medium md:hidden">
+        {NAV_TABS.map((tab) => (
+          <Link key={tab.href} href={tab.href} className={tabClass(isActive(tab))}>
+            {tab.label}
+          </Link>
+        ))}
       </div>
     </nav>
   );

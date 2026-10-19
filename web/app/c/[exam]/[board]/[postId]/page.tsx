@@ -488,7 +488,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       <Navbar />
 
       <main className="flex-1">
-        <header className="bg-white border-b sticky top-16 z-40">
+        <header className="bg-white border-b sticky top-[6.5rem] z-40 md:top-16">
           <div className="container mx-auto px-4 h-14 flex items-center gap-3">
             <Link
               href={`/c/${exam}/${board}`}
@@ -518,8 +518,12 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                   )}
                 </div>
                 <div className="text-sm text-gray-500 flex items-center gap-2">
-                  <span>{formatRelativeTime(postData.created_at)}</span>
-                  <span>•</span>
+                  {board === "news" ? (
+                    <>
+                      <span>{formatRelativeTime(postData.created_at)}</span>
+                      <span>•</span>
+                    </>
+                  ) : null}
                   <span className="flex items-center gap-1">
                     <Eye className="h-3.5 w-3.5" />
                     {viewCount}

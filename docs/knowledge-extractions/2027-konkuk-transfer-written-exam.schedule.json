@@ -1,0 +1,39 @@
+{
+  "kind": "schedule_notice",
+  "document": {
+    "examSlug": "transfer",
+    "university": "건국대학교",
+    "campus": "서울",
+    "admissionYear": 2027,
+    "documentType": "일정 사전 안내",
+    "title": "2027학년도 편입학 필기고사 일정 사전 안내",
+    "sourceFile": null,
+    "sourceUrl": "https://admission.konkuk.ac.kr/bbs/admission/6282/1208808/artclView.do?layout=unknown",
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-19T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "publicationStage": "schedule_notice",
+      "publishedOn": "2026-09-29",
+      "publisher": "건국대학교 입학처",
+      "notice": "일정은 예정이며 대학 사정에 따라 변경될 수 있다. 모집단위별 고사시간·고사장·입실시간은 2027학년도 편입학 모집요강에서 확인해야 한다.",
+      "extractionScope": "입학처 공지의 필기고사 고사일시만. 일정 전용 문서라 지식 적재 대상이 아니고 달력 반영에만 쓴다."
+    }
+  },
+  "scheduleEvents": [
+    {
+      "key": "written-exam",
+      "audience": "전체 지원자",
+      "label": "필기고사",
+      "startsAt": "2026-12-24T10:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2026-12-24",
+      "endsOn": null,
+      "displayText": "2026. 12. 24.(목) 오전 10시 (예정)",
+      "details": "고사장소 및 세부사항은 추후 공지.",
+      "sourcePage": null,
+      "metadata": { "precision": "minute", "factStatus": "provisional" }
+    }
+  ]
+}

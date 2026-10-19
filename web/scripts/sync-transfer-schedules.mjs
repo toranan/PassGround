@@ -20,6 +20,16 @@ function schoolLabel(document) {
   return ["전체", "서울", ""].includes(document.campus) ? document.university : `${document.university} ${document.campus}`;
 }
 
+// PDF 없이 입학처 공지로만 나온 일정은 kind=schedule_notice 파일로 두고 달력에만 반영한다.
+export function parseScheduleSource(raw, file) {
+  const parsed = JSON.parse(raw);
+  if (parsed.kind !== "schedule_notice") return parseManifest(raw, file);
+  if (parsed.document?.examSlug !== "transfer" || !parsed.document?.university || !Array.isArray(parsed.scheduleEvents)) {
+    throw new Error(`일정 공지 형식이 올바르지 않습니다: ${file}`);
+  }
+  return parsed;
+}
+
 export function buildScheduleRows(manifest) {
   const { document } = manifest;
   const isFinal = ["최종 모집요강", "모집요강"].includes(document.documentType);
@@ -58,7 +68,7 @@ async function main() {
 
   const rows = [];
   for (const file of files) {
-    rows.push(...buildScheduleRows(parseManifest(await readFile(file, "utf8"), file)));
+    rows.push(...buildScheduleRows(parseScheduleSource(await readFile(file, "utf8"), file)));
   }
   for (const row of rows) console.log(`${row.starts_at} ~ ${row.ends_at} | ${row.category} | ${row.title}`);
   console.log(`\n${rows.length}건${commit ? " 반영" : " (dry-run, --commit 시 반영)"}`);
