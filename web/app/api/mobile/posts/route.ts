@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
-import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
+import { ENABLE_CPA, ENABLE_CPA_WRITE, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { stripNewsResources } from "@/lib/newsResources";
@@ -134,7 +134,8 @@ export async function GET(request: Request) {
   const limit = parseLimit(searchParams.get("limit"));
   const cursor = decodeCursor(searchParams.get("cursor"));
   // 내가 차단한 사람의 글은 목록에서 뺀다(viewer별로 URL이 달라 캐시도 분리된다).
-  const blockedUserIdsPromise = loadBlockedUserIds(searchParams.get("viewer"));
+  const viewerId = (searchParams.get("viewer") ?? "").trim();
+  const blockedUserIdsPromise = loadBlockedUserIds(viewerId);
 
   if (!exam || !board) {
     return NextResponse.json({ error: "exam, board 파라미터가 필요합니다." }, { status: 400 });
@@ -323,8 +324,9 @@ export async function GET(request: Request) {
     title: post.title,
     content: (board === "news" ? stripNewsResources(post.content ?? "") : (post.content ?? "")).substring(0, 100),
     authorName: (post.author_name ?? "익명").trim() || "익명",
-    verificationLevel:
+    verificationLevel: !SHOW_VERIFICATION_BADGES ? "none" :
       (typeof post.author_id === "string" ? verificationByProfileId.get(post.author_id) : undefined) ?? "none",
+    isMine: Boolean(viewerId && post.author_id === viewerId),
     commentCount: commentCountMap.get(post.id) ?? 0,
     likeCount: likeCountMap.get(post.id) ?? 0,
     viewCount: post.view_count ?? 0,

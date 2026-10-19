@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Heart, BadgeCheck } from "lucide-react";
@@ -49,7 +50,7 @@ function formatRelativeTime(dateString: string | null): string {
 }
 
 function verificationLabel(level: string | null | undefined): string | null {
-  if (!level || level === "none") return null;
+  if (!SHOW_VERIFICATION_BADGES || !level || level === "none") return null;
   switch (level) {
     case "transfer_passer":
       return "편입 합격";

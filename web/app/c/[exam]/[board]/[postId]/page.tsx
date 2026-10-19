@@ -10,7 +10,7 @@ import { CommentList } from "@/components/CommentList";
 import { LikeButton } from "@/components/LikeButton";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
+import { ENABLE_CPA, ENABLE_CPA_WRITE, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
 import { ChevronLeft, Eye, MessageCircle, Share2, Bookmark, User } from "lucide-react";
 
 type PostDetailPageProps = {
@@ -205,7 +205,7 @@ function formatRelativeTime(dateString: string | null): string {
 }
 
 function verificationLabel(level: string | null | undefined): string | null {
-  if (!level || level === "none") return null;
+  if (!SHOW_VERIFICATION_BADGES || !level || level === "none") return null;
   switch (level) {
     case "transfer_passer":
       return "편입 합격";

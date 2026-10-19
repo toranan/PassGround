@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
-import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
+import { ENABLE_CPA, ENABLE_CPA_WRITE, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { loadBlockedUserIds } from "@/lib/moderation";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -361,7 +361,7 @@ export async function GET(
       createdAt: comment.created_at,
       timeLabel: formatRelativeTime(comment.created_at),
       parentId: comment.parent_id,
-      verificationLevel:
+      verificationLevel: !SHOW_VERIFICATION_BADGES ? "none" :
         (commentAuthorId && verificationByProfileId.get(commentAuthorId)) ||
         (commentAuthorName ? verificationByDisplayName.get(commentAuthorName) : undefined) ||
         "none",
@@ -401,7 +401,7 @@ export async function GET(
         content: postData.content,
         authorName: postData.author_name ?? "익명",
         authorId: postData.author_id ?? null,
-        verificationLevel:
+        verificationLevel: !SHOW_VERIFICATION_BADGES ? "none" :
           (postData.author_id ? verificationByProfileId.get(postData.author_id) : undefined) ||
           (postAuthorName ? verificationByDisplayName.get(postAuthorName) : undefined) ||
           "none",

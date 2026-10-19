@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
-import { ENABLE_CPA } from "@/lib/featureFlags";
+import { ENABLE_CPA, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { stripNewsResources } from "@/lib/newsResources";
@@ -341,7 +341,7 @@ export async function GET(request: Request) {
             return normalized.substring(0, 100);
           })(),
           authorName: (post.author_name ?? "익명").trim() || "익명",
-          verificationLevel:
+          verificationLevel: !SHOW_VERIFICATION_BADGES ? "none" :
             (typeof post.author_id === "string" ? verificationByProfileId.get(post.author_id) : undefined) ?? "none",
           commentCount,
           likeCount,
