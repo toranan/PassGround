@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "경희대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 주요사항(변경 안내)",
+    "title": "2027학년도 경희대학교 편입학 주요 사항 안내",
+    "sourceFile": "2027학년도_경희대학교_변경사항.pdf",
+    "sourceUrl": null,
+    "sha256": "cbac3e3a6717413606c5c7f77b2074663ec7ac371fe3503f40b6a7298a5afa9a",
+    "fileSizeBytes": 110426,
+    "pageCount": 2,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-19T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedMonth": "2026-07",
+      "publisher": "경희대학교 입학처",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "writtenSubjects": "deferred",
+        "selectionWeights": "partial",
+        "englishTestDetails": "partial",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "원서접수 전 입학처 홈페이지 게재",
+      "notice": "2027학년도 경희대학교 편입학의 주요 변경 사항만 안내한 2쪽 자료이며 전체 기본계획이나 모집요강이 아니다. 교육부 「2027학년도 대학 편입학 전형 기본계획」 등에 따라 변경될 수 있고, 최종 확정 내용은 원서접수 전 입학처 홈페이지의 「2027학년도 편입학 모집요강」에서 확인해야 한다. 이 문서에 언급되지 않은 모집단위의 전형방법·필답고사 과목·모집인원·전형일정·지원자격은 이 문서에 없으며, 언급이 없다는 것이 변경이 없거나 해당 사항이 없다는 뜻은 아니다.",
+      "extractionScope": "변경 사항 안내문(전체 계획 아님) 2쪽 전체 전사: Ⅰ 전자정보대학 3개 모집단위 전형방법 변경(필답고사 폐지, 서류평가·전적대학성적 도입), Ⅱ 스포츠지도학과 분야별 추가 지원자격과 전형방법 변경, Ⅲ 공인영어성적 인정 범위. 2026학년도 비교 열은 참고용 전년도 정보로만 기록. 그 밖의 모집단위 전형방법·필답고사 과목·모집인원·전형일정은 원문에 없음.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027학년도_경희대학교_변경사항.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "document-status",
+      "heading": "문서 성격과 변경 가능성",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "이 문서는 경희대학교 입학처가 2026년 7월 공개한 2027학년도 편입학 주요 사항 안내로, 2026학년도 대비 바뀌는 사항만 정리한 2쪽 변경 안내 자료이다. 전체 기본계획이나 모집요강이 아니다. 다루는 내용은 전자정보대학 3개 모집단위의 전형방법 변경, 스포츠지도학과 편입학 모집 계획(분야별 추가 지원자격과 전형방법), 공인영어성적 인정 범위뿐이다. 이 문서에 나오지 않은 모집단위의 전형방법·필답고사 과목·반영비율, 모집인원, 전형일정, 일반 지원자격은 이 문서에 없으므로 최종 모집요강을 확인해야 하며, 문서에 없다는 이유로 변경이 없다고 단정할 수 없다. 내용은 교육부 「2027학년도 대학 편입학 전형 기본계획」 등의 사유로 변경될 수 있고, 최종 확정 내용은 원서접수 전 경희대학교 입학처 홈페이지의 「2027학년도 편입학 모집요강」으로 확인해야 한다."
+    },
+    {
+      "key": "electronics-selection-change",
+      "heading": "전자정보대학 모집단위 전형방법 변경(일반/학사)",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2027학년도 일반편입·학사편입에서 전자정보대학의 전자정보공학부 전자공학과, 전자정보공학부 반도체공학과, 생체의공학과는 필답고사를 폐지하고 서류평가와 전적대학성적을 도입한다. 2027학년도 전형방법은 일괄합산으로 서류평가 40%, 공인영어성적 30%, 전적대학성적 30%를 반영한다. 변경 전 2026학년도에는 일괄합산으로 필답고사 90%, 공인영어성적 10%를 반영했다. 학과별 결원 등에 따라 모집 여부와 모집인원이 변경될 수 있으며 「2027학년도 편입학 모집요강」에서 확인해야 한다. 모집인원과 서류평가 세부 평가 기준은 이 문서에 없다."
+    },
+    {
+      "key": "sports-eligibility-football-baseball",
+      "heading": "스포츠지도학과 추가 지원자격: 축구·야구",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "스포츠지도학과 편입학 축구(남)는 2025~2026년 2년간 대학축구 연맹 선수로 등록되어 경기에 출전한 자가 지원할 수 있다. 선발 포지션은 FW(ST) 공격수(스트라이커), DF(CB) 수비수(센터백)이며 편입학 후 2년간 선수로 필수 참여해야 한다. 지원하는 포지션과 경기실적증명서상 포지션이 일치하는 경우만 실적으로 인정한다. 본교가 인정하는 경기실적 전국대회는 춘계대학축구연맹전, 1,2학년대학축구대회, 전국체육대회, 추계대학축구연맹전, 대학축구 U리그 왕중왕전이다. 야구(남)는 2025~2026년 2년간 대학야구 연맹 선수로 등록되어 경기에 출전한 자가 지원할 수 있다. 선발 포지션은 투수, 중견수(좌타), 3루수이며 편입학 후 2년간 선수로 필수 참여해야 한다. 경기실적증명서상 포지션이 투수, 3루수, 중견수(좌타)인 경우만 실적으로 인정한다. 본교가 인정하는 경기실적 전국대회는 KUSF U-리그 예선 및 왕중왕전, 전국대학야구선수권대회, 대통령기 전국대학야구대회이다. 학과별 결원 등에 따라 모집 여부와 선발 포지션은 변경될 수 있다."
+    },
+    {
+      "key": "sports-eligibility-other",
+      "heading": "스포츠지도학과 추가 지원자격: 기타종목",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "스포츠지도학과 편입학 기타종목은 다음 두 가지를 모두 충족해야 한다. ① 대학입학 이후부터 원서접수 마감까지의 기간 내 대한체육회 단일종목(1개 종목) 선수로 1년 이상 등록된 자, ② 대한체육회 또는 가맹 경기단체가 주관하는 전국대회(생활체육 경기 실적 제외)에서 1회 이상 1위~10위 입상자이며 ①에 해당하는 기간 내 실적만 인정한다. 선발종목은 단체 종목 컬링, 개인 종목 볼링, 사격, 스키, 육상, 에어로빅, 수상스키·웨이크스포츠(보드, 서프)이다. 대한체육회 선수로 등록되어 참가한 실적과 대한체육회 또는 가맹 경기단체가 주관하는 전국대회 실적만 인정하며, 대회 본인 출전 사실을 확인할 수 있어야 한다. 동호인(동호회)·생활체육대회 실적은 인정하지 않는다. 개인종목 경기실적은 본인 1인 출전 또는 본인을 포함한 복식/2인조 경기만 인정한다. 개인종목 1인 출전 경기는 실적증명서상 대회 참가 인원이 3인 이상인 경우의 입상실적만, 개인종목 복식/2인조와 단체종목 출전 경기는 참가팀이 3팀 이상인 경우의 입상실적만 인정한다. 학과별 결원 등에 따라 모집 여부는 변경될 수 있다."
+    },
+    {
+      "key": "sports-selection-change",
+      "heading": "스포츠지도학과 전형방법 변경",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "2027학년도 스포츠지도학과 편입학 전형방법은 서류종합평가(경기실적, 자기소개서 등) 40%, 공인영어성적 30%, 전적대학성적 30%를 반영한다. 변경 전 2026학년도에는 실적평가 80%, 공인영어성적 20%를 반영했다. 원문은 이 전형의 편입 유형(일반/학사)과 모집인원을 명시하지 않았다."
+    },
+    {
+      "key": "english-score-recognition",
+      "heading": "공인영어성적 인정 범위",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "인문·자연·예술·체육계열 지원자의 공인영어성적은 TOEIC, TOEFL(iBT), TEPS를 인정하며, 본교 인정기간인 2024년 12월 12일부터 2026년 12월 11일까지 응시하고 취득한 성적(응시와 취득 모두 기간 내)만 인정한다. TOEFL CBT, TOEFL PBT, 외국에서 응시한 TOEIC은 인정하지 않는다. 기관TOEFL, 기관TOEIC, TOEIC Bridge, TOEIC Speaking and Writing Tests도 인정하지 않는다. TOEFL(iBT)는 동일 회차 시험(Test Date Scores)에서 취득한 점수만 인정하고 MY BEST SCORES는 인정하지 않는다. 2027학년도 편입학 모집요강의 <공인영어성적 상관기준표>를 참조해 등급이 높은 1개의 성적을 선택해 원서접수 사이트에 입력하고 성적표를 제출(업로드)한다. 청각장애로 듣기시험을 미응시한 경우 듣기 부분을 제외한 점수를 환산해 반영하며, 장애인복지법 제32조에 따라 장애인등록을 필한 장애인에 한해 인정한다. 최저 기준 점수와 상관기준표 수치는 이 문서에 없다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "electronics-document-english-prior",
+      "scopeType": "major",
+      "scopeValue": "전자정보대학 전자정보공학부 전자공학과·전자정보공학부 반도체공학과·생체의공학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필답고사 폐지(2026학년도 필답고사 90%에서 변경). 일괄합산",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": "2024-12-12",
+      "englishScoreValidThrough": "2026-12-11",
+      "sourcePages": [
+        1,
+        2
+      ],
+      "notes": "일괄합산 서류평가 40%+공인영어성적 30%+전적대학성적 30%. 2026학년도 필답고사 90%+공인영어 10%에서 변경. 학과별 결원에 따라 모집 여부·모집인원 변경 가능.",
+      "metadata": {
+        "factStatus": "provisional",
+        "majorCount": 3,
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 30,
+        "previousYear": {
+          "admissionYear": 2026,
+          "writtenWeight": 90,
+          "languageWeight": 10
+        },
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL(iBT)",
+            "TEPS"
+          ],
+          "sourcePages": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "key": "sports-coaching-document-english-prior",
+      "scopeType": "major",
+      "scopeValue": "스포츠지도학과",
+      "transferTypes": [
+        "편입학(일반/학사 유형 미명시)"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험 없음. 서류종합평가(경기실적, 자기소개서 등)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": "2024-12-12",
+      "englishScoreValidThrough": "2026-12-11",
+      "sourcePages": [
+        1,
+        2
+      ],
+      "notes": "서류종합평가(경기실적, 자기소개서 등) 40%+공인영어성적 30%+전적대학성적 30%. 2026학년도 실적평가 80%+공인영어 20%에서 변경. 축구(남)·야구(남)·기타종목별 추가 지원자격 있음. 원문은 편입 유형(일반/학사)을 명시하지 않음. 학과별 결원에 따라 모집 여부·선발 포지션 변경 가능.",
+      "metadata": {
+        "factStatus": "provisional",
+        "majorCount": 1,
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 30,
+        "previousYear": {
+          "admissionYear": 2026,
+          "performanceWeight": 80,
+          "languageWeight": 20
+        },
+        "transferTypesDisclosed": false,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": null,
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL(iBT)",
+            "TEPS"
+          ],
+          "sourcePages": [
+            2
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 2,
+    "expectedScheduleRows": 0,
+    "tablesChecked": [
+      "PDF 1페이지 전자정보대학 전형방법 변경 전·후 비교 표",
+      "PDF 1페이지 스포츠지도학과 분야별 추가 지원자격 표",
+      "PDF 2페이지 스포츠지도학과 전형방법 변경 전·후 비교 표",
+      "PDF 2페이지 공인영어성적 인정 범위 안내"
+    ],
+    "notes": [
+      "파일명은 변경사항, 원문 제목은 편입학 주요 사항 안내이며 내용은 2026학년도 대비 변경 사항만 담은 2쪽 안내이므로 documentType을 전형 주요사항(변경 안내)로 분류(전남대 선례와 동일)",
+      "전자정보대학(국제캠퍼스 소재로 알려짐)과 공인영어 공통 안내를 함께 다루고 원문에 캠퍼스 표기가 없으므로 campus=전체",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "전형일정이 원문에 없으므로 schedule 행을 생성하지 않음. 문서 작성 시점 2026. 7.은 metadata.publishedMonth로만 기록",
+      "스포츠지도학과는 원문에 편입 유형이 없어 일반/학사로 추정하지 않고 미명시로 기록",
+      "공인영어 최저 기준 점수는 원문에 없어 englishToeicMin 등은 null. 인정 응시기간 2024-12-12~2026-12-11만 기록",
+      "그 밖의 모집단위 전형규칙은 원문에 없어 생성하지 않음",
+      "2026학년도 비교 열은 참고용 전년도 정보로 섹션과 metadata.previousYear에만 기록"
+    ]
+  }
+}

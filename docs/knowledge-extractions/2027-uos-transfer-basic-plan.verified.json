@@ -1,0 +1,563 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "서울시립대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "모집 주요사항(안)",
+    "title": "2027학년도 서울시립대학교 편입학 모집 주요사항(안)",
+    "sourceFile": "2027 시립대학교 편입학 기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "7ba54c491b14805b1458c0d860182a4791509edbc8e768cc2306090b9c83b6f1",
+    "fileSizeBytes": 516471,
+    "pageCount": 6,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-19T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedOn": "2026-06",
+      "publisher": "서울시립대학교 입학처(입학관리과)",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred",
+        "selectionMultiple": "partial",
+        "englishTestDetails": "partial",
+        "detailedEligibility": "deferred",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "최종 공지되는 모집요강(시기 미기재)",
+      "notice": "교육부 「2027학년도 편입학 전형 기본계획」에 따라 변경될 수 있는 주요사항(안)이다. 모집 희망 여부는 학과 의견이며 여석이 없으면 모집하지 않을 수 있다. 최종 모집요강을 반드시 확인해야 한다.",
+      "extractionScope": "6페이지 주요사항(안) 전체: 필답 위주·실기 포함 전형 단계별 반영비율, 공인영어 인정 기준, 3단계 선발배수, 필답고사 구성, 서류·GPA 평가, 가산점, 제출서류, 모집단위별 모집 희망 여부 41행. 모집인원·전형일정·지원자격 세부·공인영어 환산표는 원문에 없음.",
+      "pageNumbering": "sourcePage는 PDF 페이지 순번(표지 포함)이며 인쇄된 쪽번호는 PDF 페이지-1이다.",
+      "relatedDocuments": [
+        "docs/knowledge-extractions/2027-uos-transfer-major-points.verified.md"
+      ],
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027 시립대학교 편입학 기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status-and-scope",
+      "heading": "주요사항(안) 상태와 유의사항",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "2026년 6월 서울시립대학교 입학처(입학관리과)가 공개한 2027학년도 편입학 모집 주요사항(안)이다. 전형계획은 교육부 「2027학년도 편입학 전형 기본계획」에 따라 변경될 수 있으므로 최종 공지되는 모집요강을 반드시 확인해야 한다. 모집단위 사정에 따라 편입학 모집을 실시하지 않는 학과가 발생할 수 있다. 일반편입과 학사편입의 전형방법 및 반영비율은 동일하며 단계별 전형이다. 모집인원과 전형일정(원서접수·필답고사·발표일)은 이 문서에 없다.",
+      "metadata": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "deferred"
+      }
+    },
+    {
+      "key": "written-track-method",
+      "heading": "필답 위주 전형 방법 및 반영비율",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "필답 위주 전형은 인문계열, 자연계열(건축학부 건축학전공 제외), 스포츠과학과에 적용한다. 인문계열·조경학과·스포츠과학과는 1단계 공인영어성적 100%(일정배수), 2단계 필답고사 영어 100%(일정배수), 3단계 2단계 점수 55%+서류정성평가 40%+GPA정량평가 5%이다. 자연계열Ⅰ은 1단계 공인영어성적 100%, 2단계 필답고사 수학 100%, 3단계 2단계 점수 60%+서류정성평가 35%+GPA정량평가 5%이다. 자연계열Ⅱ는 1단계 공인영어성적 100%, 2단계 필답고사 영어·수학 통합 100%, 3단계 2단계 점수 60%+서류정성평가 35%+GPA정량평가 5%이다. 자연계열Ⅰ 모집단위는 화학공학과, 기계정보공학과, 토목공학과, 수학과, 물리학과, 건축학부 건축공학전공, 교통공학과, 공간정보공학과, 인공지능학과이다. 자연계열Ⅱ 모집단위는 통계학과, 생명과학과, 환경원예학과, 융합응용화학과, 도시공학과, 환경공학부, 첨단융합학부 융합바이오헬스전공, 첨단융합학부 지능형반도체전공이다."
+    },
+    {
+      "key": "english-test",
+      "heading": "공인영어성적",
+      "pageStart": 2,
+      "pageEnd": 4,
+      "content": "인정 시험은 TOEIC, TOEFL, (NEW) TEPS이며 공인영어성적환산표에 따라 정량 반영한다. 군토익, 국외 토익, 기관 자체 토플·토익, 토익스피킹 등 명시된 시험 외 성적은 인정하지 않는다. 청각장애인은 듣기 점수를 제외한 영어성적을 기존 점수표에 환산해 반영한다(예시: TOEIC 495점, 2018년 5월 12일 이후 TEPS 360점, TOEFL iBT 90점). 청각장애 적용은 「장애인고용촉진 및 직업재활법 시행령」 제3조에 따른 장애인으로 유효하게 등록되어 있어야 한다. 1단계 공인영어성적에 따른 2단계 필기고사 응시대상자 선발배수는 추후 모집요강에서 발표한다. 건축학부 건축학전공과 디자인학과에도 같은 공인영어 기준을 적용한다. 최저점은 제시되지 않았다."
+    },
+    {
+      "key": "stage3-multiples",
+      "heading": "2단계 필답고사 총점에 따른 3단계 평가대상자 선발배수",
+      "pageStart": 2,
+      "pageEnd": 4,
+      "content": "필답 위주 전형의 3단계 평가대상자 선발배수는 모집인원 1명 15배수, 2~3명 10배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수이다. 건축학부 건축학전공은 모집인원 1명 10배수, 2~3명 8배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수이다."
+    },
+    {
+      "key": "written-exam-composition",
+      "heading": "필답고사 구성",
+      "pageStart": 3,
+      "pageEnd": 4,
+      "content": "인문계열·조경학과·스포츠과학과 영어는 30문항 60분이며 편입 후 전공 텍스트를 영어로 읽을 수 있는 능력을 측정하는 객관식이다(수능, TOEIC, TOEFL 등 영어시험 형태로 문법, 어휘, 논리완성, 독해 유형 등 출제). 자연계열Ⅰ 수학은 25문항 70분이며 자연계열 학부과정 이수에 필요한 기초지식을 측정하는 객관식 및 단답형이다(미적분학, 선형대수학, 공학수학 포함). 자연계열Ⅱ와 건축학부 건축학전공은 영어·수학 55문항 130분(영어 30문항+수학 25문항)이며 출제범위는 인문계열 및 자연계열Ⅰ과 동일하다."
+    },
+    {
+      "key": "document-and-gpa-evaluation",
+      "heading": "서류정성평가와 GPA정량평가",
+      "pageStart": 3,
+      "pageEnd": 5,
+      "content": "서류정성평가는 학업계획서 30%, 전적대학 관련 사항(이수학점, 이수과목, 성적 등 종합 평가) 50%, 기타 모집단위별 고려 사항(공인영어성적, 기타 어학성적, 자격증, 수상실적, 포트폴리오 등 종합 평가) 20%를 참고한 종합 정성평가다. 서류정성평가 결과 수학하기에 현저히 낮은 학업역량을 지녔다고 판단되면 필답고사 점수와 관계없이 불합격될 수 있다. GPA정량평가는 전적대학 최종 성적표 GPA를 백분율로 환산해 적용하고, 백분율로 나타나지 않으면 본교 자체 기준을 적용한다. 전적대학이 2개 이상이면 2학년을 수료한 전적대학을 기준으로 한다. 예를 들어 전적대학A에서 2학년 수료 후 전적대학B로 편입해 3학년을 수료했다면 전적대학A의 최종 성적표 GPA를 반영하고 전적대학B는 서류평가 시 정성평가한다. 그 밖의 경우는 입학전형관리위원회 심의에 따르며 필요시 추가 서류를 요구할 수 있다. 건축학부 건축학전공과 음악학과의 GPA정량평가 기준도 같다."
+    },
+    {
+      "key": "bonus-points",
+      "heading": "모집단위별 가산점",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "해당 조건을 증빙하면 2단계 필답고사 점수에 가산점 3점을 부여한다(100점 만점 중 3점 추가). 세무학과는 국내 공인회계사 또는 세무사 시험 1차 이상 합격자, 경영학부는 국내 공인회계사 시험 1차 이상 합격자가 대상이다."
+    },
+    {
+      "key": "written-track-documents",
+      "heading": "필답 위주 전형 제출서류",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "인문·자연계열 전 모집단위 및 스포츠과학과는 1단계에 공인영어성적표를 최초 원서접수 기간에 제출한다. 2단계에는 1단계 합격자 발표 후 지정 기간에 학업계획서, 전적대학 수료(졸업)증명서, 전적대학 성적증명서를 제출하고, 어학성적·자격증·수상실적 등 본인의 우수성을 드러낼 증빙서류가 있으면 제출할 수 있다. 조경학과 지원자는 포트폴리오를 필수 제출한다."
+    },
+    {
+      "key": "practical-track-method",
+      "heading": "실기 포함 전형 방법 및 반영비율",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "실기 포함 전형은 건축학부 건축학전공, 디자인학과, 음악학과에 적용한다. 건축학부 건축학전공은 1단계 공인영어성적 100%(일정배수), 2단계 필답고사 영어·수학 100%(일정배수), 3단계 2단계 점수 40%+서류정성평가 35%+GPA정량평가 5%+실기고사 20%이다. 디자인학과는 1단계 공인영어성적 100%(6배수), 2단계 실기고사 60%+면접고사 40%이다. 음악학과 작곡 외 전공은 일괄 GPA정량평가 20%+실기고사 80%, 작곡 전공은 일괄 GPA정량평가 10%+실기고사 70%+면접고사 20%이다. 건축학부 건축학전공의 서류정성평가 구성(학업계획서 30%, 전적대학 관련 사항 50%, 기타 20%)은 필답 위주 전형과 같다."
+    },
+    {
+      "key": "practical-track-documents",
+      "heading": "실기 포함 전형 제출서류",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "건축학부 건축학전공은 1단계에 공인영어성적표(최초 원서접수 기간), 2단계에 학업계획서, 전적대학 수료(졸업)증명서, 전적대학 성적증명서, 선택 증빙서류(어학성적·자격증·수상실적 등), 포트폴리오(필수)를 1단계 합격자 발표 후 지정 기간에 제출한다. 디자인학과는 1단계에 공인영어성적표(최초 원서접수 기간), 2단계에 전적대학 수료(졸업)증명서와 성적증명서(1단계 합격자 발표 후 지정 기간)를 제출하고 포트폴리오는 면접고사 시 지참한다. 음악학과는 일괄로 전적대학 수료(졸업)증명서와 성적증명서를 지정 기간에 제출한다. 제출서류 및 실기고사 세부내용은 추후 모집요강 등을 통해 공지할 예정이다."
+    },
+    {
+      "key": "recruitment-humanities",
+      "heading": "인문계열 모집단위별 모집 희망 여부와 필답고사 과목",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "모집 희망 여부는 학과 의견이며 실제 편입학 여석이 발생하지 않으면 모집하지 않을 수 있다. 인문계열 필답고사 과목은 모두 영어 100%이다. 일반·학사편입 모두 모집 희망: 정경대학 행정학과, 국제관계학과, 경제학부, 사회복지학과, 세무학과, 인문대학 영어영문학과, 도시과학대학 도시사회학과. 일반편입만 모집 희망(학사편입 모집하지 않음): 경영대학 경영학부, 인문대학 국어국문학과, 국사학과, 철학과, 중국어문화학과, 도시과학대학 도시행정학과.",
+      "metadata": {
+        "recruitmentIntent": "department_preference"
+      }
+    },
+    {
+      "key": "recruitment-natural",
+      "heading": "자연계열 모집단위별 모집 희망 여부와 필답고사 과목",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "모집 희망 여부는 학과 의견이며 실제 편입학 여석이 발생하지 않으면 모집하지 않을 수 있다. 일반·학사편입 모두 모집 희망: 수학과(수학 100%), 통계학과(영어+수학 혼합), 물리학과(수학 100%), 생명과학과(영어+수학 혼합), 건축학부 건축공학전공(수학 100%), 건축학부 건축학전공(영어+수학 혼합), 조경학과(영어 100%), 공간정보공학과(수학 100%). 일반편입만 모집 희망(학사편입 모집하지 않음): 화학공학과(수학 100%), 기계정보공학과(수학 100%), 토목공학과(수학 100%, 전년 대비 학사 미시행·과목변경), 환경원예학과(영어+수학 혼합), 융합응용화학과(영어+수학 혼합), 도시공학과(영어+수학 혼합), 교통공학과(수학 100%), 환경공학부(영어+수학 혼합), 인공지능학과(수학 100%), 첨단융합학부 융합바이오헬스전공(영어+수학 혼합), 첨단융합학부 지능형반도체전공(영어+수학 혼합). 일반·학사편입 모두 모집하지 않음: 전자전기컴퓨터공학부(전년 대비 편입 미시행), 신소재공학과, 컴퓨터과학부, 첨단융합학부 첨단인공지능전공.",
+      "metadata": {
+        "recruitmentIntent": "department_preference"
+      }
+    },
+    {
+      "key": "recruitment-arts",
+      "heading": "예체능계열 모집단위별 모집 희망 여부와 필답고사 과목",
+      "pageStart": 6,
+      "pageEnd": 6,
+      "content": "모집 희망 여부는 학과 의견이며 실제 편입학 여석이 발생하지 않으면 모집하지 않을 수 있다. 예술체육대학 스포츠과학과는 일반·학사편입 모두 모집 희망이며 필답고사 영어 100%이다. 디자인학과 시각디자인전공은 일반편입만 모집 희망(학사편입 모집하지 않음), 디자인학과 산업디자인전공은 일반·학사편입 모집 희망이며 모두 실기고사로 선발한다. 음악학과는 일반·학사편입 모두 모집 희망이며 실기고사로 선발한다. 조각학과는 일반·학사편입 모두 모집하지 않는다.",
+      "metadata": {
+        "recruitmentIntent": "department_preference"
+      }
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "humanities-landscape-sports",
+      "scopeType": "category",
+      "scopeValue": "인문계열 전 모집단위 및 조경학과, 스포츠과학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 30,
+      "examFormat": "영어 30문항 객관식(문법, 어휘, 논리완성, 독해 등)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 55,
+      "finalDocumentWeight": 40,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2,
+        3,
+        6
+      ],
+      "notes": "단계별 전형. 1단계 공인영어 100%(일정배수), 2단계 필답고사 영어 100%(일정배수), 3단계 2단계 점수 55%+서류정성평가 40%+GPA정량평가 5%. 조경학과(자연계열)·스포츠과학과(예체능)도 영어 필답. 조경학과는 2단계 포트폴리오 필수 제출. 세무학과(공인회계사·세무사 1차 이상 합격)와 경영학부(공인회계사 1차 이상 합격)는 2단계 필답고사에 3점 가산(100점 만점). 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "stage1LanguageWeight": 100,
+        "stage2WrittenWeight": 100,
+        "finalStage2ScoreWeight": 55,
+        "finalPriorUniversityWeight": 5,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "stage1SelectionMultiple": "추후 모집요강 발표",
+        "stage3SelectionByQuota": "모집인원 1명 15배수, 2~3명 10배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수",
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 100,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL",
+            "TEPS"
+          ],
+          "sourcePages": [
+            2
+          ],
+          "note": "1단계 공인영어성적 100%(환산표 정량 반영)로 2단계 필답고사 응시대상자를 선발한다. 최저점은 제시되지 않았고 1단계 선발배수는 추후 모집요강에서 발표한다."
+        },
+        "bonusPoints": "세무학과: 국내 공인회계사·세무사 시험 1차 이상 합격자, 경영학부: 국내 공인회계사 시험 1차 이상 합격자 — 2단계 필답고사 점수에 3점 가산",
+        "tracksBasis": "인문계열 + 조경학과(자연) + 스포츠과학과(예체능), PDF 6페이지 계열 구분"
+      }
+    },
+    {
+      "key": "natural-1-math",
+      "scopeType": "major",
+      "scopeValue": "화학공학과, 기계정보공학과, 토목공학과, 수학과, 물리학과, 건축학부 건축공학전공, 교통공학과, 공간정보공학과, 인공지능학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 70,
+      "questionCount": 25,
+      "examFormat": "수학 25문항 객관식·단답형(미적분학, 선형대수학, 공학수학 포함)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 35,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2,
+        3,
+        6
+      ],
+      "notes": "자연계열Ⅰ. 1단계 공인영어 100%(일정배수), 2단계 필답고사 수학 100%(일정배수), 3단계 2단계 점수 60%+서류정성평가 35%+GPA정량평가 5%. 토목공학과는 전년 대비 학사편입 미시행·과목변경. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "stage1LanguageWeight": 100,
+        "stage2WrittenWeight": 100,
+        "finalStage2ScoreWeight": 60,
+        "finalPriorUniversityWeight": 5,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "stage1SelectionMultiple": "추후 모집요강 발표",
+        "stage3SelectionByQuota": "모집인원 1명 15배수, 2~3명 10배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 100,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL",
+            "TEPS"
+          ],
+          "sourcePages": [
+            2
+          ],
+          "note": "1단계 공인영어성적 100%(환산표 정량 반영)로 2단계 필답고사 응시대상자를 선발한다. 최저점은 제시되지 않았고 1단계 선발배수는 추후 모집요강에서 발표한다."
+        }
+      }
+    },
+    {
+      "key": "natural-2-english-math",
+      "scopeType": "major",
+      "scopeValue": "통계학과, 생명과학과, 환경원예학과, 융합응용화학과, 도시공학과, 환경공학부, 첨단융합학부 융합바이오헬스전공, 첨단융합학부 지능형반도체전공",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 130,
+      "questionCount": 55,
+      "examFormat": "영어 30문항 + 수학 25문항 (영어·수학 통합, 출제범위는 인문계열·자연계열Ⅰ과 동일)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 60,
+      "finalDocumentWeight": 35,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        2,
+        3,
+        6
+      ],
+      "notes": "자연계열Ⅱ. 1단계 공인영어 100%(일정배수), 2단계 필답고사 영어·수학 통합 100%(일정배수), 3단계 2단계 점수 60%+서류정성평가 35%+GPA정량평가 5%. 영어·수학 과목별 배점 비율은 원문에 없음. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "stage1LanguageWeight": 100,
+        "stage2WrittenWeight": 100,
+        "finalStage2ScoreWeight": 60,
+        "finalPriorUniversityWeight": 5,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "stage1SelectionMultiple": "추후 모집요강 발표",
+        "stage3SelectionByQuota": "모집인원 1명 15배수, 2~3명 10배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 100,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL",
+            "TEPS"
+          ],
+          "sourcePages": [
+            2
+          ],
+          "note": "1단계 공인영어성적 100%(환산표 정량 반영)로 2단계 필답고사 응시대상자를 선발한다. 최저점은 제시되지 않았고 1단계 선발배수는 추후 모집요강에서 발표한다."
+        }
+      }
+    },
+    {
+      "key": "architecture",
+      "scopeType": "major",
+      "scopeValue": "건축학부 건축학전공",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 130,
+      "questionCount": 55,
+      "examFormat": "영어 30문항 + 수학 25문항 (출제범위는 인문계열·자연계열Ⅰ과 동일)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": 35,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 20,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        4,
+        5,
+        6
+      ],
+      "notes": "실기 포함 전형. 1단계 공인영어 100%(일정배수), 2단계 필답고사 영어·수학 100%(일정배수), 3단계 2단계 점수 40%+서류정성평가 35%+GPA정량평가 5%+실기고사 20%. 2단계 포트폴리오 필수 제출. 실기고사 세부내용은 추후 모집요강 공지. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "stage1LanguageWeight": 100,
+        "stage2WrittenWeight": 100,
+        "finalStage2ScoreWeight": 40,
+        "finalPriorUniversityWeight": 5,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "stage1SelectionMultiple": "추후 모집요강 발표",
+        "stage3SelectionByQuota": "모집인원 1명 10배수, 2~3명 8배수, 4~5명 7배수, 6~8명 6배수, 9~13명 5배수, 14명 이상 4배수",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 100,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL",
+            "TEPS"
+          ],
+          "sourcePages": [
+            4
+          ],
+          "note": "1단계 공인영어성적 100%(환산표 정량 반영)로 2단계 필답고사 응시대상자를 선발한다. 최저점은 제시되지 않았고 1단계 선발배수는 추후 모집요강에서 발표한다."
+        },
+        "practicalDetails": "추후 모집요강 공지"
+      }
+    },
+    {
+      "key": "design",
+      "scopeType": "major",
+      "scopeValue": "디자인학과(시각디자인전공, 산업디자인전공)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필답고사 없음(실기고사·면접고사)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 60,
+      "stage1SelectionMinMultiple": 6,
+      "stage1SelectionMaxMultiple": 6,
+      "sourcePages": [
+        4,
+        5,
+        6
+      ],
+      "notes": "1단계 공인영어 100%로 6배수, 2단계 실기고사 60%+면접고사 40%. 시각디자인전공은 일반편입만, 산업디자인전공은 일반·학사편입 모집 희망. 포트폴리오는 면접고사 시 지참. 실기고사 세부내용은 추후 모집요강 공지. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "stage1LanguageWeight": 100,
+        "transferTypesByMajor": {
+          "시각디자인전공": [
+            "일반편입"
+          ],
+          "산업디자인전공": [
+            "일반편입",
+            "학사편입"
+          ]
+        },
+        "practicalDetails": "추후 모집요강 공지",
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 100,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TOEFL",
+            "TEPS"
+          ],
+          "sourcePages": [
+            4
+          ],
+          "note": "1단계 공인영어성적 100%로 6배수 선발. 최저점 미제시."
+        }
+      }
+    },
+    {
+      "key": "music-non-composition",
+      "scopeType": "major",
+      "scopeValue": "음악학과 작곡 외 전공",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필답고사 없음(실기고사)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": 80,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        4,
+        5,
+        6
+      ],
+      "notes": "일괄 전형. GPA정량평가 20%+실기고사 80%. 공인영어성적은 전형요소가 아님. 실기고사 세부내용은 추후 모집요강 공지. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalPriorUniversityWeight": 20,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "practicalDetails": "추후 모집요강 공지",
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
+    },
+    {
+      "key": "music-composition",
+      "scopeType": "major",
+      "scopeValue": "음악학과 작곡 전공",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필답고사 없음(실기고사·면접고사)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 70,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        4,
+        5,
+        6
+      ],
+      "notes": "일괄 전형. GPA정량평가 10%+실기고사 70%+면접고사 20%. 공인영어성적은 전형요소가 아님. 실기고사 세부내용은 추후 모집요강 공지. 주요사항(안) 기준.",
+      "metadata": {
+        "factStatus": "provisional",
+        "finalPriorUniversityWeight": 10,
+        "finalPriorUniversityBasis": "GPA정량평가(전적대학 최종 성적표 GPA 백분율 환산)",
+        "practicalDetails": "추후 모집요강 공지",
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            4
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 7,
+    "expectedScheduleRows": 0,
+    "tablesChecked": [
+      "PDF 2페이지 필답 위주 전형 전형요소 표",
+      "PDF 2페이지 공인영어성적 표",
+      "PDF 2페이지 3단계 평가대상자 선발배수 표",
+      "PDF 3페이지 필답고사 구성 표",
+      "PDF 3페이지 서류정성평가 구성 표",
+      "PDF 3페이지 모집단위별 가산점 표",
+      "PDF 3페이지 필답 위주 전형 제출서류 표",
+      "PDF 4페이지 실기 포함 전형 전형요소 표",
+      "PDF 4페이지 건축학전공 선발배수·필답고사·서류정성평가 표",
+      "PDF 5페이지 실기 포함 전형 제출서류 표",
+      "PDF 6페이지 모집단위별 모집 희망 여부 및 필답고사 과목 표(41행)"
+    ],
+    "notes": [
+      "2026년 6월 모집 주요사항(안)으로 분류. 최종 모집요강이 아님",
+      "모집인원 미공개이므로 program 행을 생성하지 않음",
+      "원문에 전형일정이 전혀 없어 schedule event를 생성하지 않음",
+      "1단계는 공인영어 100%이고 필답고사는 2단계이므로 stage1WrittenWeight는 null, finalWrittenWeight에는 3단계의 2단계(필답) 점수 반영비율을 기록",
+      "GPA정량평가는 finalPriorUniversityWeight로 기록",
+      "1단계 공인영어 선발배수는 추후 모집요강 발표라 stage1SelectionMultiple을 비움. 디자인학과만 1단계 6배수 명시",
+      "공인영어 최저점이 없어 englishTest.role은 weighted, toeicMin은 null",
+      "디자인학과 일반편입 병합 셀 O를 시각·산업디자인전공 두 행에 상속(검증 추출본 좌표 검증 기준)",
+      "자연계열Ⅱ·건축학전공 영어·수학 과목별 배점은 원문에 없어 문항 수만 기록"
+    ]
+  }
+}

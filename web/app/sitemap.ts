@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const now = new Date();
 
-  const staticRoutes = ["/", "/transfer", "/news", "/schedule", "/transfer/ai", "/community/transfer", "/support"];
+  const staticRoutes = ["/", "/transfer", "/news", "/schedule", "/past-exams", "/transfer/ai", "/community/transfer", "/support"];
   if (ENABLE_TRANSFER) {
     staticRoutes.push("/verification");
   }

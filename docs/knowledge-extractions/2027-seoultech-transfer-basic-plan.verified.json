@@ -1,0 +1,1002 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "서울과학기술대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 기본계획",
+    "title": "2027학년도 서울과학기술대학교 편입학 전형 기본계획",
+    "sourceFile": "2027_서울과학기술대학교_편입학기본계획.pdf",
+    "sourceUrl": null,
+    "sha256": "1c87fbc5126fcc0ee7bd1c997849d985ff76ddc159a9c96614d744c4272008b8",
+    "fileSizeBytes": 343593,
+    "pageCount": 18,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-19T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "basic_plan",
+      "publishedOn": "2026-07",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "provisional",
+        "selectionMultiple": "provisional",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "2026년 12월 중",
+      "notice": "2026년 7월 공고된 2027학년도 편입학 전형 기본계획 기준. 교육부 기본계획에 따라 변경될 수 있으며 최종 전형방법·모집인원·일정은 2026년 12월 중 모집요강에서 확정된다.",
+      "extractionScope": "주요 변경사항·일정·모집단위(인원 미정)·지원자격·전형요소별 반영점수·1단계 선발인원·대학수학시험·공인영어·동일계·면접·동점자/불합격 기준 요약. 공인영어 환산표(별표1)와 동일계 분류표(별표2)는 요약.",
+      "pageNumbering": "sourcePage는 PDF 페이지 순번(표지 포함)이며 인쇄된 쪽번호는 PDF 페이지-1이다.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_서울과학기술대학교_편입학기본계획.pdf"
+    }
+  },
+  "sections": [
+    {
+      "key": "status",
+      "heading": "기본계획 성격과 주요 변경사항",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "2027학년도 서울과학기술대학교 편입학 전형 기본계획이다. 교육부 2027학년도 편입학 전형 기본계획에 따라 변경될 수 있으며 최종 전형방법·모집인원·일정은 모집요강에서 확정된다. 일반전형 모집인원은 2026학년도 감축분 238석을 유지한다(첨단분야 여석 활용 없음). 학과별 모집인원이 대폭 감소하거나 모집하지 않을 수 있다. 모집단위 변경: 스마트ICT융합공학과→ICT융합공학과, 산업공학과(산업정보시스템전공)→산업공학부(산업정보시스템전공), 미래에너지융합학과→미래에너지학과, 디자인학과 산업디자인전공·시각디자인전공→산업디자인학과·시각디자인학과로 분리. 환경공학과에 동일계 학과 점수(20점) 추가(총점 1단계 220·2단계 270), 건축학부(건축학전공) 면접 60→80점(총점 300). 건축학전공 동일계는 KAAB 인증 5년제 건축학과만 인정."
+    },
+    {
+      "key": "quota",
+      "heading": "모집단위와 모집인원",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "모집인원은 일반·평생학습자(정원 내), 특성화고졸재직자·공무원 및 군위탁(정원 외) 모두 미정이며 최종 모집요강에서 확정된다. 학과 사정에 따라 모집하지 않는 학과가 있을 수 있다. 모집단위: 공과대학(기계시스템공학부 지능형로봇전공·미래자동차전공, 기계공학과, 안전공학과, 신소재공학과, 건설시스템공학과, 건축학부 건축공학전공·건축학전공), 정보통신대학(전기정보공학과, 전자공학과, ICT융합공학과, 컴퓨터공학과), 에너지바이오대학(화공생명공학과, 환경공학과, 식품생명공학과, 정밀화학과, 안경광학과, 스포츠과학과), 조형대학(산업디자인학과, 시각디자인학과, 도예학과, 금속공예디자인학과, 조형예술학과), 인문사회대학(행정학과, 영어영문학과, 문예창작학과), 기술경영융합대학(산업공학부 산업정보시스템전공, MSDE학과, 경영학과 경영학전공·글로벌테크노경영전공), 미래융합대학(융합기계공학과, 건설환경융합공학과, 헬스피트니스학과, 문화예술학과, 영어과, 벤처경영학과, 인공지능응용학과), 창의융합대학(지능형반도체공학과, 미래에너지학과). 건축학부(건축공학전공)는 ABEEK, 건축학전공은 KAAB 5년제 교육과정. MSDE학과·경영학과(글로벌테크노경영전공)는 복수학위 등으로 3-4-5학년 재학 가능성 사전 확인 필요. 공무원 및 군위탁은 교육부장관 추천자만. 미래융합대학은 4학기제·일학습병행 운영. 원문 전형방법 표에는 미래융합대학 학과(인공지능응용학과 제외)의 일반전형 배점이 없다."
+    },
+    {
+      "key": "eligibility-general",
+      "heading": "일반전형 지원자격(정원 내)",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "전적대학 전공과 관계없이 지원 가능하며 비동일계 지원자는 입학 후 선이수교과목(1·2학년 과정 15학점 범위 내)을 추가 취득해야 한다. 국내 4년제 대학(산업대·방송통신대·교육대 등 포함) 2학년 이상 수료하고 65학점 이상 취득(2027년 2월 수료 예정자 포함). 계절학기 학점은 취득학점으로 인정하나 이수학기에 포함하지 않는다. 학점은행제: 전문학사·일반학사 학위 취득(예정)자, 일반학사학위과정 80학점 이상 취득(예정)자, 독학학위 취득(예정)자(독학사 학점을 학점은행제로 전환한 경우 독학사 3단계 이상 수료+90학점 이상). 폴리텍대학 다기능기술자과정 졸업(예정)자. 전문대학 졸업(전문학사 취득 예정)자(3년제 2년 수료자 불가), 교육부 지정 전문대학 4년제 간호학과 2학년(4학기) 이상 수료자. 외국대학 2학년 이상 수료(예정)·졸업학점 1/2(영국 3년제 2/3) 이상 취득자(사이버대 제외). 증명서는 서류 제출일로부터 3개월 이내 발급분만 인정."
+    },
+    {
+      "key": "eligibility-special",
+      "heading": "평생학습자·특성화고졸재직자·공무원 및 군위탁 지원자격",
+      "pageStart": 6,
+      "pageEnd": 7,
+      "content": "평생학습자 전형(정원 내): 일반편입(3학년) 자격을 충족하고 입학일(2027.3.1.) 기준 만 30세 이상인 자, 또는 특성화고 등 졸업자로서 2027.3.1. 기준 산업체 근무경력 3년 이상 재직자. 특성화고 등을 졸업한 재직자 전형(정원 외): 일반편입 자격 충족+특성화고·산업수요맞춤형고·일반고 직업위탁과정·학력인정 평생교육시설 등 졸업자로서 2027.3.1. 기준 재직경력 3년 이상. 산업체는 국가·지자체·공공단체, 상시근로자 5인 이상, 4대보험 1개 이상 가입 사업체. 재직기간은 고교 졸업 이후, 휴직·정직 제외, 원서접수 시작일 현재 휴직자 지원 불가, 2027.3.1.까지 재직 신분 유지 필요. 병역특례·군 복무 경력은 증빙 시 포함. 공무원 및 군 위탁전형(정원 외): 일반편입 자격 충족+위탁교육훈련 대상으로 교육부장관 추천을 받은 공무원·군인."
+    },
+    {
+      "key": "selection-general",
+      "heading": "일반전형 전형요소별 반영점수",
+      "pageStart": 8,
+      "pageEnd": 9,
+      "content": "모두 2단계 전형(1단계 면접대상자 선발, 2단계 최종 선발). 배점 단위는 점수. 기계시스템공학부(지능형로봇·미래자동차), 기계공학과, 신소재공학과, 안전공학과, 정보통신대학 4개 학과, 화공생명공학과·정밀화학과·식품생명공학과, 산업공학부(산업정보시스템전공): 1단계 공인영어100+대학수학100=200(600%), 2단계 +면접50=250. 건설시스템공학과·건축학부(건축공학전공)·환경공학과: 1단계 공인영어100+대학수학100+동일계20=220(600%), 2단계 +면접50=270. 건축학부(건축학전공): 1단계 220(600%), 2단계 +면접80=300. 안경광학과·MSDE학과·인공지능응용학과·지능형반도체공학과·미래에너지학과: 1단계 200(400%), 2단계 250. 스포츠과학과·행정학과·문예창작학과·영어영문학과·경영학과(2개 전공): 1단계 공인영어100(400%), 2단계 +면접50=150. 산업디자인학과·도예학과·금속공예디자인학과: 1단계 공인영어100+동일계20=120(10명), 2단계 +면접80=200. 시각디자인학과·조형예술학과: 1단계 공인영어100(10명), 2단계 +면접60=160. 조형대학은 면접용 포트폴리오 제출."
+    },
+    {
+      "key": "stage1-selection",
+      "heading": "1단계 선발인원과 최종 선발",
+      "pageStart": 9,
+      "pageEnd": 13,
+      "content": "일반전형 1단계는 전형요소 합산 고득점순. 조형대학 외 원칙 4배수(11개 모집단위) 또는 6배수(17개 모집단위), 모집인원 2~3명이면 16명(4배수 단위) 또는 24명(6배수 단위), 1명이면 10명. 조형대학 5개 모집단위는 10명. 2단계는 모든 전형요소 합산 고득점순으로 모집인원의 100%. 평생학습자·특성화고졸재직자 전형은 1단계 공인영어 100%로 400%, 2단계 공인영어100+면접100=200점. 공무원 및 군위탁은 1단계 서류 자격심사, 2단계 면접 100점. 동점자: 일반전형 대학수학시험(조형대학은 면접, 문예창작학과는 등단·수상 점수)→공인영어→면접 순, 3순위까지 동점이면 전원 선발. 평생학습자·특성화고졸재직자는 공인영어→면접 순. 불합격: 자격 부적격, 2개 이상 학과·전공 복수지원, 대학수학시험·면접 결시, 부정행위, 학업능력 부적격(F), 성적산출 불가, 서류 미비."
+    },
+    {
+      "key": "math-exam",
+      "heading": "대학수학시험",
+      "pageStart": 10,
+      "pageEnd": 18,
+      "content": "일반전형 이공계열에 한해 실시: 공과대학, 정보통신대학, 창의융합대학, 에너지바이오대학(스포츠과학과 제외), 기술경영융합대학(경영학과 제외). 100점 만점, 출제범위 대학수학(공업수학 일부 포함) - 이·공학계열 전공이수에 필요한 미적분학, 선형대수, 상미분방정식. 5지선다 객관식 20문항, 100분, 4점 10문항+6점 10문항. 참고자료: 미분적분학(J. Stewart), 공업수학(E. Kreyszig, 상미분방정식·선형대수)이며 출제범위를 한정하기 위한 자료. 미응시(결시)자는 0점·불합격, 부정행위자 불합격. 무표기·판독불가 문항 0점, 2개 이상 표기는 오답, 성명·수험번호 미기재로 판독 불가하면 무효(불합격). 시험일은 2027.1.8.(금) 예정."
+    },
+    {
+      "key": "english",
+      "heading": "공인영어성적 반영",
+      "pageStart": 10,
+      "pageEnd": 15,
+      "content": "대상시험 TOEFL(iBT), TEPS, TOEIC. 100점 만점으로 본교 환산표(별표1) 적용. 공인영어 미제출자는 기본점수 20점 부여(불합격 처리하지 않음). 해외 TOEIC·TOEIC 특별시험(기관주관 위탁시험) 불인정, TOEFL iBT Home Edition 인정, 기관 ITP 불인정. 원서접수 마감일 기준 최근 2년 이내 발표 성적만 인정. 별표1 예시: 100점은 TEPS 558~600·TOEIC 990·TOEFL 118~120, 90점은 TEPS 362~365·TOEIC 890·TOEFL 103, 80점은 TEPS 304~305·TOEIC 790, 33점은 TEPS 144이하·TOEIC 320이하·TOEFL 16이하. 최저 지원자격 점수는 없다. 평생학습자·특성화고졸재직자 전형도 같은 방식."
+    },
+    {
+      "key": "same-field",
+      "heading": "동일계 학과 점수",
+      "pageStart": 10,
+      "pageEnd": 17,
+      "content": "일부 학과에 한해 동일계 학과 점수 20점 반영(별표2 동일계 학부(과) 분류표). 해당 학과: 건설시스템공학과, 건축학부(건축공학·건축학전공), 환경공학과, 산업디자인학과, 도예학과, 금속공예디자인학과. 00과·00학과·00학부·00계열·00전공은 동일학과로 인정하며 학부(과)장 의견으로 추가 지정될 수 있다. 건축학부(건축학전공)는 KAAB 인증 5년제 건축학과만 인정. 별표2에는 기계시스템공학부(지능형로봇전공)의 동일계 학과 목록도 있으나 전형요소 표에서 해당 모집단위의 동일계 점수는 '-'로 표기되어 있다."
+    },
+    {
+      "key": "interview",
+      "heading": "면접고사",
+      "pageStart": 11,
+      "pageEnd": 12,
+      "content": "일반전형 1단계 합격자 전원 대상. 평가항목 학업능력(Pass/Fail), 지원학과 이해도, 전공적성(기초지식), 통합적 사고력. 배점(과락): 건축학부 건축학전공 80(30), 조형대학 80(40) 또는 60(30), 문예창작학과 50(20, 4개 항목 40점+등단 10점 또는 수상 5점 등 실적), 그 외 모집단위 50(20). 1인당 10분 내외. 과락 이하 또는 학업능력 F는 불합격. 건축학전공은 면접참고용 포트폴리오 제출 가능, 조형대학은 면접용 포트폴리오 제출 및 면접 전 드로잉/스케치·디자인(산업디자인·시각디자인·도예·금속공예디자인학과). 문예창작학과 실적은 등단 10점(신춘문예·주요 문예지 신인상), 수상 5점(대학문학상), 기타 창작집 발간(ISBN) 2~10점, 중복 불가, 개인정보 블라인드 처리한 증빙 별도 제출. 평생학습자·특성화고졸재직자·공무원 및 군위탁 면접은 100점(과락 50)."
+    },
+    {
+      "key": "schedule",
+      "heading": "주요 일정(예정)",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "기본계획 공고 2026년 7월 중, 여석 판단·모집인원 산정 2026년 11월 중, 모집요강 확정·공고 2026년 12월 중, 인터넷 원서접수 및 지원자격별 서류 제출 2026년 12월 중, 대학수학시험 2027.1.8.(금), 1단계 합격자 발표 2027.1.15.(금), 면접고사 2027.1.28.(목)~1.29.(금), 합격자 발표·등록 2027년 2월 중. 세부일정은 변동될 수 있으며 모집요강에서 확정 공고."
+    },
+    {
+      "key": "integrity",
+      "heading": "부정방지 및 특이사항",
+      "pageStart": 13,
+      "pageEnd": 14,
+      "content": "기본계획과 모집요강에 명시되지 않은 사항은 입학전형관리위원회 결정에 따른다. 입학 업무자 회피·배제, 편입학전형공정관리위원회 운영, 입시부정 확인 시 편입학 취소 및 학적 말소(담당자 과실인 경우도 취소 가능)."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "engineering-math-6x",
+      "scopeType": "major",
+      "scopeValue": "기계시스템공학부(지능형로봇전공·미래자동차전공), 기계공학과, 신소재공학과, 안전공학과, 전기정보공학과, 전자공학과, ICT융합공학과, 컴퓨터공학과, 화공생명공학과, 정밀화학과, 식품생명공학과, 산업공학부(산업정보시스템전공)",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 100,
+      "questionCount": 20,
+      "examFormat": "대학수학시험: 5지선다 객관식 20문항(4점×10문항+6점×10문항=100점), 100분. 출제범위 대학수학(공업수학 일부 포함) - 미적분학·선형대수·상미분방정식. 참고자료 Stewart 미분적분학, Kreyszig 공업수학.",
+      "stage1WrittenWeight": 50,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 6,
+      "stage1SelectionMaxMultiple": 6,
+      "sourcePages": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        18
+      ],
+      "notes": "일반전형. 1단계 공인영어100+대학수학100=200점으로 6배수, 2단계 공인영어100+대학수학100+면접50=250점. 대학수학시험 결시자 0점·불합격. 공인영어 미제출자 기본점수 20점(불합격 아님).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": null,
+            "total": 200
+          },
+          "final": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": null,
+            "interview": 50,
+            "total": 250
+          }
+        },
+        "stage1Selection": "600%(6배수), 모집인원 2~3명이면 1단계 24명, 1명이면 10명(예외).",
+        "finalLanguageWeight": 40,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            15,
+            18
+          ],
+          "stage1Weight": 50,
+          "missingScoreBasePoints": 20
+        }
+      }
+    },
+    {
+      "key": "same-field-math-6x",
+      "scopeType": "major",
+      "scopeValue": "건설시스템공학과, 건축학부(건축공학전공), 환경공학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 100,
+      "questionCount": 20,
+      "examFormat": "대학수학시험: 5지선다 객관식 20문항(4점×10문항+6점×10문항=100점), 100분. 출제범위 대학수학(공업수학 일부 포함) - 미적분학·선형대수·상미분방정식. 참고자료 Stewart 미분적분학, Kreyszig 공업수학.",
+      "stage1WrittenWeight": 45.45,
+      "finalWrittenWeight": 37.04,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 18.52,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 6,
+      "stage1SelectionMaxMultiple": 6,
+      "sourcePages": [
+        3,
+        8,
+        10,
+        11,
+        12,
+        16,
+        18
+      ],
+      "notes": "일반전형. 1단계 공인영어100+대학수학100+동일계학과20=220점으로 6배수, 2단계 +면접50=270점. 환경공학과는 2027학년도에 동일계 학과 점수 신설(2026: 1단계200·2단계250). 동일계 인정 학과는 별표2 참조.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": 20,
+            "total": 220
+          },
+          "final": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": 20,
+            "interview": 50,
+            "total": 270
+          }
+        },
+        "stage1Selection": "600%(6배수), 모집인원 2~3명이면 1단계 24명, 1명이면 10명(예외).",
+        "finalLanguageWeight": 37.04,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 37.04,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            3,
+            8,
+            10,
+            11,
+            12,
+            15,
+            16,
+            18
+          ],
+          "stage1Weight": 45.45,
+          "missingScoreBasePoints": 20
+        },
+        "finalSameFieldWeight": 7.41,
+        "sameFieldPoints": 20
+      }
+    },
+    {
+      "key": "architecture",
+      "scopeType": "major",
+      "scopeValue": "건축학부(건축학전공)",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 100,
+      "questionCount": 20,
+      "examFormat": "대학수학시험: 5지선다 객관식 20문항(4점×10문항+6점×10문항=100점), 100분. 출제범위 대학수학(공업수학 일부 포함) - 미적분학·선형대수·상미분방정식. 참고자료 Stewart 미분적분학, Kreyszig 공업수학.",
+      "stage1WrittenWeight": 45.45,
+      "finalWrittenWeight": 33.33,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 26.67,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 6,
+      "stage1SelectionMaxMultiple": 6,
+      "sourcePages": [
+        3,
+        8,
+        10,
+        11,
+        12,
+        16,
+        17,
+        18
+      ],
+      "notes": "일반전형. 1단계 공인영어100+대학수학100+동일계학과20=220점으로 6배수, 2단계 +면접80(과락30)=300점. 2027학년도 면접 60→80점 상향(총점 280→300). 동일계는 KAAB 인증 5년제 건축학과만 인정. 면접참고용 포트폴리오 제출(원문 7쪽 '면접고사용 포트폴리오 제출', 10쪽 '제출 가능').",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": 20,
+            "total": 220
+          },
+          "final": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": 20,
+            "interview": 80,
+            "total": 300
+          }
+        },
+        "stage1Selection": "600%(6배수), 모집인원 2~3명이면 1단계 24명, 1명이면 10명(예외).",
+        "finalLanguageWeight": 33.33,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 33.33,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            3,
+            8,
+            10,
+            11,
+            12,
+            15,
+            16,
+            17,
+            18
+          ],
+          "stage1Weight": 45.45,
+          "missingScoreBasePoints": 20
+        },
+        "finalSameFieldWeight": 6.67,
+        "sameFieldPoints": 20
+      }
+    },
+    {
+      "key": "math-4x",
+      "scopeType": "major",
+      "scopeValue": "안경광학과, MSDE학과, 인공지능응용학과, 지능형반도체공학과, 미래에너지학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 100,
+      "questionCount": 20,
+      "examFormat": "대학수학시험: 5지선다 객관식 20문항(4점×10문항+6점×10문항=100점), 100분. 출제범위 대학수학(공업수학 일부 포함) - 미적분학·선형대수·상미분방정식. 참고자료 Stewart 미분적분학, Kreyszig 공업수학.",
+      "stage1WrittenWeight": 50,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 4,
+      "stage1SelectionMaxMultiple": 4,
+      "sourcePages": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        18
+      ],
+      "notes": "일반전형. 1단계 공인영어100+대학수학100=200점으로 4배수, 2단계 +면접50=250점. 대학수학시험 결시자 0점·불합격.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": null,
+            "total": 200
+          },
+          "final": {
+            "englishTest": 100,
+            "math": 100,
+            "sameField": null,
+            "interview": 50,
+            "total": 250
+          }
+        },
+        "stage1Selection": "400%(4배수), 모집인원 2~3명이면 1단계 16명, 1명이면 10명(예외).",
+        "finalLanguageWeight": 40,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            15,
+            18
+          ],
+          "stage1Weight": 50,
+          "missingScoreBasePoints": 20
+        }
+      }
+    },
+    {
+      "key": "sports-science",
+      "scopeType": "major",
+      "scopeValue": "스포츠과학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 33.33,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 4,
+      "stage1SelectionMaxMultiple": 4,
+      "sourcePages": [
+        8,
+        10,
+        11,
+        12
+      ],
+      "notes": "일반전형. 대학수학시험 대상 제외. 1단계 공인영어100점으로 4배수, 2단계 +면접50=150점.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "예체능"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "total": 100
+          },
+          "final": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "interview": 50,
+            "total": 150
+          }
+        },
+        "stage1Selection": "400%(4배수), 모집인원 2~3명이면 1단계 16명, 1명이면 10명(예외).",
+        "finalLanguageWeight": 66.67,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 66.67,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            8,
+            10,
+            11,
+            12,
+            15
+          ],
+          "stage1Weight": 100,
+          "missingScoreBasePoints": 20
+        },
+        "tracksBasis": "inferred"
+      }
+    },
+    {
+      "key": "humanities-business",
+      "scopeType": "major",
+      "scopeValue": "행정학과, 문예창작학과, 영어영문학과, 경영학과(경영학전공·글로벌테크노경영전공)",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 33.33,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 4,
+      "stage1SelectionMaxMultiple": 4,
+      "sourcePages": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "notes": "일반전형. 필기 없음. 1단계 공인영어100점으로 4배수, 2단계 +면접50=150점. 문예창작학과 면접50점은 4개 항목40점+등단(10점)/수상(5점) 등 실적 평가. 원문 8쪽 표는 '영문학과'로 표기(모집인원 표는 영어영문학과).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "total": 100
+          },
+          "final": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "interview": 50,
+            "total": 150
+          }
+        },
+        "stage1Selection": "400%(4배수), 모집인원 2~3명이면 1단계 16명, 1명이면 10명(예외). 단 영문학과 행은 원문 표에 24명*로 표기.",
+        "finalLanguageWeight": 66.67,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 66.67,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            9,
+            10,
+            11,
+            12,
+            15
+          ],
+          "stage1Weight": 100,
+          "missingScoreBasePoints": 20
+        }
+      }
+    },
+    {
+      "key": "design-same-field",
+      "scopeType": "major",
+      "scopeValue": "산업디자인학과, 도예학과, 금속공예디자인학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        9,
+        11,
+        12,
+        16,
+        17
+      ],
+      "notes": "일반전형. 1단계 공인영어100+동일계학과20=120점으로 10명 선발, 2단계 +면접80(과락40)=200점. 면접용 포트폴리오 제출, 면접 전 드로잉/스케치·디자인 실시.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "예체능"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": 20,
+            "total": 120
+          },
+          "final": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": 20,
+            "interview": 80,
+            "total": 200
+          }
+        },
+        "stage1Selection": "10명",
+        "finalLanguageWeight": 50,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 50,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            9,
+            10,
+            11,
+            12,
+            15,
+            16,
+            17
+          ],
+          "stage1Weight": 83.33,
+          "missingScoreBasePoints": 20
+        },
+        "finalSameFieldWeight": 10,
+        "sameFieldPoints": 20
+      }
+    },
+    {
+      "key": "visual-finearts",
+      "scopeType": "major",
+      "scopeValue": "시각디자인학과, 조형예술학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 37.5,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        9,
+        11,
+        12
+      ],
+      "notes": "일반전형. 1단계 공인영어100점으로 10명 선발, 2단계 +면접60(과락30)=160점. 면접용 포트폴리오 제출. 면접 전 드로잉/스케치·디자인은 시각디자인학과 해당(조형예술학과는 원문 목록에 없음).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "예체능"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "total": 100
+          },
+          "final": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "interview": 60,
+            "total": 160
+          }
+        },
+        "stage1Selection": "10명",
+        "finalLanguageWeight": 62.5,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 62.5,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            9,
+            10,
+            11,
+            12,
+            15
+          ],
+          "stage1Weight": 100,
+          "missingScoreBasePoints": 20
+        }
+      }
+    },
+    {
+      "key": "lifelong-worker",
+      "scopeType": "all",
+      "scopeValue": "전 모집단위(평생학습자 전형·특성화고 등을 졸업한 재직자 전형)",
+      "transferTypes": [
+        "평생학습자전형",
+        "특성화고졸재직자편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 50,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": 4,
+      "stage1SelectionMaxMultiple": 4,
+      "sourcePages": [
+        10,
+        12,
+        13
+      ],
+      "notes": "1단계 공인영어100점(자격 적격자에 한해 평가)으로 400%, 2단계 공인영어100+면접100(과락50)=200점. 동점 시 공인영어→면접 순. 특성화고졸 재직자 전형은 정원 외.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "weightBasis": "원문은 점수 배점. 비율(%)은 배점을 총점으로 나눠 소수 둘째 자리로 환산한 값.",
+        "points": {
+          "stage1": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "total": 100
+          },
+          "final": {
+            "englishTest": 100,
+            "math": null,
+            "sameField": null,
+            "interview": 100,
+            "total": 200
+          }
+        },
+        "stage1Selection": "400%(4배수)",
+        "finalLanguageWeight": 50,
+        "englishTest": {
+          "role": "weighted",
+          "stage": "final",
+          "weight": 50,
+          "toeicMin": null,
+          "tests": [
+            "TOEFL iBT",
+            "TEPS",
+            "TOEIC"
+          ],
+          "sourcePages": [
+            10,
+            12,
+            13,
+            15
+          ],
+          "stage1Weight": 100,
+          "missingScoreBasePoints": 20
+        },
+        "tracksBasis": "inferred"
+      }
+    },
+    {
+      "key": "civil-military",
+      "scopeType": "all",
+      "scopeValue": "전 모집단위(공무원 및 군 위탁전형)",
+      "transferTypes": [
+        "공무원 및 군위탁"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "",
+      "stage1WrittenWeight": 0,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 100,
+      "finalPracticalWeight": 0,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        7,
+        10,
+        12
+      ],
+      "notes": "정원 외. 1단계 서류 자격심사(교육부장관 추천 여부 등), 2단계 면접100점(과락50)만 반영. 면접 결과 학업능력 미흡 시 선발하지 않음.",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "tracksBasis": "inferred",
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            10
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "final-guide",
+      "audience": "전체 지원자",
+      "label": "모집요강 확정 및 공고",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "모집인원은 이 모집요강에서 확정. 세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "인터넷 원서접수",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "documents",
+      "audience": "전체 지원자",
+      "label": "지원자격별 서류 제출",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2026년 12월 중",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "math-exam",
+      "audience": "일반전형 이공계 모집단위 지원자",
+      "label": "대학수학시험",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-08",
+      "endsOn": "2027-01-08",
+      "displayText": "2027. 1. 8.(금)",
+      "details": "공과대학·정보통신대학·에너지바이오대학(스포츠과학과 제외)·기술경영융합대학(경영학과 제외)·창의융합대학 일반전형 지원자 전원 응시. 세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "stage1-result",
+      "audience": "전체 지원자",
+      "label": "1단계 합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-15",
+      "endsOn": "2027-01-15",
+      "displayText": "2027. 1. 15.(금)",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "interview",
+      "audience": "1단계 합격자",
+      "label": "면접고사",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-28",
+      "endsOn": "2027-01-29",
+      "displayText": "2027. 1. 28.(목) ~ 1. 29.(금)",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "final-result",
+      "audience": "전체 지원자",
+      "label": "합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "registration",
+      "audience": "최종 합격자",
+      "label": "합격자 등록",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": null,
+      "endsOn": null,
+      "displayText": "2027년 2월 중",
+      "details": "세부일정은 변동될 수 있으며 모집요강에서 확정 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "month",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 10,
+    "expectedScheduleRows": 8,
+    "tablesChecked": [
+      "PDF 2페이지 주요 변경사항 표",
+      "PDF 3페이지 주요 일정 표",
+      "PDF 4페이지 모집단위별 모집인원 표(전부 미정)",
+      "PDF 5~7페이지 지원자격 표",
+      "PDF 8~9페이지 일반전형 전형요소별 반영점수 표",
+      "PDF 10페이지 평생학습자·재직자·공무원군위탁 반영점수 표",
+      "PDF 11페이지 면접 배점 표",
+      "PDF 12페이지 1단계 선발인원 표",
+      "PDF 13페이지 동점자 처리기준 표",
+      "PDF 15페이지 공인영어 환산표(별표1)",
+      "PDF 16~17페이지 동일계 분류표(별표2)",
+      "PDF 18페이지 대학수학시험 문항수·배점"
+    ],
+    "notes": [
+      "모집인원 전부 미정이므로 program 행을 생성하지 않음",
+      "일정은 기본계획 단계(변동 가능)라 하루 단위 일정도 factStatus=provisional",
+      "원문 배점은 점수이므로 반영비율(%)은 배점/총점 환산값이며 metadata.points에 원 점수를 보존",
+      "공인영어는 최저 자격기준 없이 점수 반영(미제출 20점)이라 role=weighted",
+      "미래융합대학 학과(인공지능응용학과 제외)는 모집단위 표에만 있고 일반전형 배점표에 없음",
+      "영문학과 행은 1단계 400%인데 예외 인원이 24명*로 표기되어 원문 그대로 메모",
+      "학사편입 전형 구분은 원문에 없음(일반전형만)"
+    ]
+  }
+}

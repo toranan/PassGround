@@ -18,6 +18,7 @@ const NAV_TABS = [
   { href: "/transfer", label: "홈", match: (path: string) => path === "/" || path === "/transfer" },
   { href: "/news", label: "최신뉴스", match: (path: string) => path.startsWith("/news") || path.startsWith("/c/transfer/news") },
   { href: "/schedule", label: "일정", match: (path: string) => path.startsWith("/schedule") },
+  { href: "/past-exams", label: "기출문제", match: (path: string) => path.startsWith("/past-exams") },
   { href: "/c/transfer/free", label: "커뮤니티", match: (path: string) => path.startsWith("/c/transfer") && !path.startsWith("/c/transfer/news") },
   { href: "/transfer/ai", label: "AI 상담", match: (path: string) => path.startsWith("/transfer/ai") },
 ];
