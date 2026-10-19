@@ -46,6 +46,14 @@ function toRows(files: PastExamFile[]): PastExamRow[] {
     else row.question = file;
     rows.set(file.subject, row);
   }
+  // "영어_정답" 하나가 "영어A형"·"영어B형" 문제에 공통으로 쓰이는 경우 그 줄들에 붙인다.
+  for (const [subject, row] of rows) {
+    if (row.question || row.combined || !row.answer) continue;
+    const forms = [...rows.values()].filter((other) => other !== row && other.question && !other.answer && other.subject.startsWith(subject));
+    if (!forms.length) continue;
+    for (const form of forms) form.answer = row.answer;
+    rows.delete(subject);
+  }
   return [...rows.values()].sort((a, b) => a.subject.localeCompare(b.subject, "ko"));
 }
 
