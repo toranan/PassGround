@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -164,12 +164,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
+  // 편입 자유게시판은 웹과 같이 예전 합격전략·학습질문·합격수기 글까지 함께 보여준다.
+  let listBoardIds = [boardRow.id];
+  if (exam === "transfer" && board === "free") {
+    const { data: mergedBoards } = await supabase
+      .from("boards")
+      .select("id,exams!inner(slug)")
+      .eq("exams.slug", exam)
+      .in("slug", TRANSFER_MERGED_BOARD_SLUGS);
+    if (mergedBoards?.length) listBoardIds = mergedBoards.map((item) => item.id as string);
+  }
+
   let postsData: PostRow[] | null = null;
 
   let modernQuery = supabase
     .from("posts")
     .select("id,title,content,author_name,author_id,created_at,view_count")
-    .eq("board_id", boardRow.id)
+    .in("board_id", listBoardIds)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(limit + 1);
@@ -187,7 +198,7 @@ export async function GET(request: Request) {
     let legacyQuery = supabase
       .from("posts")
       .select("id,title,content,author_name,created_at")
-      .eq("board_id", boardRow.id)
+      .in("board_id", listBoardIds)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(limit + 1);

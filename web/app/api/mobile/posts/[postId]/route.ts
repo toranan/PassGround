@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -188,6 +188,17 @@ export async function GET(
     return NextResponse.json({ error: "게시판 정보를 찾을 수 없습니다." }, { status: 404 });
   }
 
+  // 자유게시판 목록에는 예전 게시판 글도 섞여 있으므로 그 글들도 열 수 있게 한다.
+  let allowedBoardIds = [boardData.id as string];
+  if (exam === "transfer" && board === "free") {
+    const { data: mergedBoards } = await supabase
+      .from("boards")
+      .select("id,exams!inner(slug)")
+      .eq("exams.slug", exam)
+      .in("slug", TRANSFER_MERGED_BOARD_SLUGS);
+    if (mergedBoards?.length) allowedBoardIds = mergedBoards.map((item) => item.id as string);
+  }
+
   let postData:
     | {
       id: string;
@@ -204,7 +215,7 @@ export async function GET(
     .from("posts")
     .select("id,title,content,author_name,author_id,created_at,view_count")
     .eq("id", postId)
-    .eq("board_id", boardData.id)
+    .in("board_id", allowedBoardIds)
     .maybeSingle();
   postData = modernPost;
 
@@ -213,7 +224,7 @@ export async function GET(
       .from("posts")
       .select("id,title,content,author_name,created_at")
       .eq("id", postId)
-      .eq("board_id", boardData.id)
+      .in("board_id", allowedBoardIds)
       .maybeSingle();
     postData = legacyPost
       ? {
