@@ -25,6 +25,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [authorName, setAuthorName] = useState("익명");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -149,7 +150,7 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
       setMessage("로그인 후 글을 작성할 수 있어요.");
       return;
     }
-    const nameValue = isLoggedIn ? authorName.trim() : "익명";
+    const nameValue = isLoggedIn && !isAnonymous ? authorName.trim() : "익명";
     const titleValue = title.trim();
     let contentValue = content.trim();
 
@@ -213,7 +214,18 @@ export function BoardComposer({ examSlug, boardSlug }: BoardComposerProps) {
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
           <User className="h-4 w-4 text-primary" />
         </div>
-        <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
+        <span className="text-sm font-medium text-gray-700">{isLoggedIn && !isAnonymous ? authorName : "익명"}</span>
+        {isLoggedIn ? (
+          <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            익명
+          </label>
+        ) : null}
       </div>
 
       {/* Title */}
