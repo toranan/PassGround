@@ -35,6 +35,7 @@ import {
   type CutoffEvidenceKnowledgeItem,
 } from "@/lib/cutoffEvidence";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
+import { AI_CHAT_LOGIN_REQUIRED } from "@/lib/featureFlags";
 import { buildCoachingTopicGuides, matchCoachingTopics } from "@/lib/coachingTopics";
 import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
 import { EVIDENCE_ANSWER_POLICY, formatEvidenceContext, type EvidenceInput } from "@/lib/knowledgeEvidence";
@@ -1795,7 +1796,7 @@ async function runChatWorkflow(params: {
 export async function POST(request: Request) {
   const traceId = request.headers.get("x-request-id")?.trim() || crypto.randomUUID();
   const accessToken = getBearerToken(request);
-  if (!accessToken || !(await getUserByAccessToken(accessToken))) {
+  if (AI_CHAT_LOGIN_REQUIRED && (!accessToken || !(await getUserByAccessToken(accessToken)))) {
     return NextResponse.json(
       {
         error: "AI 상담은 로그인 후 이용할 수 있습니다.",

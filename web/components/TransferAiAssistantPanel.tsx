@@ -96,11 +96,8 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
     const question = input.trim();
     if (!question) return;
 
+    // 로그인 필수 여부는 서버가 정한다. 토큰이 없으면 비로그인으로 보내고, 401이면 로그인 안내를 띄운다.
     let token = await resolveUsableAccessToken();
-    if (!token) {
-      openLoginPrompt();
-      return;
-    }
 
     const userMessage: ChatMessage = { id: makeId(), role: "user", text: question };
     const assistantId = makeId();
@@ -112,12 +109,12 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
 
     try {
       const history = toHistory(messages);
-      const buildRequest = (accessToken: string) => fetch("/api/ai/chat", {
+      const buildRequest = (accessToken: string | null) => fetch("/api/ai/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "text/event-stream",
-          Authorization: `Bearer ${accessToken}`,
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           exam: "transfer",
@@ -134,6 +131,13 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
           token = refreshedToken;
           response = await buildRequest(token);
         }
+      }
+
+      if (response.status === 401) {
+        setMessages((prev) => prev.filter((message) => message.id !== userMessage.id && message.id !== assistantId));
+        setInput(question);
+        openLoginPrompt();
+        return;
       }
 
       if (!response.ok || !response.body) {

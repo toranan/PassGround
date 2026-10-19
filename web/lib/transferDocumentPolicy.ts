@@ -4,10 +4,24 @@ type DocumentBasis = {
   metadata?: Record<string, unknown> | null;
 };
 
+// 줄임말을 DB 학교명(예: 숙명여자대학교 → 숙명여대)과 같은 형태로 맞춘다.
+const UNIVERSITY_SHORT_NAMES: Record<string, string> = {
+  연대: "연세대",
+  고대: "고려대",
+  성대: "성균관대",
+  건대: "건국대",
+  경상대: "경상국립대",
+  시립대: "서울시립대",
+  과기대: "서울과학기술대",
+  서울과기대: "서울과학기술대",
+  외대: "한국외국어대",
+  한국외대: "한국외국어대",
+  항공대: "한국항공대",
+};
+
 export function normalizeTransferUniversityName(value: string): string {
-  const normalized = value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대");
-  return ({ 연대: "연세대", 성대: "성균관대", 경상대: "경상국립대" } as Record<string, string>)[normalized]
-    ?? normalized;
+  const normalized = value.toLowerCase().replace(/\s+/g, "").replace(/대학교$/, "대").replace(/여자대$/, "여대");
+  return UNIVERSITY_SHORT_NAMES[normalized] ?? normalized;
 }
 
 // 최종 모집요강이 아닌 문서(기본계획·주요사항·필기과목 안내 등)는 모두 바뀔 수 있는 사전 안내로 본다.
