@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { BoardComposer } from "@/components/BoardComposer";
-import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 
 type BoardWritePageProps = {
@@ -23,6 +23,9 @@ export default async function BoardWritePage({ params }: BoardWritePageProps) {
   }
   if (exam === "cpa" && !ENABLE_CPA_WRITE) {
     notFound();
+  }
+  if (exam === "transfer" && board !== "free" && TRANSFER_MERGED_BOARD_SLUGS.includes(board)) {
+    redirect("/c/transfer/free/write");
   }
 
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);

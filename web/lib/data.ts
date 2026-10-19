@@ -38,6 +38,9 @@ export type CommunityBoardGroup = {
   boards: CommunityBoard[];
 };
 
+// 편입 커뮤니티는 자유게시판 하나로 운영한다. 예전 게시판 글은 자유게시판 목록에 함께 보여준다.
+export const TRANSFER_MERGED_BOARD_SLUGS = ["free", "qa", "study-qa", "admit-review"];
+
 export const COMMUNITY_BOARD_GROUPS: CommunityBoardGroup[] = [
   {
     id: "cg-transfer",

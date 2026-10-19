@@ -69,13 +69,12 @@ export default async function TransferPage() {
           </SectionCard>
 
           <div className="lg:col-span-2">
-            <SectionCard title="커뮤니티" href="/c/transfer/free">
+            <SectionCard title="자유게시판" href="/c/transfer/free">
               {posts.length ? (
                 <ul className="grid grid-cols-1 gap-x-8 divide-y md:grid-cols-2 md:divide-y-0">
                   {posts.map((post) => (
                     <li key={post.id} className="py-2.5">
                       <Link href={`/c/transfer/${post.boardSlug}/${post.id}`} className="flex items-center gap-2 hover:text-primary">
-                        <span className="shrink-0 text-xs font-semibold text-primary">{post.boardName}</span>
                         <span className="truncate text-sm">{post.title}</span>
                       </Link>
                     </li>

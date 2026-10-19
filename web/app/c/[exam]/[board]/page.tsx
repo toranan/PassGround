@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { CutoffMaskedTitle } from "@/components/CutoffMaskedTitle";
 import { Button } from "@/components/ui/button";
-import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
+import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { MessageCircle, Heart, Eye, ChevronLeft, PenSquare } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -45,6 +45,9 @@ export default async function BoardPage({ params }: BoardPageProps) {
   if (exam === "transfer" && board === "cutoff") {
     notFound();
   }
+  if (exam === "transfer" && board !== "free" && TRANSFER_MERGED_BOARD_SLUGS.includes(board)) {
+    redirect("/c/transfer/free");
+  }
   const isReadOnlyExam = exam === "cpa" && !ENABLE_CPA_WRITE;
 
   const examInfo = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === exam);
@@ -62,6 +65,17 @@ export default async function BoardPage({ params }: BoardPageProps) {
     .maybeSingle();
 
   const boardId = boardData?.id ?? null;
+  let listBoardIds = boardId ? [boardId] : [];
+  const boardSlugById = new Map<string, string>(boardId ? [[boardId, board]] : []);
+  if (exam === "transfer" && board === "free") {
+    const { data: mergedBoards } = await supabase
+      .from("boards")
+      .select("id,slug,exams!inner(slug)")
+      .eq("exams.slug", exam)
+      .in("slug", TRANSFER_MERGED_BOARD_SLUGS);
+    for (const item of mergedBoards ?? []) boardSlugById.set(item.id as string, item.slug as string);
+    listBoardIds = [...boardSlugById.keys()];
+  }
   const boardName =
     exam === "transfer" && board === "qa"
       ? "합격전략"
@@ -70,7 +84,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
         : (boardData?.name ?? boardNameFromList);
 
   // Fetch posts with real comment count and like count
-  let dbPosts: { id: string; title: string; author: string; comments: number; likes: number; views: number; timeLabel: string }[] = [];
+  let dbPosts: { id: string; boardSlug: string; title: string; author: string; comments: number; likes: number; views: number; timeLabel: string }[] = [];
 
   if (boardId) {
     let postsData:
@@ -80,21 +94,22 @@ export default async function BoardPage({ params }: BoardPageProps) {
         author_name: string | null;
         created_at: string | null;
         view_count?: number | null;
+        board_id?: string | null;
       }[]
       | null = null;
 
     const { data: modernPosts, error: modernError } = await supabase
       .from("posts")
-      .select("id, title, author_name, created_at, view_count")
-      .eq("board_id", boardId)
+      .select("id, title, author_name, created_at, view_count, board_id")
+      .in("board_id", listBoardIds)
       .order("created_at", { ascending: false });
     postsData = modernPosts;
 
     if ((!postsData || postsData.length === 0) && modernError?.message?.includes("view_count")) {
       const { data: legacyPosts } = await supabase
         .from("posts")
-        .select("id, title, author_name, created_at")
-        .eq("board_id", boardId)
+        .select("id, title, author_name, created_at, board_id")
+        .in("board_id", listBoardIds)
         .order("created_at", { ascending: false });
 
       postsData = (legacyPosts ?? []).map((post) => ({
@@ -131,6 +146,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
       dbPosts = postsData.map((post) => ({
         id: post.id,
+        boardSlug: (post.board_id && boardSlugById.get(post.board_id)) || board,
         title: post.title,
         author: post.author_name ?? "익명",
         comments: commentCountMap.get(post.id) || 0,
@@ -175,22 +191,6 @@ export default async function BoardPage({ params }: BoardPageProps) {
           </div>
         </header>
 
-        {exam === "transfer" && board !== "news" ? (
-          <nav className="border-b bg-white">
-            <div className="container mx-auto flex gap-1 overflow-x-auto px-4 py-2 text-sm">
-              {(examInfo?.boards ?? []).filter((item) => item.slug !== "news").map((item) => (
-                <Link
-                  key={item.slug}
-                  href={`/c/${exam}/${item.slug}`}
-                  className={`shrink-0 rounded-full px-3 py-1.5 ${item.slug === board ? "bg-primary text-primary-foreground font-semibold" : "text-gray-600 hover:bg-gray-100"}`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-          </nav>
-        ) : null}
-
         {/* Post List */}
         <section className="bg-white">
           {posts.length ? (
@@ -198,7 +198,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
               {posts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/c/${exam}/${board}/${post.id}`}
+                  href={`/c/${exam}/${post.boardSlug}/${post.id}`}
                   className="block hover:bg-gray-50 transition-colors"
                 >
                   <div className="container mx-auto px-4 py-4">

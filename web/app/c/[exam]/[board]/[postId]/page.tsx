@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
+import { TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { CommentComposer } from "@/components/CommentComposer";
 import { CommentList } from "@/components/CommentList";
 import { LikeButton } from "@/components/LikeButton";
@@ -292,12 +293,8 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     }
     | null = null;
   let commentsData: CommentRow[] = [];
-  const boardName =
-    exam === "transfer" && board === "qa"
-      ? "합격전략"
-      : exam === "transfer" && board === "study-qa"
-        ? "학습질문"
-        : (boardData?.name ?? "게시판");
+  const isMergedTransferBoard = exam === "transfer" && TRANSFER_MERGED_BOARD_SLUGS.includes(board);
+  const boardName = isMergedTransferBoard ? "자유게시판" : (boardData?.name ?? "게시판");
   let likeCount = 0;
   let adoptedCommentId: string | null = null;
   let postVerificationLevel = "none";
@@ -491,7 +488,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         <header className="bg-white border-b sticky top-[6.5rem] z-40 md:top-16">
           <div className="container mx-auto px-4 h-14 flex items-center gap-3">
             <Link
-              href={`/c/${exam}/${board}`}
+              href={isMergedTransferBoard ? "/c/transfer/free" : `/c/${exam}/${board}`}
               className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
             >
               <ChevronLeft className="h-5 w-5" />
