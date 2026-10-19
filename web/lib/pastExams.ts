@@ -32,6 +32,11 @@ export async function loadPastExams(): Promise<PastExamFile[]> {
   }
 }
 
+// 앱에서 PDF를 바로 열 때는 download 없이 연다.
+export function pastExamViewUrl(file: PastExamFile): string {
+  return `${storagePublicBase()}/${file.path}`;
+}
+
 // download 파라미터로 받을 때 한글 파일 이름이 그대로 저장되게 한다.
 export function pastExamDownloadUrl(file: PastExamFile): string {
   return `${storagePublicBase()}/${file.path}?download=${encodeURIComponent(file.filename)}`;
