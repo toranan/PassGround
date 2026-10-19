@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AdminReportsPanel } from "@/components/AdminReportsPanel";
 import { emitAuthChange, getUserSnapshot, subscribeAuthChange } from "@/lib/authClient";
 import { cutoffTrackLabel, type CutoffTrackType } from "@/lib/cutoffTrack";
 import { ENABLE_CPA } from "@/lib/featureFlags";
@@ -193,9 +194,10 @@ type AdminVerificationResponse = {
   error?: string;
 };
 
-type AdminTab = "verification" | "cutoff" | "content" | "questions" | "ai";
+type AdminTab = "reports" | "verification" | "cutoff" | "content" | "questions" | "ai";
 
 const ADMIN_TAB_OPTIONS: Array<{ value: AdminTab; label: string }> = [
+  { value: "reports", label: "신고" },
   { value: "verification", label: "인증 검수" },
   { value: "cutoff", label: "커트라인" },
   { value: "content", label: "뉴스·일정" },
@@ -337,7 +339,7 @@ export default function AdminPage() {
   );
 
   const [exam, setExam] = useState<"transfer" | "cpa">("transfer");
-  const [adminTab, setAdminTab] = useState<AdminTab>("verification");
+  const [adminTab, setAdminTab] = useState<AdminTab>("reports");
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [adminState, setAdminState] = useState<AdminMeResponse | null>(null);
   const [loadingCutoffs, setLoadingCutoffs] = useState(false);
@@ -2036,6 +2038,8 @@ export default function AdminPage() {
                 </Card>
                 </>
                 ) : null}
+
+                {adminTab === "reports" ? <AdminReportsPanel getToken={resolveUsableAccessToken} /> : null}
 
                 {adminTab === "verification" ? (
                 <Card className="border-none shadow-lg">

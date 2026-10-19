@@ -203,6 +203,7 @@ export async function GET(request: Request) {
     .from("posts")
     .select("id,title,content,author_name,author_id,created_at,view_count,board_id")
     .in("board_id", boardIds)
+    .eq("is_hidden", false)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(260);

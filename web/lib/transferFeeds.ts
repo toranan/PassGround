@@ -114,6 +114,7 @@ export async function loadRecentCommunityPosts(limit = 8): Promise<CommunityPost
     .from("posts")
     .select("id,title,board_id")
     .in("board_id", boards.map((board) => board.id))
+    .eq("is_hidden", false)
     .order("created_at", { ascending: false })
     .limit(limit);
 

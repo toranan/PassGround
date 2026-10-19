@@ -4,6 +4,7 @@ import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { stripNewsResources } from "@/lib/newsResources";
+import { loadBlockedUserIds } from "@/lib/moderation";
 
 type PostRow = {
   id: string;
@@ -132,6 +133,8 @@ export async function GET(request: Request) {
   const board = (searchParams.get("board") ?? "").trim();
   const limit = parseLimit(searchParams.get("limit"));
   const cursor = decodeCursor(searchParams.get("cursor"));
+  // 내가 차단한 사람의 글은 목록에서 뺀다(viewer별로 URL이 달라 캐시도 분리된다).
+  const blockedUserIdsPromise = loadBlockedUserIds(searchParams.get("viewer"));
 
   if (!exam || !board) {
     return NextResponse.json({ error: "exam, board 파라미터가 필요합니다." }, { status: 400 });
@@ -181,6 +184,7 @@ export async function GET(request: Request) {
     .from("posts")
     .select("id,title,content,author_name,author_id,created_at,view_count")
     .in("board_id", listBoardIds)
+    .eq("is_hidden", false)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(limit + 1);
@@ -235,7 +239,10 @@ export async function GET(request: Request) {
   }
 
   const hasMore = postsData.length > limit;
-  const pageRows = hasMore ? postsData.slice(0, limit) : postsData;
+  const blockedUserIds = new Set(await blockedUserIdsPromise);
+  const pageRows = (hasMore ? postsData.slice(0, limit) : postsData).filter(
+    (post) => !post.author_id || !blockedUserIds.has(post.author_id)
+  );
   const postIds = pageRows.map((post) => post.id);
   const commentCountMap = new Map<string, number>();
   const likeCountMap = new Map<string, number>();
@@ -326,7 +333,7 @@ export async function GET(request: Request) {
     isSample: false,
   }));
 
-  const last = pageRows[pageRows.length - 1];
+  const last = postsData[Math.min(postsData.length, limit) - 1];
   const nextCursor =
     hasMore && last?.created_at
       ? encodeCursor({ createdAt: last.created_at, id: last.id })

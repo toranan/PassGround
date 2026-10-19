@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
+import { BANNED_USER_MESSAGE, BANNED_WORD_MESSAGE, findBannedWord, isUserBanned } from "@/lib/moderation";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -53,6 +54,9 @@ export async function POST(request: Request) {
   if (!content) {
     return NextResponse.json({ error: "내용을 입력해 주세요." }, { status: 400 });
   }
+  if (findBannedWord(title, content)) {
+    return NextResponse.json({ error: BANNED_WORD_MESSAGE }, { status: 400 });
+  }
 
   const admin = getSupabaseAdmin();
   const headerToken = getBearerToken(request);
@@ -68,6 +72,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
   }
   const actorUserId = authed.id;
+  if (await isUserBanned(actorUserId)) {
+    return NextResponse.json({ error: BANNED_USER_MESSAGE }, { status: 400 });
+  }
 
   const examMeta = COMMUNITY_BOARD_GROUPS.find((group) => group.examSlug === examSlug);
   const boardMeta = examMeta?.boards.find((board) => board.slug === boardSlug);

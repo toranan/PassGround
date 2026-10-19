@@ -102,6 +102,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
       .from("posts")
       .select("id, title, author_name, created_at, view_count, board_id")
       .in("board_id", listBoardIds)
+      .eq("is_hidden", false)
       .order("created_at", { ascending: false });
     postsData = modernPosts;
 

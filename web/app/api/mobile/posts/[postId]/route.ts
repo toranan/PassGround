@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { loadBlockedUserIds } from "@/lib/moderation";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 type ParamsLike = { postId?: string };
@@ -216,6 +217,7 @@ export async function GET(
     .select("id,title,content,author_name,author_id,created_at,view_count")
     .eq("id", postId)
     .in("board_id", allowedBoardIds)
+    .eq("is_hidden", false)
     .maybeSingle();
   postData = modernPost;
 
@@ -238,6 +240,10 @@ export async function GET(
   if (!postData) {
     return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
   }
+  const blockedUserIds = new Set(await loadBlockedUserIds(requestedUserId));
+  if (postData.author_id && blockedUserIds.has(postData.author_id)) {
+    return NextResponse.json({ error: "차단한 사용자의 글이에요." }, { status: 404 });
+  }
 
   bumpViewCountBestEffort(admin, postId);
 
@@ -245,6 +251,7 @@ export async function GET(
     .from("comments")
     .select("id,author_name,author_id,content,created_at,parent_id")
     .eq("post_id", postId)
+    .eq("is_hidden", false)
     .order("created_at", { ascending: true });
 
   const adoptionPromise = supabase
@@ -260,7 +267,9 @@ export async function GET(
     isViewerLiked(admin, postId, requestedUserId),
   ]);
 
-  const commentsData = commentsResult.data ?? [];
+  const commentsData = (commentsResult.data ?? []).filter(
+    (comment) => !comment.author_id || !blockedUserIds.has(comment.author_id)
+  );
   const adoptionData = adoptionResult.data;
 
   const authorNames = Array.from(

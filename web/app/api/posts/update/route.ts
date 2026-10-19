@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
+import { BANNED_USER_MESSAGE, BANNED_WORD_MESSAGE, findBannedWord, isUserBanned } from "@/lib/moderation";
 
 function isValidUUID(str: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
   if (!content) {
     return NextResponse.json({ error: "내용을 입력해 주세요." }, { status: 400 });
   }
+  if (findBannedWord(title, content)) {
+    return NextResponse.json({ error: BANNED_WORD_MESSAGE }, { status: 400 });
+  }
 
   const accessToken = getBearerToken(request) || bodyAccessToken;
   if (!accessToken) {
@@ -58,6 +62,9 @@ export async function POST(request: Request) {
   }
   if (authed.id !== requestUserId) {
     return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
+  }
+  if (await isUserBanned(authed.id)) {
+    return NextResponse.json({ error: BANNED_USER_MESSAGE }, { status: 400 });
   }
 
   const admin = getSupabaseAdmin();

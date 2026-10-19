@@ -249,6 +249,7 @@ const loadBoardAndPost = cache(async (exam: string, board: string, postId: strin
     .select("id,title,content,author_name,author_id,created_at,view_count")
     .eq("id", postId)
     .eq("board_id", boardData.id)
+    .eq("is_hidden", false)
     .maybeSingle<LoadedPost>();
   if (data || !error?.message?.includes("view_count")) return { boardData, postData: data ?? null };
 
@@ -328,6 +329,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         .from("comments")
         .select("id,author_name,author_id,content,created_at,parent_id")
         .eq("post_id", currentPostId)
+        .eq("is_hidden", false)
         .order("created_at", { ascending: true }),
       admin.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", currentPostId),
       supabase.from("answer_adoptions").select("comment_id").eq("post_id", currentPostId).maybeSingle<{ comment_id: string }>(),

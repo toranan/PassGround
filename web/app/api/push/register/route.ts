@@ -15,12 +15,13 @@ export async function POST(request: Request) {
   const accessToken = getBearerToken(request);
   const user = accessToken ? await getUserByAccessToken(accessToken) : null;
 
+  // 토큰이 만료돼 사용자를 못 찾으면 기존에 연결된 계정은 그대로 둔다.
   const { error } = await getSupabaseAdmin().from("push_devices").upsert(
     {
       token,
       environment,
       news_enabled: newsEnabled,
-      user_id: user?.id ?? null,
+      ...(user ? { user_id: user.id } : {}),
       platform: "ios",
       updated_at: new Date().toISOString(),
     },

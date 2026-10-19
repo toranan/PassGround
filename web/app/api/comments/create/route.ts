@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
+import { BANNED_USER_MESSAGE, BANNED_WORD_MESSAGE, findBannedWord, isUserBanned } from "@/lib/moderation";
 
 // UUID 형식 검증
 function isValidUUID(str: string): boolean {
@@ -141,6 +142,9 @@ export async function POST(request: Request) {
   if (!content) {
     return NextResponse.json({ error: "댓글 내용을 입력해 주세요." }, { status: 400 });
   }
+  if (findBannedWord(content)) {
+    return NextResponse.json({ error: BANNED_WORD_MESSAGE }, { status: 400 });
+  }
 
   const admin = getSupabaseAdmin();
   const headerToken = getBearerToken(request);
@@ -157,6 +161,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
   }
   const actorUserId = authed.id;
+  if (await isUserBanned(actorUserId)) {
+    return NextResponse.json({ error: BANNED_USER_MESSAGE }, { status: 400 });
+  }
 
   const { data: postData, error: postError } = await admin
     .from("posts")
