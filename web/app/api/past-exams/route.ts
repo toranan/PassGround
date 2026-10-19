@@ -16,8 +16,10 @@ export async function GET() {
       rows: rows.map((row) => ({
         subject: row.subject,
         question: toFile(row.question),
-        answer: toFile(row.answer),
         combined: toFile(row.combined),
+        answers: row.answers.map((answer) => ({ label: answer.label, file: toFile(answer.file) })),
+        // 예전 앱 버전 호환: 첫 번째 정답
+        answer: toFile(row.answers.find((answer) => answer.file.kind.startsWith("정답"))?.file ?? null),
       })),
     })),
   }));

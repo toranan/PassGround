@@ -32,16 +32,20 @@ export function PastExamYears({ entry }: { entry: PastExamSchool }) {
           <h3 className="mb-2 text-sm font-bold text-gray-500">{year}학년도</h3>
           <ul className="space-y-1.5">
             {rows.map((row) => (
-              <li key={row.subject} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 truncate text-sm">{row.subject}</span>
-                <span className="flex shrink-0 gap-1.5">
+              <li key={row.subject} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <span className="min-w-0 text-sm">{row.subject}</span>
+                <span className="flex flex-wrap justify-end gap-1.5">
                   {row.combined ? (
-                    <FileButton file={row.combined} label={row.combined.ext === ".zip" ? "문제+정답 zip" : "문제+정답"} tone="question" />
+                    <FileButton file={row.combined} label="문제+정답" tone="question" />
                   ) : (
-                    <>
-                      <FileButton file={row.question} label={row.question?.ext === ".zip" ? "문제 zip" : "문제"} tone="question" />
-                      <FileButton file={row.answer} label="정답" tone="answer" />
-                    </>
+                    <FileButton file={row.question} label="문제" tone="question" />
+                  )}
+                  {row.answers.length ? (
+                    row.answers.map((answer) => (
+                      <FileButton key={answer.file.path} file={answer.file} label={answer.label} tone="answer" />
+                    ))
+                  ) : row.combined || row.subject.startsWith("실기") ? null : (
+                    <FileButton file={null} label="정답" tone="answer" />
                   )}
                 </span>
               </li>

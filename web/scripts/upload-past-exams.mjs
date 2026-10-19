@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// 로컬 기출문제 폴더(<학교>/<학년도>_<학교>_<과목>_<문제|정답|문제및정답>.pdf)를 Supabase Storage(past-exams)에 올리고
+// 로컬 기출문제 폴더(<학교>/<학년도>_<학교>_<과목>_<종류>.pdf)를 Supabase Storage(past-exams)에 올리고
 // 웹 기출문제 탭이 읽는 index.json을 만든다. 기본은 dry-run이고 --commit일 때만 올린다.
+// 종류: 문제 | 정답 | 정답(영어) | 정답(수학) | 해설 | 문제및정답. ZIP은 풀어서 PDF로 올린다.
+// 올린 뒤 목록에 없는 예전 파일(지운 ZIP 등)은 Storage에서도 지운다.
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
@@ -8,7 +10,8 @@ import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 export const PAST_EXAM_BUCKET = "past-exams";
-const CONTENT_TYPES = { ".pdf": "application/pdf", ".zip": "application/zip", ".hwp": "application/x-hwp" };
+const CONTENT_TYPES = { ".pdf": "application/pdf", ".hwp": "application/x-hwp" };
+const KIND_PATTERN = /^(문제|정답|해설|문제및정답)(?:\(([^)]+)\))?$/;
 
 // "2026_한국항공대학교_자연_영어수학_문제.pdf" → { year: 2026, school, subject: "자연 영어수학", kind: "문제" }
 export function parsePastExamFilename(filename) {
@@ -16,7 +19,7 @@ export function parsePastExamFilename(filename) {
   const parts = basename(filename, extname(filename)).split("_");
   if (parts.length < 4 || !/^\d{4}$/.test(parts[0]) || !CONTENT_TYPES[ext]) return null;
   const kind = parts.at(-1);
-  if (!["문제", "정답", "문제및정답"].includes(kind)) return null;
+  if (!KIND_PATTERN.test(kind)) return null;
   return { year: Number(parts[0]), school: parts[1], subject: parts.slice(2, -1).join(" "), kind, ext };
 }
 
@@ -60,13 +63,16 @@ async function main() {
   const { error: bucketError } = await admin.storage.createBucket(PAST_EXAM_BUCKET, { public: true });
   if (bucketError && !/already exists/i.test(bucketError.message)) throw new Error(`버킷 생성 실패: ${bucketError.message}`);
 
-  for (const [index, item] of items.entries()) {
+  const existing = await listStoredPaths(admin);
+  const pending = items.filter((item) => !existing.has(item.path));
+  console.log(`새로 올릴 파일 ${pending.length}개 (이미 있는 ${items.length - pending.length}개는 건너뜀)`);
+  for (const [index, item] of pending.entries()) {
     const { error } = await admin.storage.from(PAST_EXAM_BUCKET).upload(item.path, await readFile(item.localPath), {
       contentType: CONTENT_TYPES[item.ext],
       upsert: true,
     });
     if (error) throw new Error(`${item.filename} 업로드 실패: ${error.message}`);
-    console.log(`[${index + 1}/${items.length}] ${item.filename}`);
+    console.log(`[${index + 1}/${pending.length}] ${item.filename}`);
   }
 
   const manifest = {
@@ -79,7 +85,28 @@ async function main() {
     cacheControl: "60",
   });
   if (indexError) throw new Error(`목록 업로드 실패: ${indexError.message}`);
-  console.log("업로드 완료");
+
+  const keep = new Set(items.map((item) => item.path));
+  const stale = [...existing].filter((path) => !keep.has(path));
+  if (stale.length) {
+    const { error: removeError } = await admin.storage.from(PAST_EXAM_BUCKET).remove(stale);
+    if (removeError) throw new Error(`예전 파일 삭제 실패: ${removeError.message}`);
+  }
+  console.log(`업로드 완료 (예전 파일 ${stale.length}개 삭제)`);
+}
+
+// 학년도 폴더별로 저장된 파일 경로를 모은다(index.json 제외).
+async function listStoredPaths(admin) {
+  const paths = new Set();
+  const { data: folders, error } = await admin.storage.from(PAST_EXAM_BUCKET).list("", { limit: 1000 });
+  if (error) throw new Error(`저장소 목록 조회 실패: ${error.message}`);
+  for (const folder of folders ?? []) {
+    if (!/^\d{4}$/.test(folder.name)) continue;
+    const { data: files, error: listError } = await admin.storage.from(PAST_EXAM_BUCKET).list(folder.name, { limit: 1000 });
+    if (listError) throw new Error(`저장소 목록 조회 실패: ${listError.message}`);
+    for (const file of files ?? []) paths.add(`${folder.name}/${file.name}`);
+  }
+  return paths;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

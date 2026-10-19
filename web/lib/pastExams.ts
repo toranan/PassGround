@@ -10,8 +10,9 @@ export type PastExamFile = {
   path: string;
 };
 
-// 같은 학교·학년도·과목의 문제와 정답을 한 줄로 묶는다. 정답은 나중에 올라와도 같은 줄에 붙는다.
-export type PastExamRow = { subject: string; question: PastExamFile | null; answer: PastExamFile | null; combined: PastExamFile | null };
+// 같은 학교·학년도·과목의 문제와 정답·해설을 한 줄로 묶는다. 정답은 나중에 올라와도 같은 줄에 붙는다.
+export type PastExamAnswer = { label: string; file: PastExamFile };
+export type PastExamRow = { subject: string; question: PastExamFile | null; combined: PastExamFile | null; answers: PastExamAnswer[] };
 export type PastExamSchool = { school: string; years: Array<{ year: number; rows: PastExamRow[] }>; count: number; answerCount: number };
 
 const BUCKET = "past-exams";
@@ -42,24 +43,40 @@ export function pastExamDownloadUrl(file: PastExamFile): string {
   return `${storagePublicBase()}/${file.path}?download=${encodeURIComponent(file.filename)}`;
 }
 
+// "정답" → 정답, "정답(영어)" → 영어 정답, "해설" → 해설. 정답이 해설보다 앞에 온다.
+function answerLabel(kind: string): string {
+  const match = kind.match(/^(정답|해설)(?:\(([^)]+)\))?$/);
+  if (!match) return kind;
+  return match[2] ? `${match[2]} ${match[1]}` : match[1];
+}
+
+function answerOrder(kind: string): number {
+  if (kind === "정답") return 0;
+  if (kind.startsWith("정답")) return 1;
+  return 2;
+}
+
 function toRows(files: PastExamFile[]): PastExamRow[] {
   const rows = new Map<string, PastExamRow>();
   for (const file of files) {
-    const row = rows.get(file.subject) ?? { subject: file.subject, question: null, answer: null, combined: null };
-    if (file.kind === "정답") row.answer = file;
+    const row = rows.get(file.subject) ?? { subject: file.subject, question: null, combined: null, answers: [] };
+    if (file.kind === "문제") row.question = file;
     else if (file.kind === "문제및정답") row.combined = file;
-    else row.question = file;
+    else row.answers.push({ label: answerLabel(file.kind), file });
     rows.set(file.subject, row);
   }
   // "영어_정답" 하나가 "영어A형"·"영어B형" 문제에 공통으로 쓰이는 경우 그 줄들에 붙인다.
   for (const [subject, row] of rows) {
-    if (row.question || row.combined || !row.answer) continue;
-    const forms = [...rows.values()].filter((other) => other !== row && other.question && !other.answer && other.subject.startsWith(subject));
+    if (row.question || row.combined || !row.answers.length) continue;
+    const forms = [...rows.values()].filter((other) => other !== row && other.question && !other.answers.length && other.subject.startsWith(subject));
     if (!forms.length) continue;
-    for (const form of forms) form.answer = row.answer;
+    for (const form of forms) form.answers = [...row.answers];
     rows.delete(subject);
   }
-  return [...rows.values()].sort((a, b) => a.subject.localeCompare(b.subject, "ko"));
+  for (const row of rows.values()) row.answers.sort((x, y) => answerOrder(x.file.kind) - answerOrder(y.file.kind));
+  // 필기 과목을 먼저, 실기는 뒤에 둔다.
+  return [...rows.values()].sort((a, b) =>
+    Number(a.subject.startsWith("실기")) - Number(b.subject.startsWith("실기")) || a.subject.localeCompare(b.subject, "ko"));
 }
 
 export function groupPastExamsBySchool(files: PastExamFile[]): PastExamSchool[] {
@@ -75,7 +92,7 @@ export function groupPastExamsBySchool(files: PastExamFile[]): PastExamSchool[] 
       return {
         school,
         count: all.length,
-        answerCount: all.filter((file) => file.kind !== "문제").length,
+        answerCount: all.filter((file) => file.kind !== "문제" && !file.kind.startsWith("해설")).length,
         years: [...years.entries()].sort((a, b) => b[0] - a[0]).map(([year, list]) => ({ year, rows: toRows(list) })),
       };
     })
