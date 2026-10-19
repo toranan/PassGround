@@ -15,6 +15,7 @@ type CommentComposerProps = {
 export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }: CommentComposerProps) {
   const router = useRouter();
   const [authorName, setAuthorName] = useState("익명");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -53,7 +54,7 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
       setMessage("로그인 후 댓글을 작성할 수 있어요.");
       return;
     }
-    const nameValue = isLoggedIn ? authorName.trim() : "익명";
+    const nameValue = isLoggedIn && !isAnonymous ? authorName.trim() : "익명";
     const contentValue = content.trim();
 
     if (!contentValue) {
@@ -108,7 +109,18 @@ export function CommentComposer({ postId, parentId = null, onCancel, onSuccess }
         <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
           <User className="h-4 w-4 text-primary" />
         </div>
-        <span className="text-sm font-medium text-gray-700">{isLoggedIn ? authorName : "익명"}</span>
+        <span className="text-sm font-medium text-gray-700">{isLoggedIn && !isAnonymous ? authorName : "익명"}</span>
+        {isLoggedIn ? (
+          <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            익명
+          </label>
+        ) : null}
       </div>
 
       {/* Textarea */}
