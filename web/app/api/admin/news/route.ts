@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { sendNewsPush } from "@/lib/apns";
 import { COMMUNITY_BOARD_GROUPS } from "@/lib/data";
 import { ENABLE_CPA } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken, isAdminUser } from "@/lib/authServer";
@@ -202,14 +203,16 @@ export async function POST(request: Request) {
   }
 
   const admin = getSupabaseAdmin();
-  let { error: insertError } = await admin.from("posts").insert({
+  const inserted = await admin.from("posts").insert({
     board_id: board.boardId,
     author_name: authorName,
     title,
     content,
     post_type: "general",
     view_count: 0,
-  });
+  }).select("id").single<{ id: string }>();
+  let insertError = inserted.error;
+  let newPostId = inserted.data?.id ?? null;
 
   if (insertError?.message?.includes("post_type") || insertError?.message?.includes("view_count")) {
     const retry = await admin.from("posts").insert({
@@ -217,12 +220,19 @@ export async function POST(request: Request) {
       author_name: authorName,
       title,
       content,
-    });
+    }).select("id").single<{ id: string }>();
     insertError = retry.error;
+    newPostId = retry.data?.id ?? null;
   }
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 400 });
+  }
+
+  // 응답을 보낸 뒤 앱 사용자들에게 최신뉴스 알림을 보낸다.
+  if (exam === "transfer" && newPostId && body.sendPush !== false) {
+    const postId = newPostId;
+    after(() => sendNewsPush({ title, postId }));
   }
 
   const result = await loadNews(board.boardId);
