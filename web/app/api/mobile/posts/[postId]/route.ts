@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { COMMUNITY_BOARD_GROUPS, TRANSFER_MERGED_BOARD_SLUGS } from "@/lib/data";
 import { ENABLE_CPA, ENABLE_CPA_WRITE, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
+import { anonymousCommentLabels } from "@/lib/anonymousLabels";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { loadBlockedUserIds } from "@/lib/moderation";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -267,6 +268,8 @@ export async function GET(
     isViewerLiked(admin, postId, requestedUserId),
   ]);
 
+  // 번호는 차단 여부와 상관없이 전체 댓글 기준으로 매겨야 보는 사람마다 달라지지 않는다.
+  const anonymousLabels = anonymousCommentLabels(commentsResult.data ?? [], postData.author_id ?? null);
   const commentsData = (commentsResult.data ?? []).filter(
     (comment) => !comment.author_id || !blockedUserIds.has(comment.author_id)
   );
@@ -355,11 +358,12 @@ export async function GET(
 
     return {
       id: comment.id,
-      authorName: comment.author_name ?? "익명",
+      authorName: anonymousLabels.get(comment.id) ?? comment.author_name ?? "익명",
       authorId: comment.author_id ?? null,
       content: comment.content,
       createdAt: comment.created_at,
-      timeLabel: formatRelativeTime(comment.created_at),
+      // 댓글에는 작성 시각을 보여주지 않는다.
+      timeLabel: "",
       parentId: comment.parent_id,
       verificationLevel: !SHOW_VERIFICATION_BADGES ? "none" :
         (commentAuthorId && verificationByProfileId.get(commentAuthorId)) ||

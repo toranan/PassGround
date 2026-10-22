@@ -33,22 +33,6 @@ type StoredUser = {
   nickname?: string;
 };
 
-function formatRelativeTime(dateString: string | null): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) return "방금 전";
-  if (diffMinutes < 60) return `${diffMinutes}분 전`;
-  if (diffHours < 24) return `${diffHours}시간 전`;
-  if (diffDays < 7) return `${diffDays}일 전`;
-  return date.toLocaleDateString("ko-KR");
-}
-
 function verificationLabel(level: string | null | undefined): string | null {
   if (!SHOW_VERIFICATION_BADGES || !level || level === "none") return null;
   switch (level) {
@@ -217,7 +201,6 @@ export function CommentList({
                   채택된 답변
                 </span>
               )}
-              <span className="text-xs text-gray-500">{formatRelativeTime(comment.created_at)}</span>
             </div>
             <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
             <div className="flex items-center gap-4 mt-2 flex-wrap">

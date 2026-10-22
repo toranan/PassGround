@@ -11,6 +11,7 @@ import { LikeButton } from "@/components/LikeButton";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { ENABLE_CPA, ENABLE_CPA_WRITE, SHOW_VERIFICATION_BADGES } from "@/lib/featureFlags";
+import { anonymousCommentLabels } from "@/lib/anonymousLabels";
 import { ChevronLeft, Eye, MessageCircle, Share2, Bookmark, User } from "lucide-react";
 
 type PostDetailPageProps = {
@@ -399,9 +400,10 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
       verificationByProfileId.set(profileId, `${parsed} 합격자`);
     });
 
+    const anonymousLabels = anonymousCommentLabels(rawComments, postData.author_id ?? null);
     commentsData = rawComments.map((comment) => ({
       id: comment.id,
-      author_name: comment.author_name,
+      author_name: anonymousLabels.get(comment.id) ?? comment.author_name,
       author_id: comment.author_id ?? null,
       content: comment.content,
       created_at: comment.created_at,
