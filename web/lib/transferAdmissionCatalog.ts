@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { asksToeic, englishTestMatches, ruleEnglishTest, trackMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
+import { asksToeic, asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches, writtenOnlyMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
 import { detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude, type TransferField } from "@/lib/transferFieldQuery";
 import { admissionScopeStatus, basicPlanNotice, documentBasisSummary, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
@@ -203,7 +203,7 @@ function normalizeUniversity(value: string): string {
 
 function explicitUniversities(question: string): string[] {
   const matches = question.matchAll(/([가-힣]{2,12}대학교|[가-힣]{1,8}대)(?=가|와|과|는|은|를|을|에서|의|\s|[?!.,]|$)/g);
-  return uniqueStrings([...matches].map((match) => match[1]).filter((name) => !isFieldAbbreviation(name)));
+  return uniqueStrings([...matches].map((match) => match[1]).filter((name) => !isFieldAbbreviation(name) && !isNonSchoolWord(name)));
 }
 
 function explicitAdmissionYear(question: string): number | null {
@@ -556,6 +556,41 @@ function formatSelectionAnswer(
   return lines.join("\n");
 }
 
+// 필기 100% 전형이 없을 때, 같은 조건에서 필기 비중이 높은 전형을 대신 보여준다.
+function formatClosestWrittenAnswer(
+  rows: KnowledgeUnitRow[],
+  documents: SourceDocumentRow[],
+  year: number | null
+): { answer: string; matched: number } | null {
+  const closest = rows
+    .filter((row) => Number(row.final_written_weight ?? 0) > 0 && row.written_subjects?.length)
+    .sort((a, b) => Number(b.final_written_weight) - Number(a.final_written_weight))
+    .slice(0, 6);
+  if (!closest.length) return null;
+  const lines = [
+    `${coveragePrefix(documents, year)}으로는 필기만 100% 반영하는(전적대 성적·서류·면접을 보지 않는) 전형이 없어요.`,
+    "같은 조건에서 필기 비중이 높은 곳은 이래요.",
+  ];
+  for (const row of closest) {
+    const others = [
+      row.final_document_weight ? `서류 ${formatPercent(row.final_document_weight)}` : null,
+      typeof row.metadata?.finalPriorUniversityWeight === "number" && row.metadata.finalPriorUniversityWeight > 0
+        ? `전적대학 ${formatPercent(row.metadata.finalPriorUniversityWeight)}`
+        : null,
+      row.final_interview_weight ? `면접 ${formatPercent(row.final_interview_weight)}` : null,
+    ].filter((value): value is string => value !== null);
+    const priorWeight = typeof row.metadata?.finalPriorUniversityWeight === "number" ? row.metadata.finalPriorUniversityWeight : 0;
+    const known = [row.final_written_weight, row.final_document_weight, priorWeight, row.final_interview_weight, row.final_practical_weight]
+      .reduce<number>((sum, value) => sum + Number(value ?? 0), 0);
+    if (known < 100) others.push(`나머지 ${formatPercent(Math.round((100 - known) * 100) / 100)}는 요강 확인 필요`);
+    lines.push(
+      `- ${schoolCampusLabel(row.university, row.campus)} ${row.scope_value}: 필기(${row.written_subjects?.join("·")}) ${formatPercent(row.final_written_weight)}${others.length ? ` + ${others.join("·")}` : ""}`
+    );
+  }
+  lines.push("\n서류는 대부분 전적대 성적이에요. 아직 DB에 적재되지 않은 학교는 결과에 포함되지 않아요.");
+  return { answer: lines.join("\n"), matched: closest.length };
+}
+
 function englishTestLabel(info: EnglishTestInfo): string {
   const stage = info.stage === "stage1" ? "1단계 " : info.stage === "final" ? "최종 " : "";
   const parts = [
@@ -678,7 +713,7 @@ async function answerStructured(params: {
   if (params.plan.factKind === "selection") {
     const loaded = await loadUnits(params.admin, documentIds, "selection_rule");
     if (loaded.missingCatalog) return "missing_catalog";
-    const rows = loaded.rows.filter((row) =>
+    const conditionRows = loaded.rows.filter((row) =>
       subjectMatches(row.written_subjects, params.plan.subjectMode)
       && trackMatches(row, params.plan.category)
       && englishTestMatches(row, params.plan.englishTestMode, asksToeic(params.question))
@@ -689,6 +724,12 @@ async function answerStructured(params: {
       && (params.plan.maxInterviewWeight === null
         || Number(row.final_interview_weight ?? Number.POSITIVE_INFINITY) <= params.plan.maxInterviewWeight)
     );
+    const writtenOnly = asksWrittenOnly(params.question);
+    const rows = writtenOnly ? conditionRows.filter(writtenOnlyMatches) : conditionRows;
+    if (writtenOnly && !rows.length) {
+      const closest = formatClosestWrittenAnswer(conditionRows, params.documents, params.year);
+      if (closest) return closest;
+    }
     return {
       answer: params.plan.englishTestMode === "unspecified"
         ? formatSelectionAnswer(rows, params.documents, params.year)

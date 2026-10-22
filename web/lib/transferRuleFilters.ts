@@ -48,3 +48,23 @@ export function englishTestMatches(row: RuleFilterRow, mode: EnglishTestMode, to
   if (mode === "eligibility") return role === "eligibility" || role === "weighted_and_eligibility";
   return role === "weighted" || role === "eligibility" || role === "weighted_and_eligibility";
 }
+
+// "전적대", "타대"처럼 학교 이름이 아닌데 "~대"로 끝나는 말. 학교명으로 잡으면 "자료 없음"으로 빠진다.
+const NON_SCHOOL_WORDS = new Set(["전적대", "전적대학", "타대", "본교대", "우리대", "명문대", "지방대", "인서울대", "상위대", "하위대", "목표대"]);
+
+export function isNonSchoolWord(word: string): boolean {
+  return NON_SCHOOL_WORDS.has(word.replace(/\s+/g, ""));
+}
+
+// "필기 100%", "수학 100%", "전적대 성적 안 보는"처럼 필기만으로 뽑는 전형을 묻는 질문
+export function asksWrittenOnly(question: string): boolean {
+  const compact = question.replace(/\s+/g, "");
+  return /(필기|수학|영어|시험)(만)?100(%|퍼|프로)/.test(compact)
+    || /(전적대|학점|전적대성적|내신)(성적|학점)?(을|은|는)?(안|미)(보|반영)/.test(compact)
+    || /(전적대|학점)(성적)?(반영)?(없|안들어|0%)/.test(compact);
+}
+
+// 최종 반영비율에서 필기가 100%인 전형만 남긴다(서류·면접·전적대 성적 반영이 없다).
+export function writtenOnlyMatches(row: { final_written_weight: number | null }): boolean {
+  return Number(row.final_written_weight ?? 0) >= 100;
+}

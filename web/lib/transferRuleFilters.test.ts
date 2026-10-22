@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { buildTransferKnowledgeUnits, parseManifest } from "../scripts/ingest-transfer-manifest.mjs";
 // @ts-expect-error Node's native TypeScript test runner requires the explicit extension.
-import { englishTestMatches, ruleEnglishTest, trackMatches } from "./transferRuleFilters.ts";
+import { asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches } from "./transferRuleFilters.ts";
 
 type Unit = { unitType: string; university: string; metadata: Record<string, unknown>; category: string | null };
 
@@ -77,4 +77,19 @@ test("토익 보는 자연계 전형은 공인영어 반영·자격 규칙만 �
   assert.ok(undisclosed.has("전남대학교") && undisclosed.has("숭실대학교"));
   assert.ok(!keys.some((key) => /충북대학교:(veterinary|pharmacy)/.test(key)), "TOEIC 불인정 전형 제외");
   assert.ok(!keys.some((key) => key.startsWith("숙명여자대학교") || key.startsWith("울산과학기술원")));
+});
+
+test("전적대·타대는 학교 이름으로 보지 않는다", () => {
+  assert.equal(isNonSchoolWord("전적대"), true);
+  assert.equal(isNonSchoolWord("타대"), true);
+  assert.equal(isNonSchoolWord("건국대"), false);
+});
+
+test("수학 100%·전적대 성적 안 보는 질문은 필기 100% 전형을 찾는다", () => {
+  assert.equal(asksWrittenOnly("수학 100%에 전적대 성적 안 보는 대학 추천좀"), true);
+  assert.equal(asksWrittenOnly("필기 100프로 학교"), true);
+  assert.equal(asksWrittenOnly("영어 100퍼 학교"), true);
+  assert.equal(asksWrittenOnly("학점 안 보는 학교 있어?"), true);
+  assert.equal(asksWrittenOnly("전적대 성적 반영 없는 곳"), true);
+  assert.equal(asksWrittenOnly("수학만 보는 학교"), false);
 });
