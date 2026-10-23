@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "인하대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "전형 주요사항(변경 안내)",
+    "title": "2027학년도 인하대학교 편입학 주요사항 및 변경사항",
+    "sourceFile": "2027_인하대학교_편입학주요사항및변경사항.pdf",
+    "sourceUrl": null,
+    "sha256": "91106f0b4940cdfc70e7705cdabaa80183490718c1f9f0bd1ab4eeea74941821",
+    "fileSizeBytes": 501805,
+    "pageCount": 2,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-10-23T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": false,
+      "publicationStage": "basic_plan",
+      "publishedOn": "2026-10-23",
+      "publisher": "인하대학교 입학처",
+      "factAvailability": {
+        "recruitmentQuota": "deferred",
+        "exactSchedule": "partial",
+        "writtenSubjects": "provisional",
+        "selectionWeights": "deferred",
+        "selectionMultiple": "provisional",
+        "englishTestDetails": "deferred",
+        "detailedEligibility": "partial",
+        "detailedSelection": "partial"
+      },
+      "finalGuideExpected": "2026년 12월 초 입학처 홈페이지 공개 예정",
+      "notice": "인하대학교 입학처 홈페이지에 게시된 2027학년도 편입학 주요사항 및 변경사항 안내 이미지이며 전체 모집요강이 아니다. 세부사항은 관계 법령 및 대학입학전형관리위원회 심의 결과 등에 따라 변경될 수 있고, 최종 내용은 12월 초 공개 예정인 2027학년도 편입학 모집요강에서 확인해야 한다.",
+      "extractionScope": "안내 이미지 전체 전사: 필기고사 일시와 계열별 과목·시간, 1단계 합격배수, 의학과 재학생·휴학생 지원 허용, 첨단분야 지정 학과, 자율 전공(트랙) 선택 학부, 단과대학·모집단위 편제 변경. 반영비율·모집인원·문항 수·원서접수 일정·공인영어 기준은 원문에 없음.",
+      "sourceLocalPath": "/Users/anseung-won/Desktop/편입학pdf모음/2027기본계획모음/완료/2027_인하대학교_편입학주요사항및변경사항.pdf",
+      "sourceNote": "입학처 홈페이지 안내 이미지를 화면 캡처 2장으로 저장해 PDF로 묶음(두 장은 일부 겹침)."
+    }
+  },
+  "sections": [
+    {
+      "key": "document-status",
+      "heading": "문서 성격과 변경 가능성",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "이 자료는 인하대학교 입학처가 게시한 2027학년도 편입학 주요사항 및 변경사항 안내로, 전체 모집요강이 아니다. 2027학년도 편입학 모집요강은 12월 초 공개 예정이다. 세부사항은 관계 법령 및 대학입학전형관리위원회 심의 결과 등에 따라 변경될 수 있으므로 추후 공지되는 모집요강을 반드시 확인해야 한다. 전형 단계별 반영비율, 모집인원, 문항 수, 원서접수 일정, 공인영어 기준, 지원자격 세부는 이 자료에 없으며, 언급이 없다는 것이 변경이 없다는 뜻은 아니다."
+    },
+    {
+      "key": "written-exam",
+      "heading": "필기고사 일시와 과목",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2027학년도 인하대학교 편입학 필기고사는 2027년 1월 8일(금) 15:00에 실시한다. 인문(예체능)계열은 영어 80분, 자연계열은 영어·수학 통합 120분으로 운영한다. 특성화고 등을 졸업한 재직자 전형 지원자는 모집단위 계열에 관계없이 필기고사 영어 과목만 응시한다. 문항 수와 배점은 이 자료에 없다."
+    },
+    {
+      "key": "stage1-multiple",
+      "heading": "1단계 합격배수",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "일반편입학·학사편입학의 1단계 합격배수는 8~10배수로 변경되었다(의학과, 건축학부 건축학전공 제외). 의학과와 건축학부(건축학전공)는 1단계 합격자(면접대상자)를 의학과 3배수, 건축학부(건축학전공) 5배수로 선발한다. 이전 학년도 배수와 단계별 반영비율은 이 자료에 없다."
+    },
+    {
+      "key": "medicine-eligibility",
+      "heading": "의학과 인하대 재학생·휴학생 지원 허용",
+      "pageStart": 1,
+      "pageEnd": 1,
+      "content": "2027학년도부터 변경되어, 일반편입학 의학과에 한하여 인하대학교 재학생과 휴학생도 편입학 전형에 지원할 수 있다. 의학과 외 모집단위의 본교생 지원 가능 여부는 이 자료에 없다."
+    },
+    {
+      "key": "advanced-field-majors",
+      "heading": "교육부 첨단(신기술)분야 지정 학과",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "교육부 첨단(신기술)분야 지정 학과는 항공우주공학과, 신소재공학과, 반도체시스템공학과, 인공지능공학과, 데이터사이언스학과, 스마트모빌리티공학과, 디자인테크놀로지학과, 첨단바이오의약학과이다. 해당 학과의 모집인원과 별도 전형 여부는 이 자료에 없다."
+    },
+    {
+      "key": "track-selection",
+      "heading": "자율 전공(트랙) 선택 가능 학부",
+      "pageStart": 1,
+      "pageEnd": 2,
+      "content": "전기전자공학부는 학부 내 모든 심화트랙을 자율 선택할 수 있다. 전기전자공학부 심화트랙은 반도체집적회로, 전기에너지, 컴퓨터인공지능신호처리, 통신네트워크, 제어로봇바이오융합이며 세부 트랙명과 분야는 변경될 수 있다. 영미유럽인문융합학부는 영어영문학, 프랑스언어문화 중 학부 내 모든 전공을 자율 선택할 수 있다."
+    },
+    {
+      "key": "organization-changes",
+      "heading": "단과대학 및 모집단위 편제 변경",
+      "pageStart": 2,
+      "pageEnd": 2,
+      "content": "단과대학 승격: 바이오시스템융합학부가 바이오융합대학으로 승격되었다. 단과대학명 변경: 소프트웨어융합대학이 AI융합대학으로 바뀌었다. 모집단위 편제 변경: 화학공학과와 이차전지융합학과가 화공에너지공학부(화학공학전공)와 화공에너지공학부(이차전지공학전공)로 개편되었다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "humanities",
+      "scopeType": "category",
+      "scopeValue": "인문(예체능)계열",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 80,
+      "questionCount": null,
+      "examFormat": "필기고사 영어 80분",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 8,
+      "stage1SelectionMaxMultiple": 10,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null,
+      "sourcePages": [
+        1
+      ],
+      "notes": "필기 영어 80분, 1단계 8~10배수. 반영비율·문항 수·모집인원은 원문에 없음(12월 초 모집요강 공개 예정).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "natural",
+      "scopeType": "category",
+      "scopeValue": "자연계열(의학과·건축학부 건축학전공 제외)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 120,
+      "questionCount": null,
+      "examFormat": "필기고사 영어·수학 통합 120분",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 8,
+      "stage1SelectionMaxMultiple": 10,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null,
+      "sourcePages": [
+        1
+      ],
+      "notes": "필기 영어·수학 통합 120분, 1단계 8~10배수. 반영비율·문항 수·모집인원은 원문에 없음(12월 초 모집요강 공개 예정).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "medicine",
+      "scopeType": "major",
+      "scopeValue": "의학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 120,
+      "questionCount": null,
+      "examFormat": "필기고사 영어·수학 통합 120분(자연계열 기준), 1단계 합격자는 면접대상자",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 3,
+      "stage1SelectionMaxMultiple": 3,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null,
+      "sourcePages": [
+        1
+      ],
+      "notes": "1단계 3배수로 면접대상자 선발. 2027학년도부터 인하대 재학생·휴학생도 지원 가능. 필기 과목은 자연계열 기준(영어·수학)으로 기록. 반영비율·문항 수·모집인원은 원문에 없음(12월 초 모집요강 공개 예정).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "architecture",
+      "scopeType": "major",
+      "scopeValue": "건축학부(건축학전공)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어",
+        "수학"
+      ],
+      "examMinutes": 120,
+      "questionCount": null,
+      "examFormat": "필기고사 영어·수학 통합 120분(자연계열 기준), 1단계 합격자는 면접대상자",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 5,
+      "stage1SelectionMaxMultiple": 5,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null,
+      "sourcePages": [
+        1
+      ],
+      "notes": "1단계 5배수로 면접대상자 선발. 필기 과목은 자연계열 기준(영어·수학)으로 기록. 반영비율·문항 수·모집인원은 원문에 없음(12월 초 모집요강 공개 예정).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "key": "vocational-employee",
+      "scopeType": "all",
+      "scopeValue": "특성화고 등을 졸업한 재직자 전형",
+      "transferTypes": [
+        "특성화고졸 재직자 전형"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 80,
+      "questionCount": null,
+      "examFormat": "모집단위 계열에 관계없이 필기고사 영어만 응시",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": null,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "englishToeicMin": null,
+      "englishTepsMin": null,
+      "englishToeflIbtMin": null,
+      "englishScoreValidFrom": null,
+      "englishScoreValidThrough": null,
+      "sourcePages": [
+        1
+      ],
+      "notes": "계열에 관계없이 영어만 응시. 시간은 영어 단독 응시 기준 80분으로 기록. 1단계 배수·반영비율·문항 수·모집인원은 원문에 없음(12월 초 모집요강 공개 예정).",
+      "metadata": {
+        "factStatus": "provisional",
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "undisclosed",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "written-exam-humanities",
+      "audience": "인문(예체능)계열, 특성화고 등을 졸업한 재직자 전형",
+      "label": "필기고사(영어)",
+      "startsAt": "2027-01-08T15:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-01-08",
+      "endsOn": "2027-01-08",
+      "displayText": "2027년 1월 8일(금) 15:00, 영어 80분",
+      "details": "입실 시각과 장소는 모집요강에서 공지.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    },
+    {
+      "key": "written-exam-natural",
+      "audience": "자연계열",
+      "label": "필기고사(영어·수학)",
+      "startsAt": "2027-01-08T15:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-01-08",
+      "endsOn": "2027-01-08",
+      "displayText": "2027년 1월 8일(금) 15:00, 영어·수학 통합 120분",
+      "details": "입실 시각과 장소는 모집요강에서 공지.",
+      "sourcePage": 1,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "provisional"
+      }
+    }
+  ],
+  "programs": [],
+  "validation": {
+    "expectedProgramRows": 0,
+    "expectedGeneralTotal": 0,
+    "expectedBachelorTotal": 0,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 5,
+    "expectedScheduleRows": 2,
+    "tablesChecked": [
+      "1페이지 필기고사 일시·계열별 과목·시간",
+      "1페이지 1단계 합격배수",
+      "1페이지 의학과 지원자격 변경",
+      "1~2페이지 첨단분야 지정 학과·자율 트랙",
+      "2페이지 단과대학·모집단위 편제 변경"
+    ],
+    "notes": [
+      "입학처 홈페이지 안내 이미지라 PDF 원본이 없어 화면 캡처 2장을 PDF로 묶어 원본으로 보관",
+      "반영비율이 원문에 없어 weight 필드는 모두 null",
+      "공인영어 활용 여부가 원문에 없어 englishTest.role=undisclosed",
+      "의학과·건축학전공 필기 과목은 원문에 따로 없어 자연계열 기준으로 기록",
+      "모집인원 미공개로 program 행 없음",
+      "필기 종료 시각은 원문에 없어 endsAt=null(시험 시간만 displayText에 기록)"
+    ]
+  }
+}
