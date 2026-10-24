@@ -68,3 +68,11 @@ export function asksWrittenOnly(question: string): boolean {
 export function writtenOnlyMatches(row: { final_written_weight: number | null }): boolean {
   return Number(row.final_written_weight ?? 0) >= 100;
 }
+
+// "왜 이 어플에 강원대는 없어?", "강원대 자료 있어?"처럼 학교 자료가 서비스에 있는지 묻는 질문
+export function asksSchoolCoverage(question: string): boolean {
+  const compact = question.replace(/\s+/g, "");
+  return /(어플|앱|여기|합격판|서비스|달력|캘린더|일정탭)(에|엔|에는|에선|에서는)?.*(없|있|안나|안보)/.test(compact)
+    || /(정보|자료|요강|기본계획)(가|이|는|은|도)?(없|있어\?|있나|있냐|있어요\?|안나|안보)/.test(compact)
+    || /왜.*(없어|없나|없냐|없죠|없어요|안나와|안보여)/.test(compact);
+}

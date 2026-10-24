@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { asksToeic, asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches, writtenOnlyMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
+import { asksSchoolCoverage, asksToeic, asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches, writtenOnlyMatches, type EnglishTestInfo } from "@/lib/transferRuleFilters";
 import { detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude, type TransferField } from "@/lib/transferFieldQuery";
-import { admissionScopeStatus, basicPlanNotice, documentBasisSummary, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
+import { admissionScopeStatus, basicPlanNotice, documentBasisSummary, isBasicPlan, missingAdmissionEvidence, noAdmissionDocument, normalizeTransferUniversityName } from "@/lib/transferDocumentPolicy";
 import {
   AiProviderUnavailableError,
   createEmbedding,
@@ -910,6 +910,39 @@ async function answerField(params: {
   };
 }
 
+function schoolCoverageAnswer(
+  schools: string[],
+  documents: SourceDocumentRow[],
+  year: number
+): TransferCatalogAnswer {
+  const lines: string[] = [];
+  let coverage = 0;
+  for (const school of schools) {
+    const key = normalizeUniversity(school);
+    const owned = documents.filter((document) => normalizeUniversity(document.university) === key && document.admission_year === year);
+    if (!owned.length) {
+      lines.push(`${school}는 아직 ${year}학년도 최종 모집요강이나 편입학 기본계획을 확보하지 못했어요. 자료가 공개되고 확인되는 대로 추가할게요.`);
+      continue;
+    }
+    coverage += 1;
+    const titles = uniqueStrings(owned.map((document) => document.title)).join(", ");
+    const basic = owned.every(isBasicPlan);
+    lines.push(
+      `${owned[0].university} 자료는 있어요. 현재 「${titles}」 기준으로 전형방법, 필기 과목, 반영비율, 일정 등을 물어보실 수 있어요.`
+        + (basic
+          ? " 아직 최종 모집요강이 나오지 않아 기본계획 기준이며, 원서접수·시험 일정이 \"12월 중\"처럼 월 단위로만 나와 있으면 정확한 날짜가 정해질 때까지 일정 달력에는 표시되지 않아요."
+          : "")
+    );
+  }
+  return {
+    answer: lines.join("\n\n"),
+    admissionYear: year,
+    coverageCount: coverage,
+    matchedRuleCount: 0,
+    grounded: coverage > 0,
+  };
+}
+
 export async function tryAnswerTransferCatalogQuestion(params: {
   admin: SupabaseClient;
   question: string;
@@ -930,6 +963,12 @@ export async function tryAnswerTransferCatalogQuestion(params: {
   const currentAdmissionYear = documents.length
     ? Math.max(...documents.map((document) => document.admission_year))
     : new Date().getFullYear() + 1;
+
+  // "왜 이 앱에 강원대는 없어?"처럼 자료 보유 여부를 물으면 그 학교의 확보 현황을 답한다.
+  const coverageSchools = explicitUniversities(params.question);
+  if (coverageSchools.length && asksSchoolCoverage(params.question)) {
+    return schoolCoverageAnswer(coverageSchools, documents, currentAdmissionYear);
+  }
 
   // 학교 없이 계열(체대·간호·약대 등)을 물으면 보유한 모든 학교에서 그 계열 전형을 모은다.
   const field = detectTransferField(params.question);

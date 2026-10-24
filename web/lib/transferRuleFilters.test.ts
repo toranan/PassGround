@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { buildTransferKnowledgeUnits, parseManifest } from "../scripts/ingest-transfer-manifest.mjs";
 // @ts-expect-error Node's native TypeScript test runner requires the explicit extension.
-import { asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches } from "./transferRuleFilters.ts";
+import { asksSchoolCoverage, asksWrittenOnly, englishTestMatches, isNonSchoolWord, ruleEnglishTest, trackMatches } from "./transferRuleFilters.ts";
 
 type Unit = { unitType: string; university: string; metadata: Record<string, unknown>; category: string | null };
 
@@ -92,4 +92,12 @@ test("수학 100%·전적대 성적 안 보는 질문은 필기 100% 전형을 �
   assert.equal(asksWrittenOnly("학점 안 보는 학교 있어?"), true);
   assert.equal(asksWrittenOnly("전적대 성적 반영 없는 곳"), true);
   assert.equal(asksWrittenOnly("수학만 보는 학교"), false);
+});
+
+test("학교 자료가 앱에 있는지 묻는 질문을 알아본다", () => {
+  assert.equal(asksSchoolCoverage("왜 이 어플에 강원대학교는 없어?"), true);
+  assert.equal(asksSchoolCoverage("강원대 자료 있어?"), true);
+  assert.equal(asksSchoolCoverage("달력에 강원대 왜 안나와"), true);
+  assert.equal(asksSchoolCoverage("강원대 수의학과 필기 과목 알려줘"), false);
+  assert.equal(asksSchoolCoverage("강원대 면접 있어?"), false);
 });
