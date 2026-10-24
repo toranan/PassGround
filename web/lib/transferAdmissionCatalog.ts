@@ -925,13 +925,11 @@ function schoolCoverageAnswer(
       continue;
     }
     coverage += 1;
-    const titles = uniqueStrings(owned.map((document) => document.title)).join(", ");
     const basic = owned.every(isBasicPlan);
     lines.push(
-      `${owned[0].university} 자료는 있어요. 현재 「${titles}」 기준으로 전형방법, 필기 과목, 반영비율, 일정 등을 물어보실 수 있어요.`
-        + (basic
-          ? " 아직 최종 모집요강이 나오지 않아 기본계획 기준이며, 원서접수·시험 일정이 \"12월 중\"처럼 월 단위로만 나와 있으면 정확한 날짜가 정해질 때까지 일정 달력에는 표시되지 않아요."
-          : "")
+      basic
+        ? `${owned[0].university} 자료 있어요. ${year}학년도 편입학 기본계획은 확보해 두었고, 아직 최종 모집요강은 나오지 않았어요. 지금은 기본계획 기준으로 전형방법, 필기 과목, 반영비율 등을 안내해 드릴 수 있고, 최종 모집요강이 나오면 그 기준으로 바꿔 안내할게요.`
+        : `${owned[0].university} 자료 있어요. ${year}학년도 최종 모집요강을 확보해 두어서 그 기준으로 전형방법, 필기 과목, 반영비율, 일정 등을 안내해 드릴 수 있어요.`
     );
   }
   return {
