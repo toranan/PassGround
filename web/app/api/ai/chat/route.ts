@@ -9,6 +9,7 @@ import {
   EmbeddingsDisabledError,
   generateGroundedAnswer,
   generateGroundedAnswerStream,
+  generateStructuredJson,
   generateText,
   getAiProviderName,
   getChatModelName,
@@ -386,6 +387,40 @@ function deriveCutoffHistoryContext(historyMessages: ChatHistoryMessage[]): Cuto
     active: sawCutoffContext && turnsSinceCutoff <= 4,
     slots,
   };
+}
+
+// 규칙에 걸리지 않은 질문만 LLM이 사실 조회인지 상담인지 한 번 더 판단한다. 실패하면 기존처럼 사실 질문으로 둔다.
+async function classifyUnmatchedQuestionWithAI(
+  question: string,
+  historyMessages: ChatHistoryMessage[]
+): Promise<IntentRoute> {
+  const historyText = historyMessages
+    .slice(-4)
+    .map((item) => `${item.role === "user" ? "사용자" : "합곰"}: ${item.text}`)
+    .join("\n");
+  try {
+    const result = await generateStructuredJson<{ type: "fact" | "counseling" }>({
+      schemaName: "question_type",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: { type: { type: "string", enum: ["fact", "counseling"] } },
+        required: ["type"],
+      },
+      disableThinking: true,
+      maxOutputTokens: 60,
+      systemPrompt: [
+        "너는 편입 수험생 앱의 질문 분류기다. 답을 만들지 말고 분류만 한다.",
+        "- fact: 특정 대학·전형·모집인원·시험과목·일정·지원자격·자료 보유 여부처럼 정해진 정보를 찾는 질문",
+        "- counseling: 공부법·교재 추천·공부 시작 시기·학점·멘탈·진로·가능성 고민처럼 학생 상황에 맞춘 조언이 필요한 질문",
+        "대학 이름이 나와도 정보를 찾는 게 아니라 고민·조언을 구하면 counseling이다.",
+      ].join("\n"),
+      userPrompt: [historyText ? `최근 대화:\n${historyText}` : "", `현재 질문: ${question}`].filter(Boolean).join("\n\n"),
+    });
+    return result.type === "counseling" ? "emotion" : "fact";
+  } catch {
+    return "fact";
+  }
 }
 
 async function resolveMessageRouteWithAI(params: {
@@ -974,7 +1009,8 @@ async function runChatWorkflow(params: {
         historyContext: cutoffHistoryContext,
       });
   const isGeneralChat = messageRoute === "smalltalk" || isGeneralConversationQuestion(question);
-  const intent = isMockExamCounseling ? "mixed" : directSmalltalk ? "emotion" : admissionFacts || cutoffFlow.active ? "fact" : coachingReason !== "none" || countKeywordHits(question, EMOTION_KEYWORDS) > 0 ? "emotion" : "fact";
+  const ruleIntent: IntentRoute | null = isMockExamCounseling ? "mixed" : directSmalltalk ? "emotion" : admissionFacts || cutoffFlow.active ? "fact" : coachingReason !== "none" || countKeywordHits(question, EMOTION_KEYWORDS) > 0 ? "emotion" : isGeneralChat ? "fact" : null;
+  const intent: IntentRoute = ruleIntent ?? await classifyUnmatchedQuestionWithAI(question, historyMessages);
   const useCache =
     shouldUseChatCache(body.disableCache) && intent === "fact" && !isGeneralChat && historyMessages.length === 0;
   let cacheStatus: CacheStatus = useCache ? "miss" : "bypass";
