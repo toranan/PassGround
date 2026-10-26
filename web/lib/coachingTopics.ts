@@ -1,5 +1,6 @@
 // 운영자 상담 방침을 주제별로 등록한다. 질문(또는 직전 사용자 질문)이 주제에 해당하면
 // 해당 방침을 코칭 답변 프롬프트에 넣고, 라우팅에서도 코칭 상담으로 분류한다.
+import { buildCutoffGuide, isCutoffQuestion } from "@/lib/cutoffCoaching";
 import { buildGpaGuide, isGpaQuestion } from "@/lib/gpaCoaching";
 import { buildStartTimingGuide, isStartTimingQuestion } from "@/lib/startTimingCoaching";
 
@@ -14,6 +15,7 @@ type CoachingTopic = {
 const COACHING_TOPICS: CoachingTopic[] = [
   { id: "start_timing", matches: isStartTimingQuestion, guide: buildStartTimingGuide },
   { id: "gpa", matches: isGpaQuestion, guide: buildGpaGuide },
+  { id: "cutoff", matches: isCutoffQuestion, guide: buildCutoffGuide },
 ];
 
 export function matchCoachingTopics(question: string, history: HistoryMessage[] = []): string[] {
