@@ -24,16 +24,24 @@ const FIELDS: Array<TransferField & { pattern: RegExp }> = [
 // 대학 이름처럼 보이지만 계열을 뜻하는 줄임말.
 const FIELD_ABBREVIATIONS = new Set(["체대", "의대", "치대", "한의대", "약대", "간호대", "수의대", "미대", "음대", "공대", "사대", "사범대", "법대", "예체대"]);
 
-const INFO_REQUEST = /정보|전형|모집|요강|어디|학교|뽑|알려|선발|과목|실기|일정|자격|반영|방법|비율/;
+// 계열 이름이 있어도 공부·멘탈·합격 가능성 상담이면 전형 정보 질문으로 보지 않는다.
+const COUNSELING = /공부|멘탈|불안|힘들|지치|무섭|걱정|가능(?:성|해|할|한)|갈\s*수|붙을|합격/;
 
 export function isFieldAbbreviation(word: string): boolean {
   return FIELD_ABBREVIATIONS.has(word.replace(/\s+/g, ""));
 }
 
 export function detectTransferField(question: string): TransferField | null {
-  if (!INFO_REQUEST.test(question)) return null;
   const field = FIELDS.find((candidate) => candidate.pattern.test(question));
   return field ? { key: field.key, label: field.label, terms: field.terms } : null;
+}
+
+// "약대편입", "간호 편입 어때"처럼 정보를 달라는 단어가 없어도 계열과 편입을 함께 말하면
+// 전형 정보 질문으로 보고 가진 자료에서 최대한 답한다.
+export function asksFieldInfo(question: string): boolean {
+  if (COUNSELING.test(question)) return false;
+  const compact = question.replace(/[\s?？!.~]/g, "");
+  return Boolean(detectTransferField(question)) && (/편입/.test(question) || compact.length <= 8);
 }
 
 // "모든 모집단위(… 체육교육과 … 제외)"처럼 제외 목록에만 나오는 학과는 해당 계열 전형이 아니다.

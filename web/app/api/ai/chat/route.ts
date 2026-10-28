@@ -39,6 +39,8 @@ import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
 import { AI_CHAT_LOGIN_REQUIRED } from "@/lib/featureFlags";
 import { buildCoachingTopicGuides, matchCoachingTopics } from "@/lib/coachingTopics";
 import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
+import { asksFieldInfo } from "@/lib/transferFieldQuery";
+import { answerWithRouter } from "@/lib/llmRouter";
 import { EVIDENCE_ANSWER_POLICY, formatEvidenceContext, type EvidenceInput } from "@/lib/knowledgeEvidence";
 import { COUNSELING_ANSWER_POLICY, COUNSELING_FALLBACK } from "@/lib/counselingPolicy";
 import { asksAdmissionFacts, smalltalkReply } from "@/lib/chatRoutingPolicy";
@@ -963,6 +965,127 @@ function isStreamRequested(body: Record<string, unknown>, request: Request): boo
   return accept.includes("text/event-stream");
 }
 
+// 기본 경로: LLM 라우터가 질문을 요청 단위로 나누고 필요한 자료를 원문으로 모아 한 번에 답한다.
+// AI_CHAT_ROUTER=legacy 로 두면 아래 runChatWorkflow의 규칙(정규식) 라우팅을 그대로 쓴다.
+function isLegacyRouter(exam: Exam): boolean {
+  return exam !== "transfer" || process.env.AI_CHAT_ROUTER === "legacy";
+}
+
+async function runLlmRouterWorkflow(params: {
+  body: Record<string, unknown>;
+  exam: Exam;
+  question: string;
+  traceId: string;
+  startedAt: number;
+  stream?: StreamCallbacks;
+}): Promise<ChatSuccessPayload> {
+  const { body, exam, question, traceId, startedAt, stream } = params;
+  const admin = getSupabaseAdmin();
+  const historyMessages = normalizeHistoryMessages(body.messages);
+  const smalltalk = smalltalkReply(question);
+  let route: FinalRoute = "emotion";
+  let answer = "";
+  let knowledgeIds: string[] = [];
+  let retrievalMs = 0;
+  let generationMs = 0;
+
+  const record = async (status: "ok" | "error", matchedContextCount: number, errorMessage?: string) => {
+    try {
+      await recordAiChatObservation(admin, {
+        traceId,
+        exam,
+        route,
+        cacheStatus: "bypass",
+        status,
+        questionLength: question.length,
+        answerLength: answer.length,
+        matchedContextCount,
+        minSimilarity: 0,
+        matchCount: 0,
+        hasEnoughContext: route === "grounded",
+        provider: getAiProviderName(),
+        chatModel: getChatModelName(),
+        embeddingModel: getEmbeddingModelName(),
+        totalMs: Date.now() - startedAt,
+        cacheMs: 0,
+        embeddingMs: 0,
+        retrievalMs,
+        generationMs,
+        errorMessage,
+      });
+    } catch {
+      // Fail-open: observability insert errors should not block chat answers.
+    }
+  };
+
+  let matchedContextCount = 0;
+  try {
+    if (smalltalk) {
+      answer = smalltalk;
+      stream?.onMeta({ intent: "emotion", route, cache: "bypass", mode: "smalltalk" });
+      if (stream) for (const chunk of splitForStream(answer)) stream.onDelta(chunk);
+    } else {
+      const retrievalStarted = Date.now();
+      const advice = await loadCoachingAdviceSnippets({ admin, exam, question }).catch(() => []);
+      retrievalMs = Date.now() - retrievalStarted;
+      const generationStarted = Date.now();
+      let metaSent = false;
+      const result = await answerWithRouter({
+        admin,
+        question,
+        history: historyMessages,
+        adviceText: advice.length ? buildAdviceReferenceText(advice) : undefined,
+        onDelta: stream
+          ? (delta) => {
+              if (!metaSent) {
+                stream.onMeta({ intent: "mixed", route: "mixed", cache: "bypass", mode: "llm_router" });
+                metaSent = true;
+              }
+              stream.onDelta(delta);
+            }
+          : undefined,
+      });
+      generationMs = Date.now() - generationStarted;
+      answer = result.answer;
+      const lookups = result.results.filter((item) => item.request.kind !== "counseling");
+      route = lookups.length ? (lookups.some((item) => item.grounded) ? "grounded" : "fallback") : "emotion";
+      matchedContextCount = lookups.filter((item) => item.grounded).length + advice.length;
+      knowledgeIds = [...advice.map((item) => item.id), ...result.mockExamReferenceIds];
+    }
+  } catch (error) {
+    await record("error", 0, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+
+  try {
+    await admin.from("ai_chat_logs").insert({
+      exam_slug: exam,
+      question,
+      answer,
+      route,
+      top_chunk_ids: [],
+      top_knowledge_item_ids: knowledgeIds,
+    });
+  } catch {
+    // Fail-open: logging errors should not block chat answers.
+  }
+  await record("ok", matchedContextCount);
+
+  return {
+    ok: true,
+    exam,
+    intent: route === "emotion" ? "emotion" : "fact",
+    route,
+    answer,
+    needsQuestionSubmission: false,
+    adviceKnowledgeItemIds: knowledgeIds,
+    contexts: [],
+    cache: "bypass",
+    traceId,
+    metrics: { totalMs: Date.now() - startedAt, cacheMs: 0, embeddingMs: 0, retrievalMs, generationMs },
+  };
+}
+
 async function runChatWorkflow(params: {
   body: Record<string, unknown>;
   exam: Exam;
@@ -971,6 +1094,7 @@ async function runChatWorkflow(params: {
   startedAt: number;
   stream?: StreamCallbacks;
 }): Promise<ChatSuccessPayload> {
+  if (!isLegacyRouter(params.exam)) return runLlmRouterWorkflow(params);
   const { body, exam, question, traceId, startedAt, stream } = params;
 
   const provider = getAiProviderName();
@@ -988,7 +1112,7 @@ async function runChatWorkflow(params: {
   const matchCount = typeof body.matchCount === "number" ? Math.max(1, Math.min(12, Math.floor(body.matchCount))) : 6;
   const historyMessages = normalizeHistoryMessages(body.messages);
   const directSmalltalk = smalltalkReply(question);
-  const admissionFacts = asksAdmissionFacts(question, historyMessages);
+  const admissionFacts = asksAdmissionFacts(question, historyMessages) || asksFieldInfo(question);
   const coachingReason = admissionFacts ? "none" : inferDeterministicCoachingReason(question, historyMessages);
   const isMockExamCounseling = exam === "transfer" && isMockExamCounselingQuestion(question, historyMessages);
   const cutoffHistoryContext = deriveCutoffHistoryContext(historyMessages);
@@ -1828,6 +1952,9 @@ async function runChatWorkflow(params: {
     },
   };
 }
+
+// Opus 답변은 자료가 많으면 수십 초가 걸린다.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const traceId = request.headers.get("x-request-id")?.trim() || crypto.randomUUID();

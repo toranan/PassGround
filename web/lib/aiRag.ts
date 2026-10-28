@@ -85,8 +85,8 @@ export type KnowledgeChunk = {
   chunkText: string;
 };
 
-export function getAiProviderName(): "openai" {
-  return "openai";
+export function getAiProviderName(): "openai" | "anthropic" {
+  return process.env.AI_CHAT_PROVIDER === "anthropic" ? "anthropic" : "openai";
 }
 
 export function getEmbeddingModelName(): string {
@@ -94,7 +94,7 @@ export function getEmbeddingModelName(): string {
 }
 
 export function getChatModelName(): string {
-  return DEFAULT_OPENAI_CHAT_MODEL;
+  return process.env.AI_CHAT_PROVIDER === "anthropic" ? (process.env.ANTHROPIC_CHAT_MODEL || "claude-opus-5-5") : DEFAULT_OPENAI_CHAT_MODEL;
 }
 
 function estimateTokens(text: string): number {
@@ -349,7 +349,60 @@ function parseResponsesText(payload: ResponsesApiResponse | null): string {
   throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
 }
 
+// 실험용: AI_CHAT_PROVIDER=anthropic 이면 답변 생성·구조화 출력만 Claude로 보낸다. 임베딩과 스트리밍은 계속 OpenAI.
+// 모집 여부·환산표와 최저 기준을 구분하는 정확도 차이로 Opus를 기본으로 쓴다(Sonnet은 환산표 점수를 최저 기준으로 오독).
+const ANTHROPIC_CHAT_MODEL = process.env.ANTHROPIC_CHAT_MODEL || "claude-opus-5-5";
+
+function isAnthropicChat(): boolean {
+  return process.env.AI_CHAT_PROVIDER === "anthropic";
+}
+
+type AnthropicResponse = {
+  content?: Array<{ type?: string; text?: string }>;
+  error?: { type?: string; message?: string };
+} | null;
+
+async function anthropicMessages(params: GenerateParams, extra: Record<string, unknown> = {}): Promise<AnthropicResponse> {
+  const key = (process.env.ANTHROPIC_API_KEY || "").trim();
+  if (!key) throw new AiProviderUnavailableError("ANTHROPIC_API_KEY가 설정되어 있지 않습니다.");
+  const model = ANTHROPIC_CHAT_MODEL;
+  let response: Response;
+  try {
+    response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model,
+        max_tokens: Math.max(MIN_OUTPUT_TOKENS, params.maxOutputTokens ?? 4096),
+        // Sonnet 5.5는 기본으로 생각을 먼저 해서 출력 예산을 다 쓰기도 한다. 짧은 생성이라 생각을 끈다.
+        ...(model.includes("sonnet") ? { thinking: { type: "between_tools" } } : {}),
+        system: params.systemPrompt,
+        messages: [{ role: "user", content: params.userPrompt }],
+        ...extra,
+      }),
+    });
+  } catch (error) {
+    throw new AiProviderUnavailableError(error instanceof Error ? error.message : String(error));
+  }
+  const payload = (await response.json().catch(() => null)) as AnthropicResponse;
+  if (!response.ok) {
+    const detail = payload?.error?.message || `Anthropic 요청 실패(${response.status})`;
+    console.error(`[ai] Anthropic status=${response.status}: ${detail}`);
+    if (response.status === 401 || response.status === 403 || response.status === 429 || response.status >= 500) {
+      throw new AiProviderUnavailableError(detail);
+    }
+    throw new Error(detail);
+  }
+  return payload;
+}
+
 export async function generateText(params: GenerateParams): Promise<string> {
+  if (isAnthropicChat()) {
+    const payload = await anthropicMessages(params);
+    const text = (payload?.content ?? []).filter((block) => block.type === "text").map((block) => block.text ?? "").join("").trim();
+    if (!text) throw new Error("응답 생성 결과를 파싱하지 못했습니다.");
+    return text;
+  }
   assertOpenAIKey();
 
   const response = await openAIFetch("/responses", {
@@ -373,6 +426,17 @@ export async function generateText(params: GenerateParams): Promise<string> {
  * 질의 플래너처럼 출력 형태가 애플리케이션 로직을 결정하는 경우에만 사용한다.
  */
 export async function generateStructuredJson<T>(params: StructuredGenerateParams): Promise<T> {
+  if (isAnthropicChat()) {
+    const payload = await anthropicMessages(params, {
+      output_config: { format: { type: "json_schema", schema: params.schema } },
+    });
+    const raw = (payload?.content ?? []).filter((block) => block.type === "text").map((block) => block.text ?? "").join("");
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      throw new Error("구조화 응답 JSON을 파싱하지 못했습니다.");
+    }
+  }
   assertOpenAIKey();
 
   const body = buildResponsesBody(params, false);
@@ -478,9 +542,66 @@ async function parseSseStream(
   return text;
 }
 
+async function streamAnthropicText(params: GenerateParams & { onDelta: (delta: string) => void }): Promise<string> {
+  const key = (process.env.ANTHROPIC_API_KEY || "").trim();
+  if (!key) throw new AiProviderUnavailableError("ANTHROPIC_API_KEY가 설정되어 있지 않습니다.");
+  let response: Response;
+  try {
+    response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: ANTHROPIC_CHAT_MODEL,
+        max_tokens: Math.max(MIN_OUTPUT_TOKENS, params.maxOutputTokens ?? 4096),
+        ...(ANTHROPIC_CHAT_MODEL.includes("sonnet") ? { thinking: { type: "between_tools" } } : {}),
+        system: params.systemPrompt,
+        messages: [{ role: "user", content: params.userPrompt }],
+        stream: true,
+      }),
+    });
+  } catch (error) {
+    throw new AiProviderUnavailableError(error instanceof Error ? error.message : String(error));
+  }
+  if (!response.ok || !response.body) {
+    const payload = (await response.json().catch(() => null)) as AnthropicResponse;
+    const detail = payload?.error?.message || `Anthropic 요청 실패(${response.status})`;
+    console.error(`[ai] Anthropic status=${response.status}: ${detail}`);
+    throw new AiProviderUnavailableError(detail);
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary >= 0) {
+      const data = buffer.slice(0, boundary).split("\n").filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trim()).join("");
+      buffer = buffer.slice(boundary + 2);
+      boundary = buffer.indexOf("\n\n");
+      if (!data) continue;
+      let event: { type?: string; delta?: { type?: string; text?: string }; error?: { message?: string } } | null = null;
+      try {
+        event = JSON.parse(data);
+      } catch {
+        continue;
+      }
+      if (event?.type === "error") throw new AiProviderUnavailableError(event.error?.message || "Anthropic 스트리밍 오류");
+      if (event?.type === "content_block_delta" && event.delta?.type === "text_delta" && event.delta.text) {
+        params.onDelta(event.delta.text);
+        text += event.delta.text;
+      }
+    }
+  }
+  return text;
+}
+
 export async function streamText(
   params: GenerateParams & { onDelta: (delta: string) => void }
 ): Promise<string> {
+  if (isAnthropicChat()) return streamAnthropicText(params);
   assertOpenAIKey();
 
   const response = await openAIFetch("/responses", {

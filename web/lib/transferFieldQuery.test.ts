@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 // @ts-expect-error Node's native TypeScript test runner requires the explicit extension.
-import { detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude } from "./transferFieldQuery.ts";
+import { asksFieldInfo, detectTransferField, detectWrittenSubject, isFieldAbbreviation, scopeMatchesField, writtenSubjectsInclude } from "./transferFieldQuery.ts";
 
 test("학교 없이 계열을 묻는 질문을 알아보고, 계열 줄임말은 대학 이름으로 보지 않는다", () => {
   assert.equal(detectTransferField("체대 편입 정보 다 줘")?.key, "pe");
   assert.equal(detectTransferField("체육교육과 편입 어디서 뽑아?")?.key, "pe");
   assert.equal(detectTransferField("약대 편입 전형 알려줘")?.key, "pharmacy");
   assert.equal(detectTransferField("수의대 편입 어디서 뽑아")?.key, "veterinary");
-  assert.equal(detectTransferField("체대 가고 싶다"), null);
+  assert.equal(detectTransferField("약대편입")?.key, "pharmacy");
+  for (const question of ["약대편입", "간호 편입?", "약대 편입 어떻게 나가냐", "수의대"]) assert.equal(asksFieldInfo(question), true, question);
+  for (const question of ["약대 편입 너무 힘들다", "간호 편입 공부 어떻게 해?", "한양대 간호학과 갈수있을꺼?", "음악 들으면서 공부해도 돼?"]) assert.equal(asksFieldInfo(question), false, question);
   assert.equal(isFieldAbbreviation("체대"), true);
   assert.equal(isFieldAbbreviation("충남대"), false);
 });
