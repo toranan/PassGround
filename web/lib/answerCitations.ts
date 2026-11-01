@@ -24,7 +24,7 @@ const WORD_TOKEN = /[가-힣A-Za-z]{3,}/g;
 const COMMON_WORDS = new Set([
   "편입학", "모집요강", "기본계획", "대학교", "학년도", "모집단위", "일반편입", "학사편입", "전형방법", "반영비율",
   "지원자격", "확인해야", "있으며", "있다", "없다", "한다", "된다", "예정이다", "공개되지", "않았다",
-  "정확한", "캠퍼스", "공개된", "해당", "경우", "이상",
+  "정확한", "캠퍼스", "공개된", "해당", "경우", "이상", "페이지", "홈페이지", "일반편입학", "학사편입학", "서류심사",
 ]);
 const TRAILING_PARTICLE = /(에서|으로|에게|은|는|이|가|을|를|의|에|도)$/;
 
@@ -50,7 +50,7 @@ function matchedTokens(answer: string, source: string, university: string): { nu
 }
 
 export function selectAnswerCitations(answer: string, sources: CitationSource[], limit = 4, perDocument = 2): AnswerCitation[] {
-  const best = new Map<string, AnswerCitation & { score: number }>();
+  const best = new Map<string, Omit<AnswerCitation, "highlights"> & { numbers: string[]; words: string[]; score: number }>();
   for (const source of sources) {
     if (!source.sha256 || !source.pages.length || !mentionsSchool(answer, source.university)) continue;
     const { numbers, words } = matchedTokens(answer, source.text, source.university);
@@ -60,13 +60,13 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
     const page = source.pages[0];
     const key = `${source.sha256}:${page}`;
     const current = best.get(key);
-    const highlights = [...new Set([...(current?.highlights ?? []), ...numbers, ...words])].slice(0, 10);
     best.set(key, {
       university: source.university,
       documentTitle: source.documentTitle,
       sha256: source.sha256,
       page,
-      highlights,
+      numbers: [...new Set([...(current?.numbers ?? []), ...numbers])],
+      words: [...new Set([...(current?.words ?? []), ...words])],
       score: Math.max(current?.score ?? 0, score) + (current ? 1 : 0),
     });
   }
@@ -79,5 +79,12 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
       return count < perDocument;
     })
     .slice(0, limit)
-    .map(({ university, documentTitle, sha256, page, highlights }) => ({ university, documentTitle, sha256, page, highlights }));
+    // 하이라이트는 답에 쓰인 숫자를 먼저 담고, 단어는 몇 개만 덧붙인다.
+    .map(({ university, documentTitle, sha256, page, numbers, words }) => ({
+      university,
+      documentTitle,
+      sha256,
+      page,
+      highlights: [...numbers.slice(0, 8), ...words.slice(0, 3)],
+    }));
 }
