@@ -41,6 +41,7 @@ import { buildCoachingTopicGuides, matchCoachingTopics } from "@/lib/coachingTop
 import { tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
 import { asksFieldInfo } from "@/lib/transferFieldQuery";
 import { answerWithRouter } from "@/lib/llmRouter";
+import { loadSourcePdfPaths } from "@/lib/sourcePdfs";
 import { EVIDENCE_ANSWER_POLICY, formatEvidenceContext, type EvidenceInput } from "@/lib/knowledgeEvidence";
 import { COUNSELING_ANSWER_POLICY, COUNSELING_FALLBACK } from "@/lib/counselingPolicy";
 import { asksAdmissionFacts, smalltalkReply } from "@/lib/chatRoutingPolicy";
@@ -96,6 +97,8 @@ type ChatSuccessPayload = {
   contexts: ResponseContext[];
   cache: CacheStatus;
   traceId: string;
+  /** 답변 근거의 원본 PDF 페이지. viewerPath를 열면 해당 페이지와 하이라이트를 보여준다. */
+  citations?: ChatCitation[];
   metrics: {
     totalMs: number;
     cacheMs: number;
@@ -103,6 +106,14 @@ type ChatSuccessPayload = {
     retrievalMs: number;
     generationMs: number;
   };
+};
+
+type ChatCitation = {
+  university: string;
+  documentTitle: string;
+  page: number;
+  highlights: string[];
+  viewerPath: string;
 };
 
 type StreamCallbacks = {
@@ -986,6 +997,7 @@ async function runLlmRouterWorkflow(params: {
   let route: FinalRoute = "emotion";
   let answer = "";
   let knowledgeIds: string[] = [];
+  let citations: ChatCitation[] = [];
   let retrievalMs = 0;
   let generationMs = 0;
 
@@ -1051,6 +1063,18 @@ async function runLlmRouterWorkflow(params: {
       route = lookups.length ? (lookups.some((item) => item.grounded) ? "grounded" : "fallback") : "emotion";
       matchedContextCount = lookups.filter((item) => item.grounded).length + advice.length;
       knowledgeIds = [...advice.map((item) => item.id), ...result.mockExamReferenceIds];
+      if (result.citations.length) {
+        const pdfPaths = await loadSourcePdfPaths(admin).catch(() => new Map<string, string>());
+        citations = result.citations
+          .filter((citation) => pdfPaths.has(citation.sha256))
+          .map((citation) => ({
+            university: citation.university,
+            documentTitle: citation.documentTitle,
+            page: citation.page,
+            highlights: citation.highlights,
+            viewerPath: `/sources/view?${new URLSearchParams({ doc: citation.sha256, page: String(citation.page), q: citation.highlights.join("|") })}`,
+          }));
+      }
     }
   } catch (error) {
     await record("error", 0, error instanceof Error ? error.message : String(error));
@@ -1082,6 +1106,7 @@ async function runLlmRouterWorkflow(params: {
     contexts: [],
     cache: "bypass",
     traceId,
+    citations,
     metrics: { totalMs: Date.now() - startedAt, cacheMs: 0, embeddingMs: 0, retrievalMs, generationMs },
   };
 }

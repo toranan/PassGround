@@ -4,7 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateStructuredJson, generateText, streamText } from "@/lib/aiRag";
 import { buildCoachingTopicGuides } from "@/lib/coachingTopics";
 import { buildMockExamCoachingPrompts, type MockExamReference } from "@/lib/mockExamCoaching";
-import { collectSchoolEvidence, collectTransferFieldEvidence, tryAnswerTransferCatalogQuestion } from "@/lib/transferAdmissionCatalog";
+import { collectSchoolEvidence, collectTransferFieldEvidence, tryAnswerTransferCatalogQuestion, type EvidenceSource } from "@/lib/transferAdmissionCatalog";
+import { selectAnswerCitations, type AnswerCitation } from "@/lib/answerCitations";
 
 type HistoryMessage = { role: "user" | "assistant"; text: string };
 
@@ -89,7 +90,7 @@ export async function planWithRouter(question: string, history: HistoryMessage[]
   });
 }
 
-export type RoutedResult = { request: RoutedRequest; answer: string | null; grounded: boolean };
+export type RoutedResult = { request: RoutedRequest; answer: string | null; grounded: boolean; sources?: EvidenceSource[] };
 
 async function runRequest(admin: SupabaseClient, request: RoutedRequest, history: HistoryMessage[]): Promise<RoutedResult> {
   if (request.kind === "counseling") return { request, answer: null, grounded: false };
@@ -104,6 +105,7 @@ async function runRequest(admin: SupabaseClient, request: RoutedRequest, history
       .join("\n\n");
     return {
       request,
+      sources: evidence.sources,
       answer: `${evidence.year}학년도 확보 ${evidence.coverageCount}개교 자료 중 '${request.fieldKeywords.join("·")}'가 언급된 학교의 원문이다. 언급만 되고 모집하지 않는 학교도 섞여 있다. ${evidence.basisNote}\n\n${body}`,
       grounded: true,
     };
@@ -118,7 +120,7 @@ async function runRequest(admin: SupabaseClient, request: RoutedRequest, history
       const missing = evidence.missing.length
         ? `\n\n아직 공개된 자료가 없는 학교: ${evidence.missing.join(", ")}`
         : "";
-      return { request, answer: `${found}${missing}`.trim(), grounded: evidence.schools.length > 0 };
+      return { request, answer: `${found}${missing}`.trim(), grounded: evidence.schools.length > 0, sources: evidence.sources };
     }
   }
   // 학교 없이 조건으로 여러 학교를 찾는 질문은 기존 구조화 조회를 쓴다.
@@ -147,6 +149,7 @@ export type RouterAnswer = {
   answer: string;
   evidenceText: string;
   mockExamReferenceIds: string[];
+  citations: AnswerCitation[];
 };
 
 export async function answerWithRouter(params: {
@@ -207,7 +210,8 @@ export async function answerWithRouter(params: {
   const answer = params.onDelta
     ? await streamText({ ...prompts, onDelta: params.onDelta })
     : await generateText(prompts);
-  return { plan, results, answer: answer.trim(), evidenceText, mockExamReferenceIds: mockReferences.map((row) => row.id) };
+  const citations = selectAnswerCitations(answer, results.flatMap((result) => result.sources ?? []));
+  return { plan, results, answer: answer.trim(), evidenceText, mockExamReferenceIds: mockReferences.map((row) => row.id), citations };
 }
 
 // 답에 나온 숫자 중 질문이나 조회 결과에 없는 것을 찾는다. 할루시네이션 점검용.

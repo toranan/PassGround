@@ -57,6 +57,7 @@ export type TransferCatalogAnswer = {
 
 type SourceDocumentRow = {
   id: string;
+  sha256?: string;
   university: string;
   campus: string;
   admission_year: number;
@@ -944,7 +945,7 @@ function schoolCoverageAnswer(
 async function loadActiveDocuments(admin: SupabaseClient): Promise<SourceDocumentRow[] | null> {
   const { data, error } = await admin
     .from("ai_source_documents")
-    .select("id,university,campus,admission_year,document_type,title,source_url,verified_at,metadata")
+    .select("id,university,campus,admission_year,document_type,title,source_url,sha256,verified_at,metadata")
     .eq("exam_slug", "transfer")
     .eq("review_status", "verified")
     .eq("lifecycle_status", "active");
@@ -955,14 +956,41 @@ async function loadActiveDocuments(admin: SupabaseClient): Promise<SourceDocumen
   return selectAuthoritativeDocuments((data as SourceDocumentRow[] | null) ?? []);
 }
 
+// 답변 근거를 원본 PDF 페이지로 보여주기 위한 출처 정보.
+export type EvidenceSource = {
+  text: string;
+  university: string;
+  documentTitle: string;
+  documentType: string;
+  sha256: string | null;
+  sourceUrl: string | null;
+  pages: number[];
+};
+
+function toEvidenceSource(row: KnowledgeUnitRow, documentsById: Map<string, SourceDocumentRow>): EvidenceSource | null {
+  const document = documentsById.get(row.document_id);
+  if (!document || !row.source_pages?.length) return null;
+  return {
+    text: row.content,
+    university: schoolCampusLabel(document.university, document.campus),
+    documentTitle: document.title,
+    documentType: document.document_type,
+    sha256: document.sha256 ?? null,
+    sourceUrl: document.source_url,
+    pages: row.source_pages,
+  };
+}
+
 // LLM 라우터용: 질문에 나온 학교의 최신 학년도 자료를 검색 없이 전부 원문으로 모은다.
 // 학교당 자료가 수십 개 단위라 통째로 넘기는 편이 벡터 검색으로 고르다 빠뜨리는 것보다 안전하다.
 export async function collectSchoolEvidence(params: {
   admin: SupabaseClient;
   universities: string[];
-}): Promise<{ schools: Array<{ school: string; basisNote: string; texts: string[] }>; missing: string[]; coverageCount: number } | null> {
+}): Promise<{ schools: Array<{ school: string; basisNote: string; texts: string[] }>; missing: string[]; coverageCount: number; sources: EvidenceSource[] } | null> {
   const documents = await loadActiveDocuments(params.admin);
   if (!documents) return null;
+  const documentsById = new Map(documents.map((document) => [document.id, document]));
+  const sources: EvidenceSource[] = [];
   const currentYear = documents.length ? Math.max(...documents.map((document) => document.admission_year)) : new Date().getFullYear() + 1;
   const missing: string[] = [];
   const schools: Array<{ school: string; basisNote: string; texts: string[] }> = [];
@@ -976,6 +1004,10 @@ export async function collectSchoolEvidence(params: {
     const ids = owned.map((document) => document.id);
     const units = await Promise.all((["section", "selection_rule", "schedule", "program"] as UnitType[]).map((type) => loadUnits(params.admin, ids, type)));
     const rows = units.flatMap((result) => result.rows);
+    rows.forEach((row) => {
+      const source = toEvidenceSource(row, documentsById);
+      if (source) sources.push(source);
+    });
     for (const document of owned) {
       schools.push({
         school: schoolCampusLabel(document.university, document.campus),
@@ -984,7 +1016,7 @@ export async function collectSchoolEvidence(params: {
       });
     }
   }
-  return { schools, missing, coverageCount: distinctSchoolCount(documents.filter((document) => document.admission_year === currentYear)) };
+  return { schools, missing, coverageCount: distinctSchoolCount(documents.filter((document) => document.admission_year === currentYear)), sources };
 }
 
 // LLM 라우터가 고른 계열 키워드("물리치료", "체육"…)로 보유한 모든 학교의 원문 근거를 학교별로 모은다.
@@ -993,7 +1025,7 @@ export async function collectSchoolEvidence(params: {
 export async function collectTransferFieldEvidence(params: {
   admin: SupabaseClient;
   keywords: string[];
-}): Promise<{ year: number; coverageCount: number; basisNote: string; schools: Array<{ school: string; texts: string[] }> } | null> {
+}): Promise<{ year: number; coverageCount: number; basisNote: string; schools: Array<{ school: string; texts: string[] }>; sources: EvidenceSource[] } | null> {
   const keywords = params.keywords.map((keyword) => keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").trim()).filter(Boolean);
   if (!keywords.length) return null;
   const allDocuments = await loadActiveDocuments(params.admin);
@@ -1009,9 +1041,13 @@ export async function collectTransferFieldEvidence(params: {
   // "계약학과"가 "약학"에 걸리지 않도록 앞 글자 '계'는 제외한다.
   const field: TransferField = { key: "router", label: "", terms: new RegExp(keywords.map((keyword) => `(?<!계)${keyword}`).join("|")) };
   const bySchool = new Map<string, string[]>();
+  const documentsById = new Map(documents.map((document) => [document.id, document]));
+  const sources: EvidenceSource[] = [];
   const add = (row: KnowledgeUnitRow) => {
     const key = schoolCampusLabel(row.university, row.campus);
     bySchool.set(key, [...(bySchool.get(key) ?? []), row.content]);
+    const source = toEvidenceSource(row, documentsById);
+    if (source) sources.push(source);
   };
   rules.rows.filter((row) => scopeMatchesField(row.scope_value, field)).forEach(add);
   const sectionCount = new Map<string, number>();
@@ -1028,6 +1064,7 @@ export async function collectTransferFieldEvidence(params: {
     coverageCount: distinctSchoolCount(documents),
     basisNote: documentBasisSummary(documents.filter((document) => schoolNames.has(schoolCampusLabel(document.university, document.campus)))),
     schools: [...bySchool.entries()].map(([school, texts]) => ({ school, texts })),
+    sources,
   };
 }
 

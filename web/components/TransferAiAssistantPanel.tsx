@@ -8,14 +8,23 @@ import { resolveUsableAccessToken } from "@/lib/authClient";
 
 type ChatRole = "user" | "assistant";
 
+type ChatCitation = {
+  university: string;
+  documentTitle: string;
+  page: number;
+  viewerPath: string;
+};
+
 type ChatMessage = {
   id: string;
   role: ChatRole;
   text: string;
+  citations?: ChatCitation[];
 };
 
 type DonePayload = {
   answer?: string;
+  citations?: ChatCitation[];
 };
 
 function makeId(): string {
@@ -198,6 +207,7 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
               ? {
                   ...item,
                   text: donePayload?.answer?.trim() || item.text || "답변을 생성하지 못했습니다.",
+                  citations: donePayload?.citations ?? [],
                 }
               : item
           )
@@ -234,8 +244,23 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
           <div className="mx-auto w-full max-w-3xl space-y-4">
             {messages.map((message) =>
               message.role === "assistant" ? (
-                <div key={message.id} className="mr-auto max-w-[88%] rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-foreground">
-                  {message.text || (pending ? "생각 정리 중..." : "")}
+                <div key={message.id} className="mr-auto max-w-[88%] rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 text-foreground">
+                  <div className="whitespace-pre-wrap">{message.text || (pending ? "생각 정리 중..." : "")}</div>
+                  {message.citations?.length ? (
+                    <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/70 pt-2">
+                      {message.citations.map((citation) => (
+                        <a
+                          key={citation.viewerPath}
+                          href={citation.viewerPath}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted"
+                        >
+                          📄 {citation.university} p.{citation.page}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div key={message.id} className="ml-auto max-w-[80%] rounded-2xl bg-primary px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-primary-foreground">
