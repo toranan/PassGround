@@ -34,6 +34,16 @@ test("숫자 없는 학과 목록 답은 학과명이 셋 이상 겹칠 때만 �
   assert.equal(selectAnswerCitations("숙명여대 통계학과는 수학만 봐.", [source]).length, 0);
 });
 
+test("근거는 답변에 학교가 나온 순서대로 놓는다", () => {
+  const chungang = { university: "중앙대학교", documentTitle: "중앙대 시행계획", sha256: "c".repeat(64) };
+  const answer = "중앙대는 필기 60%·서류 40%야. 숙명여대는 수학 100%로 10배수를 뽑고 1단계 성적 80%와 서류 20%야.";
+  const citations = selectAnswerCitations(answer, [
+    { ...sookmyung, pages: [1], text: "필답고사 수학 100% 10배수 1단계 성적 80% 서류 20%" },
+    { ...chungang, pages: [4], text: "필기 60% 서류 40%" },
+  ]);
+  assert.deepEqual(citations.map((citation) => citation.university), ["중앙대학교", "숙명여자대학교"]);
+});
+
 test("앞자리 숫자에 붙은 일치는 무시하고, 문서당 근거 수를 제한한다", () => {
   const kangwon = { university: "강원대학교 춘천캠퍼스", documentTitle: "강원대 기본계획", sha256: "b".repeat(64) };
   const answer = "강원대 수의학과는 일반생물학·일반화학 50문항 60분이고, 2단계는 필기 70%·영어 30%야.";

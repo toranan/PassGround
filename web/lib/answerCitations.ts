@@ -32,11 +32,13 @@ function compact(text: string): string {
   return text.replace(/\s+/g, "");
 }
 
-function mentionsSchool(answer: string, university: string): boolean {
+// 답변에서 학교가 처음 나온 위치. 나오지 않으면 -1.
+function schoolPosition(answer: string, university: string): number {
   const name = university.split(" ")[0];
   // 숙명여자대학교 → 숙명여자·숙명여대, 경북대학교 → 경북·경북대
   const forms = [name, name.replace(/대학교$/, ""), name.replace(/여자대학교$/, "여대"), name.replace(/대학교$/, "대")].filter((form) => form.length >= 2);
-  return forms.some((form) => answer.includes(form));
+  const positions = forms.map((form) => answer.indexOf(form)).filter((index) => index >= 0);
+  return positions.length ? Math.min(...positions) : -1;
 }
 
 function matchedTokens(answer: string, source: string, university: string): { numbers: string[]; words: string[] } {
@@ -52,7 +54,7 @@ function matchedTokens(answer: string, source: string, university: string): { nu
 export function selectAnswerCitations(answer: string, sources: CitationSource[], limit = 4, perDocument = 2): AnswerCitation[] {
   const best = new Map<string, Omit<AnswerCitation, "highlights"> & { numbers: string[]; words: string[]; score: number }>();
   for (const source of sources) {
-    if (!source.sha256 || !source.pages.length || !mentionsSchool(answer, source.university)) continue;
+    if (!source.sha256 || !source.pages.length || schoolPosition(answer, source.university) < 0) continue;
     const { numbers, words } = matchedTokens(answer, source.text, source.university);
     // 숫자 하나만 겹치는 건 우연일 수 있어서, 숫자 둘 이상이거나 숫자와 단어가 함께 겹칠 때만 쓴다.
     // 학과 목록처럼 숫자 없는 답은 그 문서의 단어(학과명 등)가 셋 이상 겹쳐야 쓴다.
@@ -83,6 +85,8 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
     .filter((citation) => citation.rank < perDocument)
     .sort((a, b) => a.rank - b.rank || b.score - a.score)
     .slice(0, limit)
+    // 화면에는 답변에 학교가 나온 순서대로 보여준다.
+    .sort((a, b) => schoolPosition(answer, a.university) - schoolPosition(answer, b.university) || a.rank - b.rank)
     // 하이라이트는 답에 쓰인 숫자를 먼저 담고, 단어는 몇 개만 덧붙인다.
     .map(({ university, documentTitle, sha256, page, numbers, words }) => ({
       university,
