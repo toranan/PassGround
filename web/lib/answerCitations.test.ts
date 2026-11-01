@@ -26,6 +26,14 @@ test("답에 학교 이름이 없거나 숫자가 하나만 우연히 겹치면 
   assert.equal(selectAnswerCitations("숙명여대는 10배수야.", [{ ...source, text: "10배수" }]).length, 0);
 });
 
+test("숫자 없는 학과 목록 답은 학과명이 셋 이상 겹칠 때만 근거로 쓴다", () => {
+  const source = { ...sookmyung, pages: [1], text: "필답고사 수학: 화학과, 수학과, 통계학과, 화공생명공학부, 기계시스템학부" };
+  const listed = selectAnswerCitations("숙명여대는 화학과·통계학과·화공생명공학부가 수학만 봐.", [source]);
+  assert.equal(listed.length, 1);
+  assert.ok(listed[0].highlights.includes("화공생명공학부"));
+  assert.equal(selectAnswerCitations("숙명여대 통계학과는 수학만 봐.", [source]).length, 0);
+});
+
 test("앞자리 숫자에 붙은 일치는 무시하고, 문서당 근거 수를 제한한다", () => {
   const kangwon = { university: "강원대학교 춘천캠퍼스", documentTitle: "강원대 기본계획", sha256: "b".repeat(64) };
   const answer = "강원대 수의학과는 일반생물학·일반화학 50문항 60분이고, 2단계는 필기 70%·영어 30%야.";

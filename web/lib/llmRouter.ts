@@ -125,7 +125,11 @@ async function runRequest(admin: SupabaseClient, request: RoutedRequest, history
   }
   // 학교 없이 조건으로 여러 학교를 찾는 질문은 기존 구조화 조회를 쓴다.
   const result = await tryAnswerTransferCatalogQuestion({ admin, question: request.query, historyMessages: history });
-  return { request, answer: result?.answer ?? null, grounded: Boolean(result?.grounded) };
+  if (!result?.grounded) return { request, answer: result?.answer ?? null, grounded: false };
+  // 조회 결과에 나온 학교의 원문 조각은 답변 근거 페이지를 고르는 데만 쓴다.
+  const listedSchools = [...new Set(result.answer.match(/[가-힣]{2,12}대학교/g) ?? [])];
+  const evidence = listedSchools.length ? await collectSchoolEvidence({ admin, universities: listedSchools }) : null;
+  return { request, answer: result.answer, grounded: true, sources: evidence?.sources };
 }
 
 async function loadMockExamReferences(admin: SupabaseClient): Promise<MockExamReference[]> {

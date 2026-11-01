@@ -55,8 +55,9 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
     if (!source.sha256 || !source.pages.length || !mentionsSchool(answer, source.university)) continue;
     const { numbers, words } = matchedTokens(answer, source.text, source.university);
     // 숫자 하나만 겹치는 건 우연일 수 있어서, 숫자 둘 이상이거나 숫자와 단어가 함께 겹칠 때만 쓴다.
+    // 학과 목록처럼 숫자 없는 답은 그 문서의 단어(학과명 등)가 셋 이상 겹쳐야 쓴다.
     const score = numbers.length * 2 + words.length;
-    if (numbers.length === 0 || score < 3) continue;
+    if (numbers.length === 0 ? words.length < 3 : score < 3) continue;
     const page = source.pages[0];
     const key = `${source.sha256}:${page}`;
     const current = best.get(key);
@@ -70,14 +71,17 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
       score: Math.max(current?.score ?? 0, score) + (current ? 1 : 0),
     });
   }
+  // 문서마다 가장 잘 맞는 페이지를 먼저 채우고, 남는 자리에 같은 문서의 다음 페이지를 넣는다.
   const perDocumentCount = new Map<string, number>();
   return [...best.values()]
     .sort((a, b) => b.score - a.score)
-    .filter((citation) => {
-      const count = perDocumentCount.get(citation.sha256) ?? 0;
-      perDocumentCount.set(citation.sha256, count + 1);
-      return count < perDocument;
+    .map((citation) => {
+      const rank = perDocumentCount.get(citation.sha256) ?? 0;
+      perDocumentCount.set(citation.sha256, rank + 1);
+      return { ...citation, rank };
     })
+    .filter((citation) => citation.rank < perDocument)
+    .sort((a, b) => a.rank - b.rank || b.score - a.score)
     .slice(0, limit)
     // 하이라이트는 답에 쓰인 숫자를 먼저 담고, 단어는 몇 개만 덧붙인다.
     .map(({ university, documentTitle, sha256, page, numbers, words }) => ({
@@ -85,6 +89,6 @@ export function selectAnswerCitations(answer: string, sources: CitationSource[],
       documentTitle,
       sha256,
       page,
-      highlights: [...numbers.slice(0, 8), ...words.slice(0, 3)],
+      highlights: [...numbers.slice(0, 8), ...words.slice(0, numbers.length ? 3 : 8)],
     }));
 }
