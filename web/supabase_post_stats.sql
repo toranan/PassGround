@@ -110,6 +110,7 @@ after insert or delete on public.post_likes
 for each row execute function public.sync_post_stats_from_post_likes();
 
 -- Backfill and reconcile existing rows.
+-- guest_post_likes는 세지 않으므로, 비회원 좋아요가 쌓인 DB에서 다시 실행하면 그 수가 빠진다.
 insert into public.post_stats(post_id, comment_count, like_count, updated_at)
 select
   p.id as post_id,

@@ -104,16 +104,26 @@ async function resolveLikeCount(admin: ReturnType<typeof getSupabaseAdmin>, post
 async function isViewerLiked(
   admin: ReturnType<typeof getSupabaseAdmin>,
   postId: string,
-  requestedUserId: string
+  requestedUserId: string,
+  guestId: string
 ): Promise<boolean> {
-  if (!isValidUUID(requestedUserId)) return false;
-  const { data: likedRow } = await admin
-    .from("post_likes")
+  if (isValidUUID(requestedUserId)) {
+    const { data: likedRow } = await admin
+      .from("post_likes")
+      .select("post_id")
+      .eq("post_id", postId)
+      .eq("user_id", requestedUserId)
+      .maybeSingle<{ post_id: string }>();
+    return Boolean(likedRow);
+  }
+  if (!isValidUUID(guestId)) return false;
+  const { data: guestRow } = await admin
+    .from("guest_post_likes")
     .select("post_id")
     .eq("post_id", postId)
-    .eq("user_id", requestedUserId)
+    .eq("device_id", guestId)
     .maybeSingle<{ post_id: string }>();
-  return Boolean(likedRow);
+  return Boolean(guestRow);
 }
 
 function bumpViewCountBestEffort(admin: ReturnType<typeof getSupabaseAdmin>, postId: string) {
@@ -145,6 +155,7 @@ export async function GET(
   const exam = (searchParams.get("exam") ?? "").trim();
   const board = (searchParams.get("board") ?? "").trim();
   const requestedUserId = (searchParams.get("userId") ?? "").trim();
+  const guestId = (searchParams.get("guestId") ?? "").trim();
 
   if (!exam || !board) {
     return NextResponse.json({ error: "exam, board 파라미터가 필요합니다." }, { status: 400 });
@@ -265,7 +276,7 @@ export async function GET(
     commentsPromise,
     adoptionPromise,
     resolveLikeCount(admin, postId),
-    isViewerLiked(admin, postId, requestedUserId),
+    isViewerLiked(admin, postId, requestedUserId, guestId),
   ]);
 
   // 번호는 차단 여부와 상관없이 전체 댓글 기준으로 매겨야 보는 사람마다 달라지지 않는다.

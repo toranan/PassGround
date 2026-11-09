@@ -9,6 +9,15 @@ type LikeButtonProps = {
     isSample?: boolean;
 };
 
+// 로그인 없이 누른 좋아요를 구분하는 이 브라우저의 ID.
+function readGuestId(): string {
+    const stored = localStorage.getItem("guest_like_id");
+    if (stored) return stored;
+    const created = crypto.randomUUID();
+    localStorage.setItem("guest_like_id", created);
+    return created;
+}
+
 export function LikeButton({ postId, initialCount, isSample = false }: LikeButtonProps) {
     const [liked, setLiked] = useState(false);
     const [count, setCount] = useState(initialCount);
@@ -32,10 +41,7 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
     const handleLike = async () => {
         if (isSample) return;
         const { accessToken, userId } = readAuth();
-        if (!userId || !accessToken) {
-            setMessage("로그인 후 이용 가능합니다.");
-            return;
-        }
+        const isMember = Boolean(userId && accessToken);
 
         const previousLiked = liked;
         const previousCount = count;
@@ -50,9 +56,13 @@ export function LikeButton({ postId, initialCount, isSample = false }: LikeButto
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
+                    ...(isMember ? { Authorization: `Bearer ${accessToken}` } : {}),
                 },
-                body: JSON.stringify({ postId, userId, desiredLiked: optimisticLiked }),
+                body: JSON.stringify({
+                    postId,
+                    desiredLiked: optimisticLiked,
+                    ...(isMember ? { userId } : { guestId: readGuestId() }),
+                }),
             });
 
             const data = await res.json();

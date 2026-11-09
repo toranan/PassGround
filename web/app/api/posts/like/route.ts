@@ -137,23 +137,29 @@ export async function POST(request: Request) {
   const postId = typeof body.postId === "string" ? body.postId.trim() : "";
   const requestedUserId = typeof body.userId === "string" ? body.userId.trim() : "";
   const desiredLiked = typeof body.desiredLiked === "boolean" ? body.desiredLiked : null;
+  const guestId = typeof body.guestId === "string" ? body.guestId.trim() : "";
 
   if (!isValidUUID(postId)) {
     return NextResponse.json({ error: "게시글 정보가 올바르지 않습니다." }, { status: 400 });
   }
 
   const accessToken = getBearerToken(request);
-  if (!accessToken) {
+  // 로그인 없이 누른 좋아요는 기기 ID로 따로 저장하고, 포인트 보상은 주지 않는다.
+  const isGuest = !accessToken && isValidUUID(guestId);
+  if (!accessToken && !isGuest) {
     return NextResponse.json({ error: "로그인 후 이용할 수 있습니다." }, { status: 401 });
   }
-  const authed = await getUserByAccessToken(accessToken);
-  if (!authed?.id) {
-    return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
+  let userId = "";
+  if (accessToken) {
+    const authed = await getUserByAccessToken(accessToken);
+    if (!authed?.id) {
+      return NextResponse.json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." }, { status: 401 });
+    }
+    if (requestedUserId && isValidUUID(requestedUserId) && requestedUserId !== authed.id) {
+      return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
+    }
+    userId = authed.id;
   }
-  if (requestedUserId && isValidUUID(requestedUserId) && requestedUserId !== authed.id) {
-    return NextResponse.json({ error: "본인 계정만 사용할 수 있습니다." }, { status: 403 });
-  }
-  const userId = authed.id;
 
   const admin = getSupabaseAdmin();
 
@@ -185,6 +191,17 @@ export async function POST(request: Request) {
       { error: "현재 CPA는 읽기 전용입니다. 좋아요 기능은 편입에서 이용해 주세요." },
       { status: 403 }
     );
+  }
+
+  if (isGuest) {
+    const liked = desiredLiked !== false;
+    const { error } = liked
+      ? await admin.from("guest_post_likes").insert({ post_id: postId, device_id: guestId })
+      : await admin.from("guest_post_likes").delete().eq("post_id", postId).eq("device_id", guestId);
+    if (error && !isDuplicateLikeConflict(error)) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true, liked, likeCount: await getLikeCount(admin, postId) });
   }
 
   // Idempotent mode: apply explicit target state if provided.
