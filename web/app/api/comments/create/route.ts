@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { sendPushToUser } from "@/lib/apns";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { ENABLE_CPA, ENABLE_CPA_WRITE } from "@/lib/featureFlags";
 import { getBearerToken, getUserByAccessToken } from "@/lib/authServer";
@@ -104,6 +105,20 @@ async function createCommentNotifications(params: {
       is_read: false,
     };
   });
+
+  // 알림함과 같은 내용을 폰 푸시로도 보낸다. 응답을 늦추지 않도록 응답 후에 보낸다.
+  // 익명 댓글이면 actorName이 '익명'이라 푸시에도 작성자가 드러나지 않는다.
+  after(() =>
+    Promise.all(
+      rows.map((row) =>
+        sendPushToUser(row.recipient_id, {
+          title: row.title,
+          body: row.body,
+          data: { type: row.type, postId, ...(boardSlug ? { boardSlug } : {}) },
+        })
+      )
+    )
+  );
 
   const { error } = await admin.from("notifications").insert(rows);
   if (error) {

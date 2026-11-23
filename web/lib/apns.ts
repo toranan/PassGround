@@ -114,6 +114,22 @@ export async function sendPushToDevices(devices: PushDevice[], message: PushMess
   return { sent, failed };
 }
 
+// 특정 사용자가 로그인해 둔 기기에만 보낸다(댓글·답글 알림).
+export async function sendPushToUser(userId: string, message: PushMessage): Promise<void> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("push_devices")
+    .select("token,environment")
+    .eq("user_id", userId)
+    .limit(20);
+  if (error) {
+    console.warn("push_devices 조회 실패:", error.message);
+    return;
+  }
+  if (!data?.length) return;
+  const result = await sendPushToDevices(data as PushDevice[], message);
+  console.info(`user push type=${message.data?.type ?? "-"} sent=${result.sent} failed=${result.failed}`);
+}
+
 // 최신뉴스가 올라오면 알림을 켜 둔 모든 기기에 보낸다.
 export async function sendNewsPush(params: { title: string; postId: string }): Promise<void> {
   const { data, error } = await getSupabaseAdmin()
