@@ -226,6 +226,22 @@ export async function GET(request: Request) {
     })) ?? null;
   }
 
+  // 위 260개는 모든 게시판을 섞은 최신순이라 커뮤니티 글이 많으면 뉴스가 밀려난다. 뉴스는 따로 20개 가져와 합친다.
+  const newsBoardId = Array.from(boardMetaById).find(([, meta]) => meta.slug === newsBoardSlug)?.[0];
+  if (newsBoardId) {
+    const { data: newsPosts } = await supabase
+      .from("posts")
+      .select("id,title,content,author_name,author_id,created_at,view_count,board_id")
+      .eq("board_id", newsBoardId)
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(20);
+    const seen = new Set((postsData ?? []).map((post) => post.id));
+    const extra = ((newsPosts as PostRow[] | null) ?? []).filter((post) => !seen.has(post.id));
+    if (extra.length) postsData = [...(postsData ?? []), ...extra];
+  }
+
   const pageRows = postsData ?? [];
   if (pageRows.length === 0) {
     return withCache(

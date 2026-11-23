@@ -6,7 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { PastExamYears } from "@/components/PastExamList";
 import { NewsRows, ScheduleRows } from "@/components/TransferFeedLists";
 import { groupPastExamsBySchool, loadPastExams, schoolAliases } from "@/lib/pastExams";
-import { loadLatestNews, loadUpcomingSchedules } from "@/lib/transferFeeds";
+import { loadNewsMentioning, loadUpcomingSchedules } from "@/lib/transferFeeds";
 
 export const revalidate = 300;
 
@@ -39,9 +39,8 @@ export default async function PastExamSchoolPage({ params }: SchoolPageProps) {
 
   const aliases = schoolAliases(entry.school);
   const matches = (text: string | null) => aliases.some((alias) => (text ?? "").replace(/\s+/g, "").includes(alias));
-  const [schedules, news] = await Promise.all([loadUpcomingSchedules(), loadLatestNews(60)]);
+  const [schedules, schoolNews] = await Promise.all([loadUpcomingSchedules(), loadNewsMentioning(aliases, 5)]);
   const schoolSchedules = schedules.filter((item) => matches(item.university) || matches(item.title)).slice(0, 6);
-  const schoolNews = news.filter((item) => matches(item.title)).slice(0, 5);
   const short = aliases.at(-1) ?? entry.school;
   const aiQuestion = `${short} 2027 편입 전형이랑 필기 과목 알려줘`;
 
