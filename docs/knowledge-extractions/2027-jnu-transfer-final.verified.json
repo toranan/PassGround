@@ -1,0 +1,2566 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "전남대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "최종 모집요강",
+    "title": "2027학년도 전남대학교 편입학(일반/학사)전형 모집요강",
+    "sourceFile": "2027학년도_전남대학교_편입학모집요강.pdf",
+    "sourceUrl": "https://admission.jnu.ac.kr",
+    "sha256": "a38d18ec59e6a9b3fbd53eec42060f905cffa728cb52c74d5edb0e716ab4f369",
+    "fileSizeBytes": 579266,
+    "pageCount": 50,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-11-23T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "final",
+      "campuses": [
+        "광주",
+        "여수"
+      ],
+      "publishedOn": "2026-11-10",
+      "publisher": "전남대학교 입학처 입학과",
+      "tableExtraction": "PyMuPDF get_text + find_tables(3·4~7·18·19·28페이지) + 병합 셀 fill-down + 수동 검토",
+      "supersedes": {
+        "documentType": "전형 주요사항(변경 안내)",
+        "sha256": "c01c96e54c3cf27178feaed0e7e31d30d9c73cfd10628ecc2a7d0e8d5d85ae2a"
+      },
+      "notice": "모집요강은 교육부 지침 등에 따라 변경될 수 있으며 변경사항은 전남대학교 입학 홈페이지(https://admission.jnu.ac.kr) 편입학 공고로 안내한다.",
+      "sourceErrata": [
+        "3페이지 2단계 세부 일정 공고 시점이 '2026. 1. 22.(금)'로 표기됐으나 요일과 전형 흐름상 2027. 1. 22.(금)으로 보인다.",
+        "9페이지 전문대학 졸업 자격이 '2026년 2월 졸업예정자 포함'으로 표기돼 있다.",
+        "모집인원 표의 지능형모빌리티융합학과가 전형방법·면접 안내에서는 미래모빌리티학과, 일정표에서는 미래모빌리티융합학과로 표기된다.",
+        "3페이지 1단계 합격자 발표 모집단위 목록에 2배수 단계선발 모집단위인 산업공학과가 빠져 있다.",
+        "모집요강 본문에 전형료 금액이 기재돼 있지 않다."
+      ]
+    }
+  },
+  "sections": [
+    {
+      "key": "schedule-overview",
+      "heading": "전형일정",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "2027학년도 전남대학교 편입학 인터넷 원서접수는 2026년 12월 11일(금) 09:00부터 12월 15일(화) 18:00까지 유웨이어플라이(www.uwayapply.com)에서 받는다. 서류는 12월 11일(금) 09:00부터 12월 17일(목) 18:00까지 방문 또는 우편(등기·택배)으로 제출하며 도착분만 인정한다. 수의학과는 필기대상자를 2027년 1월 8일(금)에 발표하고 필기고사를 1월 14일(목) 09:00에 실시할 예정이다. 1단계 합격자(수의학과는 2단계 합격자)는 1월 22일(금) 15:00 입학 홈페이지에 발표한다. 일정표의 1단계 발표 모집단위는 간호학과, 식품공학과, 건축학부, 토목공학과, 기계공학부, 전자컴퓨터공학부, 약학부, 인공지능학부, 미래모빌리티융합학과이며 전형방법 표에는 산업공학과도 2배수 단계선발로 기재돼 있다. 2단계 전형은 2027년 2월 2일(화) 09:00(08:30까지 입실)부터 필기(간호학과·약학부), 면접(간호학과·약학부를 제외한 전체 지원자, 수의학과는 3단계), 실기(음악학과·국악학과·디자인학과·미술학과(이론전공 제외)·체육교육과)를 실시하고 모집단위별 세부 일정은 1월 22일(금) 15:00 이후 공고한다. 전형 대상 인원에 따라 오후반이 편성될 수 있다. 체육교육과 예비소집은 2월 1일(월) 15:00이다. 최초합격자는 2월 11일(목) 발표 예정이고 등록은 2월 12일(금) 09:00부터 2월 15일(월) 15:00까지다. 1차 충원은 2월 16일(화) 09:00 발표, 같은 날 09:00~15:00 등록이며 2차 충원은 2월 17일(수) 10:00부터 전화로 개별 통보한다."
+    },
+    {
+      "key": "programs-overview",
+      "heading": "모집인원 총괄과 모집단위 유의사항",
+      "pageStart": 4,
+      "pageEnd": 7,
+      "content": "2027학년도 전남대학교 편입학 모집인원은 일반편입 647명(광주캠퍼스 453명, 여수캠퍼스 194명), 학사편입 83명 이내(광주 71명 이내, 여수 12명 이내)다. 여수캠퍼스 모집단위는 공학대학, 문화사회과학대학, 수산해양대학 소속이다. 표의 '-'는 해당 전형 모집이 없다는 뜻이며 전기공학과, 임산공학과, 분자생명공학과, 국어교육과, 유아교육과, 가정교육과, 음악교육과, 특수교육학부 초등특수교육전공은 2027학년도에 일반·학사편입 모두 모집하지 않는다. 화학공학부, 여수 전기컴퓨터공학부, 여수 글로벌비즈니스학부, 음악학과, 국악학과, 미술학과는 학사편입을 학부·학과 단위로, 일반편입을 전공 단위로 따로 모집한다. 건축학부는 학부 단위(일반 5명·학사 1명)와 건축·도시설계전공(일반 3명), 건축공학전공(일반 3명)을 따로 모집한다. AI융합대학 모집단위는 인공지능학부, 지능형모빌리티융합학과, 빅데이터융합학과인데 전형방법·면접 안내에는 미래모빌리티학과, 일정표에는 미래모빌리티융합학과로 표기된 모집단위가 있어 명칭이 일치하지 않으므로 지능형모빌리티융합학과 지원자는 단계선발 적용 여부를 입학처에 확인해야 한다."
+    },
+    {
+      "key": "eligibility-common",
+      "heading": "지원자격 일반사항·지원 불가·공인영어·학사편입",
+      "pageStart": 8,
+      "pageEnd": 8,
+      "content": "전적 대학 학과와 관계없이 모든 학과에 지원할 수 있으나 약학부는 대학 수학·화학·생물학을 각각 3학점 이상 이수해야 지원할 수 있다. 전적 대학에서 징계로 제적된 사람과 원서접수 개시일 이후 전남대학교 재학생(휴학생 포함)은 지원할 수 없고, 전남대 졸업자는 본인의 주전공·복수전공과 같은 모집단위에 지원할 수 없다. 전남대 2027년 2월 졸업예정자와 대학원생은 지원할 수 있으나 합격 후 이중학적이 되지 않도록 전적 학적을 정리(자퇴)해야 한다. 공인영어는 2025년 2월 1일 이후 응시한 New TEPS, TOEIC, TOEFL iBT 중 1개이며 TOEIC은 2026년 11월 29일(일), TEPS는 2026년 11월 21일(토) 응시분까지 인정한다. TOEIC Bridge, TOEIC Speaking·Writing, 기관 시행 TOEIC·TOEFL은 인정하지 않고 기관에서 확인되지 않는 성적은 불합격 처리한다. 약학부는 공인영어 환산점수 85점(100점 만점) 이상, 즉 TOEIC 845점·TEPS 333점·TOEFL 97점 이상이어야 한다. 공인영어를 반영하지 않는 모집단위는 공인영어 성적 요건에서 제외된다. 학사편입은 2027년 2월 28일 이전 국내·외 대학 학사학위 소지(예정)자(학점인정제·독학학위제 학사 포함)와 법령상 동등 학력 인정자이며 외국대학은 한국 4년제 대학에 준하는 정규대학 졸업자만 해당한다."
+    },
+    {
+      "key": "general-eligibility",
+      "heading": "일반편입 지원자격(학력·학점·성적)",
+      "pageStart": 9,
+      "pageEnd": 10,
+      "content": "일반편입은 국내·외 대학(방송통신대·산업대 포함)에서 2학년 또는 4개 학기(계절학기 제외) 이상 수료한 사람, 한국 4년제에 준하는 외국 정규대학에서 2학년(4학기) 이상 수료(2027년 2월 말 수료예정자 포함)하고 학사학위 최저학점의 2분의 1(3년제 3분의 2, 5년제 5분의 2) 이상을 취득(예정)한 사람, 교육부 지정 전문대학 4년제 간호학과 과정을 2학년(4학기) 이상 수료한 사람이 지원할 수 있다. 전문대학 전공심화과정 이수자는 대상이 아니다. 국내·외 전문대학 졸업자와 졸업예정자도 지원할 수 있으며(원문 표기는 '2026년 2월 졸업예정자 포함'), 3년제 전문대학에서 2년만 이수한 경우는 지원할 수 없고 외국 전문대학은 diploma가 아닌 전문학사학위를 취득(예정)해야 한다. 학점은행제 등은 전문학사 이상 학위 취득(예정)자 또는 학사학위과정 등록자로 원서접수 시점까지 80학점 이상을 취득해야 하며 학점은행제 타전공 학위 취득(예정)자는 80학점 요건과 무관하다. 공통필수조건으로 전적 대학의 2학년 수료(전문대학은 졸업) 요건 학점과 하나의 대학에서 취득한 65학점 이상이 필요하며 편입으로 인정받은 학점은 취득학점으로 본다. 학점은행제 (전문)학사과정 등록자는 80학점 이상 취득이 완료된 서류를 내야 하고 취득예정은 인정하지 않는다. 전적 대학 전 학년 성적의 백분율 환산점수가 80점(100점 만점) 이상이어야 한다. 학력이 여러 개면 1개를 선택해 그 성적을 반영하고, 편입·학점은행제 등을 연계해야 자격이 충족되거나 학점은행제 타전공·예과와 본과로 나뉜 경우에는 성적을 합산해 반영한다."
+    },
+    {
+      "key": "application",
+      "heading": "원서접수 기간·절차·유의사항",
+      "pageStart": 11,
+      "pageEnd": 11,
+      "content": "원서는 2026년 12월 11일(금) 09:00부터 12월 15일(화) 18:00까지 유웨이어플라이(https://www.uwayapply.com)에서 온라인으로만 접수한다. 일반편입 또는 학사편입 중 1개 전형의 1개 모집단위만 지원할 수 있고 광주캠퍼스와 여수캠퍼스 간 복수지원은 불가하다. 전형료를 결제해 수험번호가 부여되면 접수가 완료되며 이후 취소할 수 없고 제출 서류와 전형료는 반환하지 않는다. 모집요강 본문에서 전형료 금액은 확인되지 않으므로 원서접수 사이트에서 확인해야 한다. 사진은 면접 신분 확인용으로 최근 3개월 이내 촬영한 3.5cm×4.5cm JPG 파일을 첨부한다. 서류는 제출 기간 내 도착분만 인정하며 지원자나 전적 대학 사정으로 인한 연착도 인정하지 않으므로 도착 여부를 본인이 확인해야 한다. 입력 오류로 인한 불이익은 지원자 책임이며 수험표는 유웨이어플라이에서 재출력할 수 있다."
+    },
+    {
+      "key": "document-common",
+      "heading": "서류 제출 공통사항",
+      "pageStart": 12,
+      "pageEnd": 12,
+      "content": "서류는 직접 방문 또는 우편(등기·택배)으로 (61186) 전남광주통합특별시 북구 용봉로 77 전남대학교 제2학생마루 1층 입학처 입학과 편입학 담당자에게 제출하며 도착분만 인정하고 토요일·공휴일은 휴무다. 전형별 제출서류 순서대로 스테이플러 없이 제출하고 매 페이지 우측 하단 여백에 연필 등 지워지는 필기구로 수험번호를 적는다. 제출 서류는 2026년 12월 1일부터 발행된 것이어야 하며 외국대학 수료(졸업)예정자는 원서접수 개시일 기준 최근 6개월 이내 발급분이 원칙이고 외국대학 졸업자는 졸업일 이후 발행분도 낼 수 있다. 증명서는 원본을 제출하며 접수된 서류는 반환하지 않는다. 외국대학 출신자가 원본 반환을 원하면 원본과 사본을 함께 내 원본대조를 받고 합격 후 원본을 제출한다. 지원 자격 확인을 위한 추가 서류 요구에 협조해야 하고 개명한 경우 주민등록초본 또는 기본증명서를 낸다."
+    },
+    {
+      "key": "documents-general",
+      "heading": "일반편입 제출서류",
+      "pageStart": 13,
+      "pageEnd": 14,
+      "content": "일반편입 학력증명서는 졸업(예정)자는 학위번호가 기재된 졸업(예정)증명서를, 2학년 수료(예정)자는 수료(예정)증명서(제출 불가 시 수료예정확인서)와 재학·휴학·제적증명서 중 1부를 필수로 낸다. 전적 대학 학적이 제적이면 학적부를, 수강 중인 학점을 포함해야 65학점과 2학년 수료조건이 충족되면 수강내역 확인서를 추가로 낸다. 학점은행제 이수자는 학점은행제 마이페이지 학적부 조회 페이지와 전문학사학위수여(예정)증명서 또는 학사학위수여(예정)증명서·학점인정증명서를 낸다. 성적증명서는 전 학년 총 이수학점, 평균평점, 백분율 환산점수가 기재돼야 하며 연계가 필요하면 관련 성적증명서를 모두 낸다. 학점은행제·독학학위제 출신자는 국가평생교육진흥원 성적증명서와 학점 인정 대학 성적증명서, 6년제 대학 출신자는 예과·본과 성적증명서, 외국대학 출신자는 이수학점·학위취득학점·성적산출 기준 증빙을 낸다. 공인영어 성적증명서, 입학원서, 개인정보 수집·이용 동의서도 제출한다. 약학부 지원자는 선수과목 이수 내역 확인서(이수한 선수과목과 3학점을 형광펜 표시, 이수 중이면 수강신청내역서), 디자인학과 지원자는 최근 3년 이내 작품 10점 이상을 USB에 담은 포트폴리오(인적사항 기재 금지), 외국대학 출신자는 학력조회 동의서를 추가로 낸다."
+    },
+    {
+      "key": "documents-bachelor-and-enrollee",
+      "heading": "학사편입 제출서류와 등록자 추가 제출서류",
+      "pageStart": 15,
+      "pageEnd": 16,
+      "content": "학사편입은 학위번호가 기재된 대학 졸업(예정)증명서 또는 학사학위수여(예정)증명서를 내고 학점은행제 이수자는 마이페이지 학적부 조회 페이지를 함께 낸다. 성적증명서, 공인영어 성적증명서, 입학원서, 개인정보 수집·이용 동의서, 디자인학과 포트폴리오, 외국대학 출신자 학력조회 동의서 기준은 일반편입과 같다. 최종 등록자는 2027년 2월 24일(수) 18:00까지 방문 또는 우편으로 추가 서류를 내야 하며 이 기한은 교육부 일정에 따라 바뀔 수 있다. 2027년 2월 졸업예정자(학점은행제 학위취득예정자 포함)는 졸업(학위)증명서와 성적증명서, 타 대학 재학·휴학·수료자는 제적(자퇴)증명서, 2027년 2월 2학년 수료예정자는 제적증명서·수료증명서·성적증명서, 원본대조 사본을 낸 외국대학 출신자는 원본 서류 전체, 약학부 선수과목 이수예정자는 성적증명서를 낸다. 기한 내 추가 서류를 내지 않으면 입학이 취소된다."
+    },
+    {
+      "key": "foreign-applicants",
+      "heading": "외국대학 출신자 서류와 성적 산출",
+      "pageStart": 17,
+      "pageEnd": 17,
+      "content": "외국대학 출신자는 외국어 서류를 모두 한글로 번역 공증해 내고 출신 대학의 졸업요구학점, 이수학기, 성적체계, 성적등급·평점기준, 성적산출 기준, 대학 인가 증빙을 첨부해야 한다(성적증명서 뒷면에 명시돼 있으면 생략). 졸업(재학)증명서와 성적증명서는 원본과 번역 공증서에 더해 출신 대학이 전남대 입학과로 직접 우편 발송한 추가 증명서를 내는 방법과, 아포스티유(또는 한국 영사확인)를 받은 증명서와 번역 공증서를 내는 방법 중 하나를 고른다. 2002년 이후 중국 대학 졸업(예정)자는 번역 공증된 中國高等敎育學歷報告를 추가로 낸다. WES·ECE·IERF의 학점변환 증명서를 내면 그 환산을 따르고 내지 않으면 모집요강의 외국대학 출신자 성적 산출 기준(37~38페이지, 영국 학제 별도 기준 포함)을 적용하며 그 밖의 사항은 입학관련위원회가 정한다."
+    },
+    {
+      "key": "selection-weights",
+      "heading": "전형요소별 반영 비율",
+      "pageStart": 18,
+      "pageEnd": 19,
+      "content": "전형방법은 일반·학사편입 공통이며 1000점 만점이고 필기 과목 시험이 있는 모집단위는 간호학과, 수의학과, 약학부뿐이다. 단계선발 모집단위 중 간호학과는 1단계 공인영어 40%와 전적대학 성적 20%로 3배수를 뽑고 2단계에서 1단계 점수 60%와 필기 40%를 합산한다. 건축학부·토목공학과·기계공학부·식품공학과(3배수)와 산업공학과·전자컴퓨터공학부·인공지능학부·미래모빌리티학과(2배수)는 1단계 공인영어 40%·전적대학 20%, 2단계 1단계 점수 60%·면접 40%다. 수의학과는 1단계 공인영어 30%·전적대학 10%로 12배수, 2단계 1단계 점수 40%·필기 30%로 3배수, 3단계 2단계 점수 70%·면접 30%다. 약학부는 1단계 공인영어 30%·전적대학 20%로 20배수, 2단계 1단계 점수 50%·필기 50%다. 일괄선발 중 단계선발과 아래 모집단위를 제외한 모집단위는 공인영어 40%·전적대학 20%·면접 40%다. 여수캠퍼스 공학대학·문화사회과학대학·수산해양대학은 공인영어 없이 전적대학 60%·면접 40%다. 체육교육과·음악학과·국악학과·미술학과(이론전공 제외)는 전적대학 30%·면접 20%·실기 50%이고 디자인학과는 전적대학 20%·면접 40%·실기 40%다. 미술학과 이론전공은 실기 대상에서 제외돼 공인영어·전적대학·면접 기준을 적용받는다."
+    },
+    {
+      "key": "english-and-gpa-scoring",
+      "heading": "공인영어·전적대학 성적 산출 방법",
+      "pageStart": 19,
+      "pageEnd": 20,
+      "content": "공인영어 성적은 [취득 점수(TOEIC 환산 점수)/990]×100으로 반영하며 New TEPS와 TOEFL iBT는 대학이 정한 환산표(36페이지)로 TOEIC 점수로 바꿔 반영하고 지원자가 입력한 1개 성적만 반영한다. 장애 정도가 심한 청각장애인은 독해 영역 점수만 낼 수 있고 환산은 입학관련위원회가 정한다. 전적대학 성적은 지원자가 선택한 성적증명서 1개의 백분율 점수를 반영하고, 연계해야 자격이 충족되면 (A대학 백분율×A대학 취득학점 + B대학 백분율×B대학 취득학점)/(A대학 취득학점 + B대학 취득학점)으로 계산하며 성적이 없는 학점도 취득학점으로 본다. 예과·본과, 학점은행제 타전공, 학점은행제 연계 이수도 같은 산출식을 쓴다. 2026학년도 2학기나 동계 계절학기 학점을 포함해야 자격이 되는 수료·졸업예정자는 그 학기 학점을 자격 학점으로만 인정하고 성적은 반영하지 않으며, 서류제출 기간까지 2학기 성적이 확정되지 않으면 직전 학기까지 반영한다. 전형요소별 성적은 소수점 이하 넷째 자리에서 반올림해 셋째 자리까지 산출한다."
+    },
+    {
+      "key": "written-exams",
+      "heading": "필기고사(간호학과·수의학과·약학부)",
+      "pageStart": 21,
+      "pageEnd": 21,
+      "content": "필기는 간호학과·수의학과·약학부 1단계 합격자가 대상이며 과목별 100점 만점으로 평가한다. 수의학과 수의학개론은 2027년 1월 14일(목) 09:00(08:30까지 입실), 60분, 객관식·단답형 혼합형이며 수의학 기초 지식을 바탕으로 출제되고 단답형은 영어로 답해야 할 수 있다. 수준은 수의예과 전반 교육과정이고 참고도서는 수의학 개론(한미의학)이다. 간호학과 생리학은 2027년 2월 2일(화) 09:00(08:30까지 입실), 60분, 단답형·서술형 혼합형으로 생리학 기초지식의 이해도와 적용 능력을 보며 본 학과 1·2학년 교육과정 수준이다. 참고도서는 최명애 외 생리학 제6판(현문사)과 이준철 외 간호사를 위한 생리학(수문사)이다. 약학부 약학입문은 2월 2일(화) 09:00(08:30까지 입실), 90분, 객관식·주관식 혼합형으로 일반화학·일반생물학 기초지식의 이해도와 적용 능력을 보며 본 학과 1·2학년 교육과정 수준이다. 참고도서는 캠벨 생명과학 제10판(라이프사이언스)과 줌달의 일반화학 제10판(Cengage)이다. 시험 장소는 모집단위 지정 장소로 입학 홈페이지에 공고하며 수험표, 사진이 있는 공적 신분증, 볼펜을 지참해야 한다. 신분증이 없으면 응시할 수 없고 전자기기는 수거하며 이후 소지하면 불합격 처리한다. 문의는 수의학과 062-530-2805, 간호학과 062-530-4933, 약학부 062-530-2920이다."
+    },
+    {
+      "key": "interview",
+      "heading": "면접고사와 제시문 활용 모집단위",
+      "pageStart": 22,
+      "pageEnd": 22,
+      "content": "면접은 모집단위 지침에 따라 해당 학과 지원동기, 기초소양, 학과 적성, 학업수행역량, 인성역량을 구술로 확인하며 2027년 2월 2일(화) 09:00(08:30까지 입실)부터 실시한다. 제시문을 활용해 면접하는 모집단위는 공과대학 에너지자원공학과·기계공학부·신소재공학부·전자컴퓨터공학부·화학공학부(화학공정·화공안전·화공소재전공)·고분자융합소재공학부(고분자공학·융합섬유공학전공)·산업공학과, 공학대학 석유화학소재공학과, 사범대학 영어교육과·지리교육과·역사교육과·수학교육과·지구과학교육과·체육교육과·특수교육학부(유아특수교육·중등특수교육전공), 수산해양대학 수산생명의학과, 수의과대학 수의학과, 자연과학대학 수학과, AI융합대학 인공지능학부·미래모빌리티학과다. 자세한 진행은 해당 모집단위에 문의해야 한다. 신분증이 없으면 응시할 수 없고 전자기기를 소지하면 불합격 처리한다. 면접 성적이 면접 총점의 60% 미만이면 불합격이다."
+    },
+    {
+      "key": "practical-exams",
+      "heading": "실기고사(체육교육과·음악·국악·미술·디자인)",
+      "pageStart": 23,
+      "pageEnd": 29,
+      "content": "실기 대상은 사범대학 체육교육과와 예술대학 음악학과(성악·피아노·관현악·작곡), 국악학과(국악성악·국악기악·국악작곡이론), 미술학과(한국화·서양화·조소·공예), 디자인학과다. 미술학과는 한국화 인물화(수묵담채 전지 또는 연필소묘 2절지 중 택1), 서양화 인물 연필소묘(2절지), 조소 인물 두상 모각, 공예 색채 드로잉(켄트지 4절지)으로 각 4시간이다. 디자인학과는 정밀묘사(켄트지 4절지, 4시간)이며 최근 3년 이내 작품 10점 이상의 포트폴리오를 USB로 서류제출 기간 내 내야 한다. 음악학과는 피아노(쇼팽 에튀드 Op.10 또는 Op.25 중 1곡 40%, 베토벤 피아노 소나타 1곡 전 악장 60%), 성악(이탈리아 가곡 또는 오페라 아리아 1곡 50%, 독일 가곡 1곡 50%), 작곡(주어진 동기에 의한 피아노곡 작곡 180분), 관현악(자유곡 1곡)이며 모든 곡은 반복 없이 암보로 연주하고 반주자를 동반하며 피아노·타악기 외 악기는 지참한다. 국악학과는 판소리·가곡·가야금병창·가야금·타악 등 전공별 분야 과제곡(일부 당일 추첨)과 국악작곡(화성학 풀이·중주곡 작곡), 이론(고악보 역보·국악기초이론)으로 평가한다. 체육교육과는 제자리 멀리뛰기, 지그재그런, 체조(매트), 축구를 각 25%로 남녀별 기준표에 따라 채점하고 2027년 2월 1일(월) 15:00 예비소집이 있다. 실기 과제 일부라도 결시하면 불합격이며 체조는 부상이나 본인 의사로 동작을 하지 않으면 0점이다."
+    },
+    {
+      "key": "selection-and-tiebreak",
+      "heading": "합격자 선발 방법과 동점자 처리",
+      "pageStart": 30,
+      "pageEnd": 31,
+      "content": "단계별 합격선 동점자는 전원 선발한다. 일괄선발 모집단위는 공인영어(400점)·전적대학(200점)·면접(400점) 합산 고득점순으로 선발하고, 여수캠퍼스 공학대학·문화사회과학대학·수산해양대학은 전적대학(600점)과 면접(400점), 체육교육과·음악학과·국악학과·미술학과(이론전공 제외)는 전적대학(300점)·면접(200점)·실기(500점), 디자인학과는 전적대학(200점)·면접(400점)·실기(400점)를 합산한다. 간호학과는 공인영어(400점)와 전적대학(200점)으로 3배수, 3배수·2배수 단계선발 공학계열은 같은 방식으로 1단계를 뽑은 뒤 면접(400점)을 합산한다. 수의학과는 공인영어(300점)와 전적대학(100점)으로 12배수, 필기(300점) 합산으로 3배수, 면접(300점) 합산으로 최종 선발하고, 약학부는 공인영어(300점)와 전적대학(200점)으로 20배수를 뽑아 필기(500점)를 합산한다. 최종 동점자는 실기 모집단위는 실기→면접→전적대학, 여수캠퍼스 모집단위는 면접→전적대학, 간호학과·약학부는 필기→공인영어→전적대학, 수의학과는 면접→필기→공인영어→전적대학, 그 밖의 모집단위는 면접→공인영어→전적대학 순으로 가린다. 그래도 동점자 때문에 모집인원을 초과하면 합격선 동점자는 모두 선발하지 않으며 예비순위자와 충원합격자 선발도 같은 기준을 따른다."
+    },
+    {
+      "key": "fail-and-cancel",
+      "heading": "불합격 처리·충원·입학 취소",
+      "pageStart": 32,
+      "pageEnd": 32,
+      "content": "지원자격 미달자와 기간 내 서류 미제출자, 단계별 불합격자, 고사별 결시자(체능 실기 과제 일부 결시 포함)와 부정행위자, 면접 성적이 면접 총점의 60% 미만인 자, 전형 총점 700점 미만인 자, 성적이 현저히 낮아 수학능력이 없다고 인정되는 자는 불합격 처리한다. 예비순위자는 모집단위별 모집인원의 3배수 이내 선발이 원칙이며 지원 상황에 따라 가감할 수 있고 미등록·등록포기 결원은 예비순위자 고득점순으로 충원한다. 제출서류 허위 기재·변조 등 부정 합격, 수료 예정 자격으로 합격했으나 수료하지 못한 경우, (전문)학사학위 취득 예정 자격으로 합격했으나 학위를 취득하지 못한 경우, 위조 자료 제출·대리 응시·답안 공유 등 부정행위, 최종등록자 추가 서류 기한 내 미제출은 입학(합격) 취소 사유다."
+    },
+    {
+      "key": "results-and-registration",
+      "heading": "합격자 발표와 등록",
+      "pageStart": 33,
+      "pageEnd": 33,
+      "content": "수의학과 1단계(필기 대상) 발표는 2027년 1월 8일(금), 수의학과 2단계(면접 대상)와 그 밖의 단계선발 모집단위 1단계(면접·필기 대상) 발표는 1월 22일(금) 예정이며 입학 홈페이지(https://admission.jnu.ac.kr) 합격자 조회 안내 페이지에서 확인하고 개별 통보하지 않는다. 최초합격자는 2월 11일(목) 발표 예정이며 등록금 납부 페이지에서 고지서를 확인해 2월 12일(금) 09:00부터 2월 15일(월) 15:00까지 개인별 가상계좌로 낸다. 1차 충원은 2월 16일(화) 09:00 발표, 같은 날 09:00~15:00 등록이다. 2차 충원은 2월 17일(수) 10:00부터 교육부 충원 마감시한까지 전화로 개별 통보하며 3회까지 연락되지 않거나 등록을 결정하지 못하면 다음 순위자에게 통보할 수 있고 연락되지 않은 대상자는 불합격 처리한다. 회차별 지정 기간 내 등록금을 내지 않으면 미등록 불합격이며 발표 일정은 변경될 수 있다."
+    },
+    {
+      "key": "notices-and-credits",
+      "heading": "안내사항·학점 인정·이의 신청",
+      "pageStart": 34,
+      "pageEnd": 35,
+      "content": "전형 기간 중 모든 공지는 입학 홈페이지에 게시하고 개별 연락하지 않으며 입학전형 성적은 공개하지 않는다. 학력조회 소명 요청에 협조하지 않으면 합격(입학)이 취소될 수 있고 부정 합격이 입학 후 확인되면 편입학을 취소하고 학적을 말소하며 납입금을 반환하지 않는다. 전적대학 이수과목은 전남대 교육과정에 따라 인정 학점이 정해지고 편입 학과 졸업 소요학점의 2분의 1 이내만 인정되며 추가 필수과목 때문에 졸업에 1~2학기 이상 더 걸릴 수 있다. 졸업 소요학점의 2분의 1 이상을 전남대에서 이수하고 편입 후 4학기 이상 등록해야 하며 수의학과·약학부는 8학기 이상, 건축학부 건축·도시설계전공과 건축디자인학과는 6학기 이상이다. 이중학적을 인정하지 않으므로 입학 전 다른 대학(원)과 전남대 대학(원) 학적을 자퇴해야 한다. 입학전형에 대한 이의는 공고일(사유 발생) 후 7일 이내에 신청하며 안내사항에는 서면 신청, 이의신청 절차에는 전화(062-530-4739) 신청으로 안내돼 있다."
+    },
+    {
+      "key": "pharmacy-prerequisites",
+      "heading": "약학부 선수과목",
+      "pageStart": 39,
+      "pageEnd": 40,
+      "content": "약학부는 대학 수학·화학·생물학을 각각 3학점 이상 이수해야 하며 선수과목 성적은 관계없다. 성적증명서에 계열별 1과목을 형광펜으로 표시해 내고 1과목으로 3학점이 안 되면 2과목 이상 표시한다. 과목명 앞뒤나 가운데에 일반·기초·고급·응용·대학·생·개론·이해·학/공학·특강·연습·실험/실습·입문·의·및, 숫자나 알파벳이 붙어도 같은 과목으로 인정하며(예: 기초화학은 화학) 외국대학은 동일한 영문명을 인정한다(예: General Biology는 일반생물학). 대학·대학원·사이버대학 시간제등록과 학점은행제도 인정하나 국가평생교육진흥원 성적증명서가 필요하고 취득예정은 인정하지 않는다. 2026학년도 2학기나 동계 계절학기에 이수하는 선수과목도 인정하지만 합격 후 2027년 2월 24일(수) 18:00까지 성적증명서를 추가로 내야 한다. 여러 전적 대학에서 이수한 선수과목은 모두 인정하고 과목명으로 확인하기 어려우면 강의계획서 등을 내 지원자격 심사위원회의 판단을 받는다. 인정 과목 목록은 40페이지 별표에 있다."
+    },
+    {
+      "key": "program-notes",
+      "heading": "모집단위 관련 안내",
+      "pageStart": 42,
+      "pageEnd": 43,
+      "content": "간호대학은 간호교육인증 프로그램을 운영해 편입 후 졸업까지 3년 이상 걸릴 수 있다. 공과대학 편입생은 편입 후 1학기 이내 공학교육인증 프로그램 이수를 신청해 허락받아야 하며 건축학부 건축·도시설계전공, 토목공학과, 산업공학과, 기계공학부, 전기공학과, 전자컴퓨터공학부는 제외다. 건축학부 건축·도시설계전공과 여수 공학대학 건축디자인학과는 수업연한 5년의 건축학 인증 프로그램이다. 여수 메카트로닉스공학과는 1~2학년을 둔덕캠퍼스, 3~4학년을 여수 산학융합캠퍼스에서 수학한다. 여수 수산해양대학 기관시스템공학과·해양생산관리학과·해양경찰학과에서 해기사 면허를 원하면 실습 1년을 포함해 3년 이상 걸릴 수 있다. 약학대학은 약학교육 인증과 약사국가시험 응시 요건 때문에 편입 후 졸업까지 5년 이상 걸릴 수 있다. 자율전공학부(4년)는 자기설계전공을 주전공으로 하며 1개 이상 복수전공이 의무다. AI융합대학 미래모빌리티학과 일부 교과목은 광주 빛그린산학융합캠퍼스에서 운영된다."
+    },
+    {
+      "key": "contacts",
+      "heading": "제출처와 단과대학 연락처",
+      "pageStart": 44,
+      "pageEnd": 44,
+      "content": "편입학 서류 제출과 문의는 광주 용봉캠퍼스 제2학생마루 1층 입학처 입학과 편입학 담당자다. 단과대학 행정실 전화번호는 간호대학 062-530-4933, 경영대학 062-530-1412, 공과대학 062-530-1606, 여수 공학대학 061-659-7205~8, 농업생명과학대학 062-530-2005~6, 여수 문화사회과학대학 061-659-7506~8, 사범대학 062-530-2321, 사회과학대학 062-530-2605~8, 생활과학대학 062-530-1305~6, 여수 수산해양대학 061-659-7105~8, 수의과대학 062-530-2805~6, 약학대학 062-530-2905~6, 예술대학 062-530-3005, 인문대학 062-530-3105~8, 자연과학대학 062-530-3305, AI융합대학 062-530-4204다. 등록금 수납·환불은 사무국 재무과 062-530-1203·1207, 입학전형 이의 신청은 062-530-4739다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "stage-nursing",
+      "scopeType": "major",
+      "scopeValue": "간호학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "생리학"
+      ],
+      "examMinutes": 60,
+      "questionCount": null,
+      "examFormat": "혼합형(단답형·서술형), 100점 만점",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 3,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        18,
+        21,
+        30
+      ],
+      "notes": "1단계 공인영어 40%+전적대학 20%로 3배수, 2단계 1단계 점수 60%+필기(생리학) 40%. 면접 없음. 필기는 2027. 2. 2.(화) 09:00.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 40,
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            18,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "stage-3x-engineering",
+      "scopeType": "major",
+      "scopeValue": "건축학부·토목공학과·기계공학부·식품공학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험 없음. 1단계 공인영어·전적대학 성적, 2단계 면접",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 3,
+      "stage1SelectionMaxMultiple": 3,
+      "sourcePages": [
+        18,
+        30
+      ],
+      "notes": "1단계 공인영어 40%+전적대학 20%로 3배수, 2단계 1단계 점수 60%+면접 40%. 공인영어는 자체 영어 필기시험이 아니다.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 40,
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            18,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "stage-2x-engineering",
+      "scopeType": "major",
+      "scopeValue": "산업공학과·전자컴퓨터공학부·인공지능학부·미래모빌리티학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험 없음. 1단계 공인영어·전적대학 성적, 2단계 면접",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 2,
+      "stage1SelectionMaxMultiple": 2,
+      "sourcePages": [
+        18,
+        30
+      ],
+      "notes": "1단계 공인영어 40%+전적대학 20%로 2배수, 2단계 1단계 점수 60%+면접 40%. 미래모빌리티학과는 모집인원 표의 AI융합대학 지능형모빌리티융합학과와 명칭이 다르게 표기돼 있어 확인 필요.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 40,
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            18,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "stage-veterinary",
+      "scopeType": "major",
+      "scopeValue": "수의학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수의학개론"
+      ],
+      "examMinutes": 60,
+      "questionCount": null,
+      "examFormat": "혼합형(객관식·단답형), 100점 만점",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 30,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 30,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 12,
+      "stage1SelectionMaxMultiple": 12,
+      "sourcePages": [
+        18,
+        21,
+        30
+      ],
+      "notes": "3단계 선발. 1단계 공인영어 30%+전적대학 10%로 12배수, 2단계 1단계 점수 40%+필기(수의학개론) 30%로 3배수, 3단계 2단계 점수 70%+면접 30%. 필기는 2027. 1. 14.(목) 09:00.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 10,
+        "stage2SelectionMultiple": 3,
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "stage1",
+          "weight": 30,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            18,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "stage-pharmacy",
+      "scopeType": "major",
+      "scopeValue": "약학부",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "약학입문"
+      ],
+      "examMinutes": 90,
+      "questionCount": null,
+      "examFormat": "혼합형(객관식·주관식), 일반화학·일반생물학 범위, 100점 만점",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 50,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": 20,
+      "stage1SelectionMaxMultiple": 20,
+      "englishToeicMin": 845,
+      "englishTepsMin": 333,
+      "englishToeflIbtMin": 97,
+      "sourcePages": [
+        8,
+        18,
+        21,
+        30
+      ],
+      "notes": "1단계 공인영어 30%+전적대학 20%로 20배수, 2단계 1단계 점수 50%+필기(약학입문) 50%. 면접 없음. 공인영어 환산점수 85점 이상 지원자격(2025. 2. 1. 이후 응시, TOEIC 2026. 11. 29.·TEPS 2026. 11. 21. 응시분까지). 대학 수학·화학·생물학 각 3학점 이상 선수과목 필요.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 30,
+        "finalPriorUniversityWeight": 20,
+        "prerequisiteCourses": [
+          "수학 3학점",
+          "화학 3학점",
+          "생물학 3학점"
+        ],
+        "tracks": [
+          "자연"
+        ],
+        "englishTest": {
+          "role": "weighted_and_eligibility",
+          "stage": "stage1",
+          "weight": 30,
+          "toeicMin": 845,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            18,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "single-english-gpa-interview",
+      "scopeType": "category",
+      "scopeValue": "광주캠퍼스 일괄선발 모집단위(단계선발·여수캠퍼스·실기 모집단위 제외, 미술학과 이론전공 포함)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험 없음. 공인영어·전적대학 성적·면접 일괄합산",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        19,
+        30
+      ],
+      "notes": "공인영어 40%(400점)+전적대학 20%(200점)+면접 40%(400점) 일괄합산. 공인영어는 자체 영어 필기시험이 아니다. 면접 총점 60% 미만·전형총점 700점 미만 불합격.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalLanguageWeight": 40,
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "인문",
+          "자연",
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "weighted",
+          "stage": "single",
+          "weight": 40,
+          "toeicMin": null,
+          "tests": [
+            "TOEIC",
+            "TEPS",
+            "TOEFL iBT"
+          ],
+          "sourcePages": [
+            8,
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "single-yeosu-gpa-interview",
+      "scopeType": "college",
+      "scopeValue": "여수캠퍼스 공학대학·문화사회과학대학·수산해양대학",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험·공인영어 없음. 전적대학 성적·면접 일괄합산",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        19,
+        31
+      ],
+      "notes": "전적대학 60%(600점)+면접 40%(400점). 공인영어 성적을 반영하지 않는다. 동점자는 면접→전적대학 순.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalPriorUniversityWeight": 60,
+        "campus": "여수",
+        "tracks": [
+          "인문",
+          "자연"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "single-arts-pe-practical",
+      "scopeType": "major",
+      "scopeValue": "체육교육과·음악학과·국악학과·미술학과(이론전공 제외)",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험·공인영어 없음. 전적대학 성적·면접·실기 일괄합산",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 20,
+      "finalPracticalWeight": 50,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        19,
+        23,
+        31
+      ],
+      "notes": "전적대학 30%(300점)+면접 20%(200점)+실기 50%(500점). 동점자는 실기→면접→전적대학 순.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalPriorUniversityWeight": 30,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            19
+          ]
+        }
+      }
+    },
+    {
+      "key": "single-design-practical",
+      "scopeType": "major",
+      "scopeValue": "디자인학과",
+      "transferTypes": [
+        "일반편입",
+        "학사편입"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "필기시험·공인영어 없음. 전적대학 성적·면접·실기(정밀묘사) 일괄합산, 포트폴리오 제출",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 40,
+      "finalPracticalWeight": 40,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        19,
+        23,
+        31
+      ],
+      "notes": "전적대학 20%(200점)+면접 40%(400점)+실기 40%(400점). 최근 3년 이내 작품 10점 이상 포트폴리오(USB) 제출.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalPriorUniversityWeight": 20,
+        "tracks": [
+          "예체능"
+        ],
+        "englishTest": {
+          "role": "none",
+          "stage": null,
+          "weight": null,
+          "toeicMin": null,
+          "tests": [],
+          "sourcePages": [
+            19
+          ]
+        }
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "원서접수",
+      "startsAt": "2026-12-11T09:00:00+09:00",
+      "endsAt": "2026-12-15T18:00:00+09:00",
+      "startsOn": "2026-12-11",
+      "endsOn": "2026-12-15",
+      "displayText": "2026. 12. 11.(금) 09:00 ~ 12. 15.(화) 18:00",
+      "details": "유웨이어플라이 인터넷 접수. 전형료 결제 후 취소 불가.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "document-submission",
+      "audience": "전체 지원자",
+      "label": "서류 제출",
+      "startsAt": "2026-12-11T09:00:00+09:00",
+      "endsAt": "2026-12-17T18:00:00+09:00",
+      "startsOn": "2026-12-11",
+      "endsOn": "2026-12-17",
+      "displayText": "2026. 12. 11.(금) 09:00 ~ 12. 17.(목) 18:00 (도착분만 인정)",
+      "details": "방문 또는 우편(등기·택배) 제출. 제2학생마루 1층 입학과.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "veterinary-written-candidates",
+      "audience": "수의학과 지원자",
+      "label": "수의학과 필기대상자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-08",
+      "endsOn": "2027-01-08",
+      "displayText": "2027. 1. 8.(금) 예정",
+      "details": "입학 홈페이지 공고, 개별 통보 없음. 시험 장소는 공고문 참고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "veterinary-written",
+      "audience": "수의학과 필기대상자",
+      "label": "수의학과 필기고사",
+      "startsAt": "2027-01-14T09:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-01-14",
+      "endsOn": null,
+      "displayText": "2027. 1. 14.(목) 09:00 예정 (08:30까지 입실)",
+      "details": "수의학개론 60분.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "stage1-result",
+      "audience": "단계선발 모집단위 지원자",
+      "label": "1단계 합격자 발표",
+      "startsAt": "2027-01-22T15:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-01-22",
+      "endsOn": null,
+      "displayText": "2027. 1. 22.(금) 15:00 예정",
+      "details": "수의학과는 2단계 발표. 입학 홈페이지 공고, 개별 통보 없음. 2단계 세부 일정도 이후 공고.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "pe-orientation",
+      "audience": "체육교육과 지원자",
+      "label": "체육교육과 예비소집",
+      "startsAt": "2027-02-01T15:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-01",
+      "endsOn": null,
+      "displayText": "2027. 2. 1.(월) 15:00",
+      "details": "",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "stage2-written",
+      "audience": "간호학과·약학부 1단계 합격자",
+      "label": "간호학과·약학부 필기고사",
+      "startsAt": "2027-02-02T09:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-02",
+      "endsOn": null,
+      "displayText": "2027. 2. 2.(화) 09:00 ~ (08:30까지 입실)",
+      "details": "간호학과 생리학 60분, 약학부 약학입문 90분.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "interview",
+      "audience": "간호학과·약학부 제외 전체 지원자",
+      "label": "면접고사",
+      "startsAt": "2027-02-02T09:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-02",
+      "endsOn": null,
+      "displayText": "2027. 2. 2.(화) 09:00 ~ (08:30까지 입실)",
+      "details": "수의학과는 3단계. 세부 일정은 모집단위별 운영, 오후반 편성 가능.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "practical",
+      "audience": "음악·국악·디자인·미술(이론전공 제외)·체육교육과 지원자",
+      "label": "실기고사",
+      "startsAt": "2027-02-02T09:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-02",
+      "endsOn": null,
+      "displayText": "2027. 2. 2.(화) 09:00 ~ (08:30까지 입실)",
+      "details": "세부 일정은 모집단위별 운영.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "final-result",
+      "audience": "전체 지원자",
+      "label": "최초합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-02-11",
+      "endsOn": "2027-02-11",
+      "displayText": "2027. 2. 11.(목) 예정",
+      "details": "입학 홈페이지 발표, 개별 통보 없음.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "registration",
+      "audience": "최초합격자",
+      "label": "최초합격자 등록",
+      "startsAt": "2027-02-12T09:00:00+09:00",
+      "endsAt": "2027-02-15T15:00:00+09:00",
+      "startsOn": "2027-02-12",
+      "endsOn": "2027-02-15",
+      "displayText": "2027. 2. 12.(금) 09:00 ~ 2. 15.(월) 15:00",
+      "details": "등록금 납부 페이지 고지서의 개인별 가상계좌로 납부. 미납 시 미등록 불합격.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional1-result",
+      "audience": "충원합격 대상자",
+      "label": "1차 충원합격자 발표",
+      "startsAt": "2027-02-16T09:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-16",
+      "endsOn": null,
+      "displayText": "2027. 2. 16.(화) 09:00 예정",
+      "details": "입학 홈페이지 발표.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional1-registration",
+      "audience": "1차 충원합격자",
+      "label": "1차 충원합격자 등록",
+      "startsAt": "2027-02-16T09:00:00+09:00",
+      "endsAt": "2027-02-16T15:00:00+09:00",
+      "startsOn": "2027-02-16",
+      "endsOn": "2027-02-16",
+      "displayText": "2027. 2. 16.(화) 09:00 ~ 15:00",
+      "details": "",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional2-result",
+      "audience": "충원합격 대상자",
+      "label": "2차 충원합격자 발표",
+      "startsAt": "2027-02-17T10:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-17",
+      "endsOn": null,
+      "displayText": "2027. 2. 17.(수) 10:00 ~",
+      "details": "전화로 개별 통보. 3회까지 연락되지 않으면 다음 순위자에게 통보 가능. 등록은 통보 시 안내.",
+      "sourcePage": 3,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "enrollee-documents",
+      "audience": "최종등록자 중 해당자",
+      "label": "등록자 추가 서류 제출",
+      "startsAt": null,
+      "endsAt": "2027-02-24T18:00:00+09:00",
+      "startsOn": "2027-02-24",
+      "endsOn": "2027-02-24",
+      "displayText": "2027. 2. 24.(수) 18:00까지",
+      "details": "졸업·수료예정자, 타 대학 재적자, 약학부 선수과목 이수예정자 등. 방문 또는 우편, 도착분 인정. 교육부 일정에 따라 변경 가능.",
+      "sourcePage": 16,
+      "metadata": {
+        "precision": "minute",
+        "deadline": true,
+        "factStatus": "scheduled"
+      }
+    }
+  ],
+  "programs": [
+    {
+      "college": "간호대학",
+      "category": "자연",
+      "major": "간호학과",
+      "general": 12,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "경영학부(경영학전공, 회계학전공, AI비즈니스전공)",
+      "general": 29,
+      "bachelor": 8,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "경제학부",
+      "general": 14,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "건축학부(건축·도시설계전공, 건축공학전공)",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "건축학부 건축·도시설계전공",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "건축학부 건축공학전공",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "토목공학과",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "환경에너지공학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "에너지자원공학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "기계공학부(에너지기계전공, 정밀기계전공, 지능기계전공)",
+      "general": 14,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "신소재공학부(금속재료공학전공, 에너지나노재료전공, 광·전자재료전공)",
+      "general": 12,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "전자컴퓨터공학부(전자공학전공, 컴퓨터정보통신공학전공, 시스템 반도체공학전공)",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "화학공학부(화학공정전공, 화공안전전공, 화공소재전공)",
+      "general": 0,
+      "bachelor": 5,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "화학공학부 화학공정전공",
+      "general": 10,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "화학공학부 화공안전전공",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "화학공학부 화공소재전공",
+      "general": 13,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "고분자융합소재공학부 고분자공학전공",
+      "general": 6,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "고분자융합소재공학부 융합섬유공학전공",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "산업공학과",
+      "general": 9,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "전기공학과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "생물공학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "전자통신공학과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "전기컴퓨터공학부(컴퓨터공학전공, 전기및반도체공학전공)",
+      "general": 0,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "전기컴퓨터공학부 컴퓨터공학전공",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "전기컴퓨터공학부 전기및반도체공학전공",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "기계설계공학과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "기계시스템공학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "메카트로닉스공학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "냉동공조공학과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "환경시스템공학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "융합생명공학과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "화공생명공학과",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "건축디자인학과",
+      "general": 10,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "의공학부(바이오헬스케어전공, 디지털헬스케어전공)",
+      "general": 15,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "석유화학소재공학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "공학대학",
+      "category": "자연",
+      "major": "산업기술융합공학과(야간)",
+      "general": 15,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "여수",
+        "nightProgram": true
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "응용식물학과",
+      "general": 1,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "원예생명공학과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "응용생물학과",
+      "general": 7,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "산림자원학과",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "임산공학과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "조경학과",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "농생명화학과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "식품공학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "분자생명공학과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "동물자원학부 동물자원과학전공",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "동물자원학부 동물생명과학전공",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "지역·바이오시스템공학과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "바이오에너지공학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "인문",
+      "major": "농업경제학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "농업생명과학대학",
+      "category": "자연",
+      "major": "융합바이오시스템기계공학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "국제학부(영어학전공)",
+      "general": 9,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "국제학부(일본학전공)",
+      "general": 8,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "국제학부(중국학전공)",
+      "general": 11,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "글로벌비즈니스학부(국제통상학전공, 글로벌비즈니스학전공)",
+      "general": 0,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "글로벌비즈니스학부 국제통상학전공",
+      "general": 8,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "글로벌비즈니스학부 글로벌비즈니스학전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수",
+        "bachelorCell": "빈칸"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "물류교통학과",
+      "general": 7,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "문화콘텐츠학부 멀티미디어전공",
+      "general": 9,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "문화콘텐츠학부 전자상거래전공",
+      "general": 9,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "문화사회과학대학",
+      "category": "인문",
+      "major": "문화관광경영학과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "국어교육과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "영어교육과",
+      "general": 6,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "교육학과",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "유아교육과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "지리교육과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "역사교육과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "윤리교육과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "자연",
+      "major": "수학교육과",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "자연",
+      "major": "물리교육과",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "자연",
+      "major": "화학교육과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "자연",
+      "major": "생물교육과",
+      "general": 6,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "자연",
+      "major": "지구과학교육과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "가정교육과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 5,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "예체능",
+      "major": "음악교육과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "예체능",
+      "major": "체육교육과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "특수교육학부 유아특수교육전공",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "특수교육학부 초등특수교육전공",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주",
+        "notRecruiting": true
+      }
+    },
+    {
+      "college": "사범대학",
+      "category": "인문",
+      "major": "특수교육학부 중등특수교육전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "정치외교학과",
+      "general": 6,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "사회학과",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "심리학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "문헌정보학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "미디어커뮤니케이션학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "지리학과",
+      "general": 6,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "문화인류고고학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "행정학과",
+      "general": 7,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "생활과학대학",
+      "category": "인문",
+      "major": "생활복지학과",
+      "general": 1,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "생활과학대학",
+      "category": "자연",
+      "major": "식품영양과학부(식품학전공, 영양학전공)",
+      "general": 9,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "생활과학대학",
+      "category": "자연",
+      "major": "의류학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "기관시스템공학과",
+      "general": 8,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "양식생물학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "조선해양공학과",
+      "general": 7,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "해양생산관리학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "해양융합과학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "해양바이오식품학과",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "수산생명의학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "해양경찰학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수산해양대학",
+      "category": "자연",
+      "major": "스마트수산자원관리학과",
+      "general": 16,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "여수"
+      }
+    },
+    {
+      "college": "수의과대학",
+      "category": "자연",
+      "major": "수의학과",
+      "general": 11,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "약학대학",
+      "category": "자연",
+      "major": "약학부(약학전공, 제약학전공)",
+      "general": 10,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "음악학과(성악전공, 피아노전공, 관현악전공, 작곡전공)",
+      "general": 0,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "음악학과 성악전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "음악학과 피아노전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "음악학과 관현악전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "음악학과 작곡전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "국악학과(국악성악전공, 국악기악전공, 국악작곡이론전공)",
+      "general": 0,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "국악학과 국악성악전공",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "국악학과 국악기악전공",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "국악학과 국악작곡이론전공",
+      "general": 4,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과(한국화전공, 서양화전공, 조소전공, 이론전공)",
+      "general": 0,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과 한국화전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 6,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과 서양화전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과 조소전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과 공예전공",
+      "general": 1,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "미술학과 이론전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "예술대학",
+      "category": "예체능",
+      "major": "디자인학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "국어국문학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "영어영문학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "독일언어문학과(독어독문학전공, 독일지역학전공)",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "불어불문학과(불어불문학전공, 프랑스문화·지역학전공)",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "중어중문학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "일어일문학과",
+      "general": 12,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "사학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "인문대학",
+      "category": "인문",
+      "major": "철학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "수학과",
+      "general": 4,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "통계학과",
+      "general": 3,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "물리학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "지구환경과학부 지질환경전공",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "지구환경과학부 해양환경전공",
+      "general": 1,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "생물학과",
+      "general": 10,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "화학과",
+      "general": 7,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "자연과학대학",
+      "category": "자연",
+      "major": "생명과학기술학부(생명과학전공, 시스템생명공학전공)",
+      "general": 12,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "AI융합대학",
+      "category": "자연",
+      "major": "인공지능학부(인공지능전공, 소프트웨어전공)",
+      "general": 9,
+      "bachelor": 5,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "AI융합대학",
+      "category": "자연",
+      "major": "지능형모빌리티융합학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주",
+        "nameNote": "전형방법·면접 안내에는 미래모빌리티학과, 일정표에는 미래모빌리티융합학과로 표기된 모집단위가 있어 명칭 불일치"
+      }
+    },
+    {
+      "college": "AI융합대학",
+      "category": "자연",
+      "major": "빅데이터융합학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    },
+    {
+      "college": "직할학부",
+      "category": "통합",
+      "major": "자율전공학부(4년)",
+      "general": 4,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 7,
+      "metadata": {
+        "campus": "광주"
+      }
+    }
+  ],
+  "validation": {
+    "expectedProgramRows": 137,
+    "expectedGeneralTotal": 647,
+    "expectedBachelorTotal": 83,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 9,
+    "expectedScheduleRows": 15,
+    "tablesChecked": [
+      "PDF 3페이지 전형일정 표",
+      "PDF 4~7페이지 모집단위별 모집인원 표 137행(캠퍼스·단과대학 병합 셀 fill-down)",
+      "PDF 18페이지 단계선발 전형요소별 반영비율 표",
+      "PDF 19페이지 일괄선발 반영비율·공인영어 계산식 표",
+      "PDF 21페이지 필기고사 일시·과목 표",
+      "PDF 30~31페이지 선발방법·동점자 처리 표",
+      "PDF 33페이지 합격자 발표·등록 표"
+    ],
+    "notes": [
+      "PDF 텍스트 레이어 50/50페이지 확인, 페이지 번호는 PDF 물리 페이지 기준(인쇄 쪽번호와 같음)",
+      "모집인원 합계 일치: 광주 일반 453·학사 71(이내), 여수 일반 194·학사 12(이내), 총 일반 647·학사 83(이내)",
+      "'-'와 빈칸은 0명으로 저장하고 일반·학사 모두 0인 모집단위는 metadata.notRecruiting=true",
+      "학부 단위(학사편입)와 전공 단위(일반편입)를 원문 표 그대로 별도 행으로 저장, 합계가 원문 계와 일치",
+      "category는 요강에 계열 구분이 없어 단과대학·학문 분야 기준으로 부여(자율전공학부는 통합)",
+      "캠퍼스는 programs[].metadata.campus(광주·여수)에 저장",
+      "공인영어·전적대학 성적 비율은 metadata.finalLanguageWeight·finalPriorUniversityWeight로 분리, 공인영어를 자체 필기로 분류하지 않음",
+      "원문 오기·불일치는 document.metadata.sourceErrata에 기록",
+      "적재 시 같은 대학·캠퍼스(전체)·학년도의 2027 주요 변경사항 문서를 대체·정리"
+    ]
+  }
+}

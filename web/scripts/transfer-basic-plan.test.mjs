@@ -57,3 +57,21 @@ test("부속 문서와 본문 기본계획은 서로 대체하지 않고 최종 
   assert.deepEqual(ids({ documentType: "전형 기본계획", metadata: {} }), ["main"]);
   assert.deepEqual(ids({ documentType: "최종 모집요강", metadata: {} }), ["main", "sup"]);
 });
+
+test("최종 요강: 정원 합계·캠퍼스 표기·필기 없는 전형 문장", async () => {
+  const load = async (name) => {
+    const path = new URL(`../../docs/knowledge-extractions/${name}`, import.meta.url);
+    return parseManifest(await readFile(path, "utf8"), path.pathname);
+  };
+  const jnu = await load("2027-jnu-transfer-final.verified.json");
+  assert.equal(jnu.document.documentType, "최종 모집요강");
+  assert.deepEqual([jnu.actual.generalTotal, jnu.actual.bachelorTotal], [647, 83]);
+  const jnuUnits = buildTransferKnowledgeUnits(jnu);
+  assert.ok(jnuUnits.every((row) => !row.content.includes("전체캠퍼스") && !row.content.includes("null")));
+  assert.match(jnuUnits.find((row) => row.unitKey === "program:공학대학:산업기술융합공학과(야간)").content, /여수캠퍼스 공학대학/);
+  assert.match(jnuUnits.find((row) => row.unitKey === "rule:single-yeosu-gpa-interview").content, /일괄합산\. 최종 단계는/);
+
+  const unist = await load("2027-unist-general-transfer-final.verified.json");
+  assert.equal(unist.actual.generalTotal, 73);
+  assert.match(buildTransferKnowledgeUnits(unist).find((row) => row.unitType === "program").content, /^.*\n울산과학기술원 울산캠퍼스 /);
+});

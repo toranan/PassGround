@@ -15,6 +15,9 @@ test("대학 약칭을 모집요강 문서명과 같은 키로 정규화한다",
   assert.equal(normalizeTransferUniversityName("성대"), "성균관대");
   assert.equal(normalizeTransferUniversityName("연대"), "연세대");
   assert.equal(normalizeTransferUniversityName("경상대"), "경상국립대");
+  for (const alias of ["UNIST", "unist", "유니스트", "울산과기원"]) {
+    assert.equal(normalizeTransferUniversityName(alias), normalizeTransferUniversityName("울산과학기술원"));
+  }
 });
 test("검색 실패를 대학의 미공개 사실로 단정하지 않는다", () => {
   assert.match(missingAdmissionEvidence([basic]), /확인하지 못/);

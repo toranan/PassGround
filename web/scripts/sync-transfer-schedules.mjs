@@ -16,8 +16,12 @@ function categoryOf(label) {
   return CATEGORY_PATTERNS.find(([pattern]) => pattern.test(label))?.[1] ?? "기타";
 }
 
+// 학교명에 이미 들어 있는 캠퍼스(울산과학기술원·울산)는 '울산과학기술원 울산'처럼 겹쳐 쓰지 않는다.
 function schoolLabel(document) {
-  return ["전체", "서울", ""].includes(document.campus) ? document.university : `${document.university} ${document.campus}`;
+  const campus = document.campus ?? "";
+  return ["전체", "서울", ""].includes(campus) || document.university.includes(campus)
+    ? document.university
+    : `${document.university} ${campus}`;
 }
 
 // PDF 없이 입학처 공지로만 나온 일정은 kind=schedule_notice 파일로 두고 달력에만 반영한다.

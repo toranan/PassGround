@@ -17,6 +17,10 @@ const UNIVERSITY_SHORT_NAMES: Record<string, string> = {
   외대: "한국외국어대",
   한국외대: "한국외국어대",
   항공대: "한국항공대",
+  // 과학기술원은 '대학교'가 아니라 DB에 정식명(울산과학기술원)으로 들어가고 질문은 영문 약칭이 대부분이다.
+  unist: "울산과학기술원",
+  유니스트: "울산과학기술원",
+  울산과기원: "울산과학기술원",
 };
 
 export function normalizeTransferUniversityName(value: string): string {

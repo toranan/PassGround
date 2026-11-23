@@ -354,7 +354,9 @@ export function buildTransferKnowledgeUnits(manifest) {
     ].filter(Boolean);
     const body = [
       `${rule.scopeValue}에 적용되는 ${rule.transferTypes.join("·")}의 필기시험 과목은 ${subjects}이다.`,
-      rule.examMinutes ? `필기시험 시간은 ${rule.examMinutes}분이고 ${rule.examFormat}이다.` : rule.examFormat,
+      rule.examMinutes
+        ? `필기시험 시간은 ${rule.examMinutes}분이고 ${rule.examFormat}이다.`
+        : rule.examFormat && `${rule.examFormat.replace(/\.$/, "")}.`,
       rule.stage1WrittenWeight === null ? "" : `1단계는 필기시험 ${rule.stage1WrittenWeight}%를 반영한다.`,
       rule.stage1SelectionMinMultiple === null || rule.stage1SelectionMaxMultiple === null
         ? ""
@@ -417,6 +419,9 @@ export function buildTransferKnowledgeUnits(manifest) {
   for (const program of manifest.programs) {
     const prefix = sourcePrefix(document, `${program.sourcePage}페이지`, "모집인원");
     const nursing = program.nursingNight === null ? "간호학과(야) 해당 없음" : `간호학과(야) ${program.nursingNight}명`;
+    // 캠퍼스가 여럿인 대학(전남대 광주·여수)은 문서 캠퍼스가 '전체'라 모집단위 행의 캠퍼스를 쓴다.
+    const campus = program.metadata.campus ?? document.campus;
+    const campusLabel = campus && campus !== "전체" ? `${campus}캠퍼스 ` : "";
     units.push({
       ...base,
       unitKey: `program:${program.college}:${program.major}`,
@@ -428,7 +433,7 @@ export function buildTransferKnowledgeUnits(manifest) {
       generalCount: program.general,
       bachelorCount: program.bachelor,
       nursingNightCount: program.nursingNight,
-      content: `${prefix}\n${document.university} ${document.campus}캠퍼스 ${program.college} ${program.major}(${program.category})의 모집인원은 일반편입 ${program.general}명, 학사편입 ${program.bachelor}명, ${nursing}이다.`,
+      content: `${prefix}\n${document.university} ${campusLabel}${program.college} ${program.major}(${program.category})의 모집인원은 일반편입 ${program.general}명, 학사편입 ${program.bachelor}명, ${nursing}이다.`,
       sourcePages: [program.sourcePage],
       metadata: { ...program.metadata },
     });
