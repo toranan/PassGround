@@ -83,14 +83,22 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // 사용자가 맨 아래를 보고 있을 때만 새 글자를 따라 내려간다. 위로 올려 읽는 중이면 끌어내리지 않는다.
+  const stickToBottomRef = useRef(true);
 
   const scrollToBottom = () => {
     if (!scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   };
 
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+  };
+
   useEffect(() => {
-    scrollToBottom();
+    if (stickToBottomRef.current) scrollToBottom();
   }, [messages, pending]);
 
   const openLoginPrompt = () => {
@@ -111,6 +119,7 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
     const userMessage: ChatMessage = { id: makeId(), role: "user", text: question };
     const assistantId = makeId();
 
+    stickToBottomRef.current = true;
     setPending(true);
     setError("");
     setInput("");
@@ -158,6 +167,18 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
       const decoder = new TextDecoder();
       let buffer = "";
       let donePayload: DonePayload | null = null;
+      // 토큰마다 다시 그리지 않고 한 프레임에 한 번만 모아서 반영한다.
+      let queuedDelta = "";
+      let frame: number | null = null;
+      const flushDelta = () => {
+        frame = null;
+        if (!queuedDelta) return;
+        const text = queuedDelta;
+        queuedDelta = "";
+        setMessages((prev) =>
+          prev.map((item) => (item.id === assistantId ? { ...item, text: `${item.text}${text}` } : item))
+        );
+      };
 
       while (true) {
         const { value, done } = await reader.read();
@@ -179,13 +200,8 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
             const deltaPayload = JSON.parse(parsed.data) as { text?: string };
             const delta = deltaPayload.text ?? "";
             if (delta) {
-              setMessages((prev) =>
-                prev.map((item) =>
-                  item.id === assistantId
-                    ? { ...item, text: `${item.text}${delta}` }
-                    : item
-                )
-              );
+              queuedDelta += delta;
+              frame ??= requestAnimationFrame(flushDelta);
             }
           }
 
@@ -200,6 +216,9 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
         }
       }
 
+      if (frame !== null) cancelAnimationFrame(frame);
+      flushDelta();
+
       if (donePayload) {
         setMessages((prev) =>
           prev.map((item) =>
@@ -213,15 +232,12 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
           )
         );
       }
-
-      setTimeout(scrollToBottom, 0);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "응답 중 오류가 발생했습니다.";
       setError(message);
       setMessages((prev) => prev.filter((item) => item.id !== assistantId));
     } finally {
       setPending(false);
-      setTimeout(scrollToBottom, 0);
     }
   };
 
@@ -240,7 +256,7 @@ export function TransferAiAssistantPanel({ initialQuestion = "" }: { initialQues
           </div>
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/15 px-4 py-5">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto bg-muted/15 px-4 py-5">
           <div className="mx-auto w-full max-w-3xl space-y-4">
             {messages.map((message) =>
               message.role === "assistant" ? (
