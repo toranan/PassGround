@@ -1,0 +1,1515 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "examSlug": "transfer",
+    "university": "가천대학교",
+    "campus": "전체",
+    "admissionYear": 2027,
+    "documentType": "최종 모집요강",
+    "title": "2027학년도 가천대학교 편입학 모집요강",
+    "sourceFile": "2027학년도_가천대학교_편입학모집요강.pdf",
+    "sourceUrl": null,
+    "sha256": "47830bd8d1b0f40e152ea6d6e8df00daa13e319d36817f2fb4a802d6194be434",
+    "fileSizeBytes": 1114370,
+    "pageCount": 36,
+    "reviewStatus": "verified",
+    "lifecycleStatus": "active",
+    "verifiedAt": "2026-11-23T00:00:00+09:00",
+    "metadata": {
+      "language": "ko",
+      "textLayer": true,
+      "publicationStage": "final",
+      "campuses": [
+        "글로벌캠퍼스(성남)",
+        "메디컬캠퍼스(인천)"
+      ],
+      "pdfCreatedOn": "2026-11-23",
+      "tableExtraction": "PyMuPDF get_text + 4·12쪽 렌더링 육안 대조 + 전형별 페이지 합계(계)와 4쪽 통합 표 행 단위 대조",
+      "supersedes": {
+        "documentType": "기본계획",
+        "sha256": "5cde20702c417f47ce21fc2d53fa4265fc3cad952c559cb4f2f1db995bdec1c0"
+      },
+      "changesFromBasicPlan": [
+        "우선선발 반영비율: 자격실적심사 55%·면접고사 45% → 50%·50%",
+        "식품생명공학과 필기과목: 수학고사 → 영어고사(일반·학사·농어촌)",
+        "필기 문항수·시간 공개: 영어 객관식 40문항, 수학 객관식 25문항, 각 60분",
+        "합격자 발표·등록·충원 일정과 전형료 공개",
+        "간호학과 전적대학 전공 제한에서 재외국민 및 외국인 제외 명시",
+        "모집인원은 기본계획과 동일"
+      ],
+      "sourceErrata": [
+        "3쪽 전형요약은 우선선발을 '(일반편입학, 학사편입학) 경영학과, 회계세무학과'로 적었으나 15쪽은 학사편입학 우선선발을 경영학과만으로 적었다.",
+        "3쪽은 '자격실적심사', 15쪽 선발원칙은 '자격실적검사'로 표기가 다르다.",
+        "5쪽 충원합격자 발표 및 등록 기간은 2. 19.(금)까지, 8쪽 충원 통보 마감은 2. 18.(목) 18:00이다.",
+        "모집요강에 입학처 홈페이지 주소가 적혀 있지 않다."
+      ],
+      "notice": "모집요강에 명시하지 않은 사항은 가천대학교 대학입학전형관리위원회에서 정하며, 모든 사항은 개별 공지하지 않으므로 지원자가 직접 숙지해야 한다."
+    }
+  },
+  "sections": [
+    {
+      "key": "changes-from-basic-plan",
+      "heading": "기본계획 대비 변경사항",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "이 문서는 2027학년도 가천대학교 편입학 최종 모집요강이며 앞서 공개된 기본계획(예정사항)을 대체한다. 기본계획과 비교하면 우선선발 반영비율이 자격실적심사 55%·면접고사 45%에서 자격실적심사 50%·면접고사 50%로 바뀌었다. 식품생명공학과의 필기과목은 수학고사에서 영어고사로 바뀌었다(일반편입학·학사편입학·농어촌 모두). 영어고사 객관식 40문항, 수학고사 객관식 25문항, 시험시간 각 60분과 합격자 발표·등록·충원 일정, 전형료가 새로 공개됐다. 모집인원은 기본계획과 같다."
+    },
+    {
+      "key": "schedule-overview",
+      "heading": "전형일정",
+      "pageStart": 5,
+      "pageEnd": 5,
+      "content": "2027학년도 가천대학교 편입학 원서접수는 2026년 12월 2일(수) 09:00부터 12월 4일(금) 18:00까지 본 대학 입학처 홈페이지에서 한다. 서류는 2026년 12월 2일(수)부터 2027년 1월 22일(금) 13:00까지 원서접수 사이트에서 온라인으로 제출한다. 필기·면접 고사장과 고사시간은 2026년 12월 18일(금)부터 입학처 홈페이지에 게시하며 개별 통지하지 않으므로 지원자가 직접 확인해야 한다. 필기고사는 2026년 12월 28일(월), 면접고사는 2027년 1월 20일(수)이다. 전형일은 원서접수 마감 후 지원자 수에 따라 바뀔 수 있다. 고사 때는 신분증(주민등록증, 운전면허증, 기간 만료 전 여권 등)과 수험표를 지참해야 한다. 합격자 발표는 2027년 2월 6일(토) 입학처 홈페이지에서 하고 등록금 납부는 2월 9일(화)부터 2월 11일(목) 16:00까지다. 충원합격자 발표 및 등록 기간은 2월 11일(목)부터 2월 19일(금)까지다."
+    },
+    {
+      "key": "quota-notes",
+      "heading": "모집인원",
+      "pageStart": 4,
+      "pageEnd": 4,
+      "content": "2027학년도 가천대학교 편입학 모집인원은 일반편입 442명, 학사편입 81명, 농어촌 11명, 특성화고교 3명, 재외국민 및 외국인 12명, 의료인력 및 유치원교사 42명이다. 군위탁은 교육부 추천인원에 한해 모집한다. 바이오로직스학과, 간호학과, 치위생학과, 물리치료학과, 방사선학과는 메디컬캠퍼스(인천)에 개설된 모집단위다. 경영학과와 회계세무학과 모집인원은 우선선발 인원을 포함하며 우선선발은 모집인원 중 최대 30%(소수점 이하 버림)까지 뽑고 미충원분은 일반선발로 이월한다. 간호학과는 전적대학 전공이 간호학과인 경우에만 지원할 수 있다(재외국민 및 외국인 제외). 일반편입 모집인원이 많은 모집단위는 화공생명공학전공 27명, 인공지능학과 26명, 경영학과·전자공학과 각 25명, 바이오로직스학과 22명, 기계공학전공 20명 순이다. 간호학과는 일반편입 5명보다 의료인력 전형(4학년 편입) 25명이 훨씬 많다."
+    },
+    {
+      "key": "selection-summary",
+      "heading": "전형요약 및 주요사항",
+      "pageStart": 3,
+      "pageEnd": 3,
+      "content": "일반편입학·학사편입학·농어촌·특성화고교 전형은 필기고사 100%이며 모집단위에 따라 영어고사나 수학고사 중 한 과목만 본다. 일반편입학 영어고사 모집단위는 경영학과, 회계세무학과, 관광경영학과, 의료산업경영학과, 미디어커뮤니케이션학과, 경제학과, 응용통계학과, 사회복지학과, 심리학과, 패션산업학과, 한국어문학과, 영미어문학과, 법학과, 경찰행정학과, 행정학과, 도시계획학전공, 조경학전공, 식품생명공학과, 식품영양학과, 간호학과, 치위생학과, 물리치료학과, 방사선학과다. 일반편입학 수학고사 모집단위는 금융수학전공, 빅데이터경영전공, 건축공학전공, 화공생명공학전공, 배터리공학전공, 기계공학전공, 설비·소방공학전공, 스마트팩토리전공, 토목환경공학과, 신소재공학과, 바이오나노학과, 생명과학과, 반도체물리학과, 화학과, 전자공학과, 반도체공학과, 시스템반도체학과, 인공지능학과, 컴퓨터공학과, 스마트보안학과, 전기공학과, 스마트시티학과, 의공학과, 바이오로직스학과다. 학사편입학은 조경학전공·간호학과·건축공학전공·의공학과·바이오로직스학과를 뽑지 않으며 나머지 모집단위의 과목은 일반편입학과 같다. 우선선발(일반편입학 경영학과·회계세무학과, 학사편입학 경영학과)은 자격실적심사 50%와 면접고사 50%다. 의료인력 및 유치원교사 양성 관련학과 전문학사학위 소지자 전형(유아교육학과, 간호학과, 치위생학과, 방사선학과, 물리치료학과)은 영어고사 40%, 면접고사 30%, 전적대학성적 30%다. 재외국민 및 외국인 전형과 군위탁(교육부 추천인원에 한함)은 면접고사 100%다."
+    },
+    {
+      "key": "written-exam",
+      "heading": "필기고사 안내",
+      "pageStart": 12,
+      "pageEnd": 12,
+      "content": "필기고사는 2026년 12월 28일(월)에 실시한다. 영어고사는 객관식 40문항, 수학고사는 객관식 25문항이며 시험시간은 둘 다 60분이다. 일반편입학·학사편입학·농어촌·특성화고교는 필기고사 100%로 선발하고 의료인력 및 유치원교사 전형은 같은 영어고사를 40% 반영한다. 고사시간과 장소는 2026년 12월 18일(금)부터 입학처 홈페이지에 게시하며 본인이 확인해야 한다. 지정 시간까지 고사실 입실을 마쳐야 하고 신분증을 반드시 지참해야 한다. 답안은 OMR카드에 작성하며 컴퓨터용 펜은 고사실에서 지급한다. 부정확한 표기로 이중마킹이나 블랭크로 처리된 문항은 0점이다. 고사 시작 후 시험문제 관련 질문은 금지된다. 고사시간 중 휴대폰 등 전자기기를 사용하면 부정행위로 퇴실 조치하고 AI안경 등 부정 소지가 있는 첨단 전자제품은 소지만으로도 부정행위로 본다."
+    },
+    {
+      "key": "general-eligibility",
+      "heading": "일반편입학 지원자격",
+      "pageStart": 11,
+      "pageEnd": 11,
+      "content": "일반편입학(3학년)은 다음 중 하나에 해당하면 지원할 수 있다. 국내 4년제 정규대학(방송통신대학, 산업대학, 사이버대학 포함)에서 2학년(4학기) 이상 수료(예정)하고 60학점 이상 취득한 자이며 계절학기는 학기 수에 넣지 않고 이수학점만 인정한다. 국내외 전문대학(2년제, 3년제) 졸업(예정)자이며 3년제도 졸업(예정)자여야 한다. 교육부가 지정한 학사학위(4년제) 과정 84개 전문대학 간호과에서 2학년 또는 4학기 이상 수료(예정)하고 60학점 이상 취득한 자이며 전문대학 전공심화과정은 해당하지 않는다. 국내 4년제 대학에 준하는 외국 정규대학에서 2학년(4학기) 이상 수료(예정)하고 학위취득학점의 1/2 이상을 이수(예정)한 자이며 영국학제 3년제 대학은 2년 이상 재학하고 2/3 이상 취득해야 한다. 학점은행제 전문학사학위 취득(예정)자 또는 학사학위과정 70학점 이상 취득자, 독학사 학사학위 취득(예정)자, 법령상 동등 이상 학력 인정자도 지원할 수 있지만 이 셋은 간호학과에 지원할 수 없다. 간호학과를 제외한 모든 모집단위는 전적대학 학과·계열과 관계없이 지원할 수 있다. 수료는 출신 대학이 규정한 4학기 이상 등록과 수료 기준 학점 취득을 뜻하므로 원서접수 전에 출신대학에 수료 가능 여부를 확인해야 한다. 필기고사 성적 총점 순으로 선발한다."
+    },
+    {
+      "key": "bachelor-eligibility",
+      "heading": "학사편입학 지원자격",
+      "pageStart": 13,
+      "pageEnd": 13,
+      "content": "학사편입학(3학년)은 국내·외 4년제 정규대학(방송통신대학, 산업대학, 사이버대학 포함)의 학사학위 취득(예정)자와 학점은행제·독학사 학사학위 취득(예정)자가 지원할 수 있다. 외국 소재 정규대학 졸업(예정)자는 졸업요구학점, 이수학기, 성적체계, 대학인가 확인 증빙서류를 내야 한다. 모든 모집단위는 전적대학 학과·계열과 관계없이 지원할 수 있고 필기고사 성적순으로 선발한다. 학사편입학 모집인원은 81명이며 경영학과 모집인원은 우선선발 인원을 포함한다."
+    },
+    {
+      "key": "priority",
+      "heading": "우선선발(일반/학사편입학)",
+      "pageStart": 15,
+      "pageEnd": 16,
+      "content": "우선선발(3학년)은 일반편입학 경영학과·회계세무학과와 학사편입학 경영학과에서 각 모집인원의 최대 30%(소수점 이하 버림)까지 선발하며 미충원분은 일반선발로 이월한다. 일반(또는 학사)편입학 지원자격을 갖추고 2026년 공인회계사 1차 이상 합격자 또는 2025년·2024년 공인회계사 1차 이상 합격 경험자, 2026년 세무사 1차 이상 합격자 중 하나에 해당해야 한다. 자격실적심사 50%와 면접고사 50%를 합산해 총점 순으로 선발한다. 자격실적심사는 자격시험 1차 응시과목 점수를 100점 만점으로 환산해 반영하며 공인회계사·세무사 모두 2차 시험 점수는 반영하지 않는다. 면접고사는 2027년 1월 20일(수) 일반면접으로 학업의지와 성장가능성을 평가한다. 제출서류는 최종대학 졸업(예정) 또는 수료(예정)증명서, 최종대학 전학년 성적증명서, 자격시험 합격증명서(합격사실 확인서)와 성적증명서(공인회계사는 금융감독원, 세무사는 한국산업인력공단 발급)다. 우선선발 편입생이 가천고시관에 입관하면 고시준비 장학금으로 공인회계사 0차 합격생 월 20만원, 1차 합격생은 공인회계사 월 80만원·세무사 월 30만원(최대 3학기)을 받고, 고시 최종합격 시 공인회계사는 잔여학기 학비 전액, 세무사는 잔여학기 학비 반액을 감면받는다. 장학 기준은 대학 장학금 기준에 따라 바뀔 수 있다."
+    },
+    {
+      "key": "rural",
+      "heading": "농어촌",
+      "pageStart": 17,
+      "pageEnd": 18,
+      "content": "농어촌 전형(3학년) 모집인원은 11명으로 경제학과, 응용통계학과, 사회복지학과, 법학과, 식품생명공학과, 생명과학과, 화학과, 반도체공학과, 간호학과 각 1명과 치위생학과 2명이다. 경제학과·응용통계학과·사회복지학과·법학과·식품생명공학과·간호학과·치위생학과는 영어고사, 생명과학과·화학과·반도체공학과는 수학고사 100%이며 필기고사 성적순으로 선발한다. 일반편입학 지원자격을 갖추고 대학 신입학 당시 농어촌 특별전형으로 입학했거나 다음 유형 중 하나에 해당해야 한다. 유형1(6년)은 중학교 입학부터 고등학교 졸업까지 본인과 부모 모두 농어촌(읍·면, 도서·벽지) 지역에 거주하고 중·고교도 농어촌 지역에 있어야 한다. 유형2(12년)는 초등학교 입학부터 고등학교 졸업까지 본인이 농어촌 지역에 거주하고 초·중·고교가 농어촌 지역에 있어야 한다. 검정고시 출신자와 특수목적고 출신자는 제외하고 재학·거주기간은 연속된 연수만 인정하며 직권(신고)말소가 하루라도 있으면 지원할 수 없다(유형1은 부모 포함). 읍·면이 동으로 개편된 경우도 지원할 수 있지만 개편 후 주소를 옮기면 인정하지 않는다. 신입학 당시 농어촌 특별전형 입학자는 특별전형 신입학 확인서<서식1>을 내고, 그 외에는 농어촌학생 확인서<서식2>, 기본증명서·혼인관계증명서, 주민등록초본(유형1은 부·모·학생, 유형2는 학생)과 유형1의 가족관계증명서를 낸다."
+    },
+    {
+      "key": "specialized",
+      "heading": "특성화고교",
+      "pageStart": 19,
+      "pageEnd": 20,
+      "content": "특성화고교 전형(3학년) 모집인원은 경영학과 1명, 행정학과 1명, 화공생명공학전공 1명으로 합계 3명이다. 경영학과·행정학과는 영어고사, 화공생명공학전공은 수학고사 100%이며 필기고사 성적순으로 선발한다. 일반편입학 지원자격을 갖춘 국내 특성화고 졸업자로서 모집단위별 동일계열 기준학과를 졸업했거나 계열별 전문교과를 30단위 이상 이수해야 한다. 산업수요 맞춤형 마이스터고와 체험위주 교육 고교는 제외하며 일반고 안의 특성화고 교육과정 학과는 해당한다. 전문교과 인정계열은 경영학과·행정학과가 공업·농업·상업·수해운·가사, 화공생명공학전공이 공업·농업·수해운이다. 모집단위별 동일계열 기준학과와 계열별 전문교과 이수 과목 목록은 20페이지에 있다. 제출서류는 최종대학 졸업(예정) 또는 수료(예정)증명서, 최종대학 전학년 성적증명서, 출신고교 학교생활기록부다."
+    },
+    {
+      "key": "overseas-foreign",
+      "heading": "재외국민 및 외국인",
+      "pageStart": 21,
+      "pageEnd": 21,
+      "content": "재외국민 및 외국인 전형(3학년) 모집인원은 건축공학전공 2명과 전자공학과, 반도체공학과, 인공지능학과, 컴퓨터공학과, 운동재활학과, 시각디자인전공, 바이오로직스학과, 간호학과, 치위생학과, 물리치료학과 각 1명으로 합계 12명이다. 일반편입학 지원자격을 갖추고 국내대학 신입학 당시 재외국민 및 외국인 특별전형으로 입학한 사람이 지원할 수 있으며 면접고사 성적순으로 선발한다. 면접은 2027년 1월 20일(수) 일반면접으로 학업의지와 성장가능성을 평가한다. 전적대학 학과와 관계없이 지원할 수 있지만 북한이탈주민은 인공지능학과, 바이오로직스학과, 간호학과에 지원할 수 없다. 전 교육과정 이수자는 4페이지 모집인원 표의 모집단위(유아교육학과 제외)에 지원할 수 있다. 제출서류는 최종대학 졸업(예정) 또는 수료(예정)증명서, 최종대학 전학년 성적증명서, 특별전형 신입학 확인서<서식1>이며 시각디자인전공은 면접 때 포트폴리오(A4 10매 이내)를 낸다."
+    },
+    {
+      "key": "medical-teacher",
+      "heading": "의료인력 및 유치원교사 양성 관련학과 전문학사학위 소지자",
+      "pageStart": 22,
+      "pageEnd": 23,
+      "content": "의료인력 및 유치원교사 양성 관련학과 전문학사학위 소지자 전형은 4학년으로 편입하며 모집인원은 유아교육학과 5명, 간호학과 25명, 치위생학과 4명, 방사선학과 4명, 물리치료학과 4명으로 합계 42명이다. 유아교육학과는 해당학과 전문학사학위 취득(예정)자로서 유치원정교사 2급 자격증 취득(예정)자, 간호학과·치위생학과·방사선학과·물리치료학과는 해당학과 전문학사학위 취득(예정)자로서 관련 면허증(간호사, 치과위생사, 방사선사, 물리치료사) 취득(예정)자가 지원할 수 있다. 입학 때까지 면허나 자격증을 취득하지 못하면 합격이 취소된다. 편입생은 가천대학교 총장 명의의 유치원 정교사 2급 교원자격증을 받을 수 없다. 영어고사 40%(2026년 12월 28일, 객관식 40문항 60분), 면접고사 30%(2027년 1월 20일, 학업의지·성장가능성), 전적대학 성적 30%를 합산해 총점순으로 선발한다. 제출서류는 최종대학 졸업(예정)증명서, 전학년 성적증명서, 유치원정교사 2급 자격증 사본 또는 해당 면허증 사본이며 취득예정자는 한국보건의료인국가시험원이 발급한 시험 합격확인서(간호학과는 응시표 가능)를 낸다."
+    },
+    {
+      "key": "application",
+      "heading": "원서접수",
+      "pageStart": 6,
+      "pageEnd": 7,
+      "content": "원서는 가천대학교 입학처 홈페이지에서 입학원서 접수 대행기관 사이트로 들어가 인터넷으로만 접수한다. 절차는 회원가입·로그인, 유의사항 확인, 원서작성, 전형료 결제, 수험표 확인, 서류제출 순이다. 증명사진 파일(jpg, 최근 3개월 이내)을 준비해야 하며 배경이 있는 사진이나 스냅사진은 쓸 수 없다. 원서접수는 전형료 결제로 완료되며 결제 후에는 기재사항 수정, 접수 취소, 학과·전형 변경, 지원포기가 불가능하고 전형료와 제출서류는 반환하지 않는다. 성명과 주민등록번호는 주민등록과 같아야 하며 주소나 전화번호가 바뀌면 즉시 입학처에 변경 신청해야 한다. 수험표는 원서접수 사이트에 로그인해 출력한다. 서류는 온라인으로만 제출하며 각 서류를 저용량 PDF 한 개로 합본해야 하고 방문·우편 제출은 받지 않는다. 장애인 등록을 한 지원자로서 전형 과정에서 지원이 필요하면 사전에 요청해야 한다."
+    },
+    {
+      "key": "documents",
+      "heading": "제출서류 안내사항",
+      "pageStart": 25,
+      "pageEnd": 26,
+      "content": "서류는 2027년 1월 22일(금) 13:00까지 인터넷 원서접수 사이트에서 저용량 PDF 한 개로 합본해 제출하며 방문·우편 제출은 받지 않는다. 기한까지 내지 않으면 불합격 처리할 수 있고 전형료는 반환하지 않는다. 일반편입학의 기본 서류는 최종대학 졸업(예정)증명서 또는 수료(예정)증명서와 최종대학 전학년 성적증명서이며 성적증명서에는 전체 평점평균과 100점 만점 환산 백분위 성적이 반드시 기재돼야 한다. 수료(예정)증명서가 발급되지 않으면 수료예정확인서<서식3>에 발급기관장 직인이나 담당자 확인필을 받아 낸다. 전적대학이 2개 이상이면 전적대학 인정 학점이 포함된 최종 소속대학 성적증명서를 낸다. 외국대학 출신자는 졸업요구학점·이수학기·성적산출기준 증빙서류에 아포스티유나 영사 확인을 받아 내고 영어 외 외국어 서류는 한국어 번역·공증본을 낸다. 학점은행제 학사과정은 학사학위(예정)증명서 또는 70학점 이상 학점인정 증명서를 낸다. 최종등록자 중 예정증명서를 낸 사람은 수료증명서나 졸업·학위증명서를, 의료인력 전형에서 합격확인서를 낸 사람은 자격증·면허증 사본을 2027년 2월 22일(월)까지 가천대학교 입학처(경기도 성남시 수정구 성남대로 1342 글로벌센터 409호)에 방문하거나 우편(기한 내 도착분)으로 내야 하며 내지 않으면 합격 또는 입학이 취소된다. 다른 대학에 학적이 있는 최종등록자는 전적대학을 자퇴해야 이중 학적으로 입학이 취소되지 않는다."
+    },
+    {
+      "key": "results-registration",
+      "heading": "합격자 발표 및 등록",
+      "pageStart": 8,
+      "pageEnd": 8,
+      "content": "합격자는 2027년 2월 6일(토) 입학처 홈페이지에 발표한다. 등록기간은 2월 9일(화)부터 2월 11일(목) 16:00까지이며 합격자 발표 때 안내하는 가상계좌로 등록금을 낸다. 기간 안에 내지 않으면 합격이 취소된다. 1차 충원합격자는 2월 11일(목) 22:00에 발표하고 2월 12일(금)부터 2월 14일(일) 14:00까지 등록한다. 2차 충원합격자는 2월 14일(일) 19:00에 발표하고 2월 15일(월) 14:00까지 등록한다. 3차 충원부터는 원서에 적은 연락처로 개별 통지하고 입학처 홈페이지에도 게재한다. 충원합격 통보는 2월 18일(목) 18:00까지만 하며 일정은 학교 사정에 따라 바뀔 수 있다. 통지기간 중 연락이 닿지 않으면 충원 대상에서 제외되며 이의를 제기할 수 없다. 등록 후 입학을 포기하려면 입학처 홈페이지에서 등록 포기를 신청해야 한다."
+    },
+    {
+      "key": "applicant-notes",
+      "heading": "지원자 유의사항",
+      "pageStart": 27,
+      "pageEnd": 27,
+      "content": "입학전형 성적과 평가 내용은 공개하지 않고 제출서류는 반환하지 않는다. 지원자격 미달자, 고사 결시자, 서류 미제출자는 불합격 처리한다. 2027년 2월 28일(일)까지 졸업(수료)하거나 학위를 취득하지 못하면 합격을 취소한다. 학업성취 능력이 현저히 부족하면 모집정원과 관계없이 불합격 처리할 수 있다. 편입생은 3학년부터 4학기 이상(의료인력 및 유치원교사 전형은 4학년부터 2학기 이상) 이수해야 하며 조기졸업은 할 수 없다. 편입생은 교직이수, 전과, 입학 후 1년간 휴학(군입대·질병 제외)을 할 수 없다. 전적대학 학점을 인정받아도 졸업에 필요한 최저 전공학점과 필수과목을 채우지 못하면 수학기간이 늘어날 수 있고 장학금·학자금 대출이 제한될 수 있다. 출신 대학 학칙에 따라 징계 제적되었거나 부정행위로 입학이 취소된 자는 지원할 수 없다. 허위기재·서류 변조·부정행위·대리시험 등으로 합격하거나 입학하면 입학 전후를 막론하고 취소하며 부정한 방법으로 입학이 취소된 자는 3년 동안 가천대학교에 지원할 수 없다."
+    },
+    {
+      "key": "tiebreak",
+      "heading": "동점자 처리기준",
+      "pageStart": 28,
+      "pageEnd": 28,
+      "content": "일반편입학·학사편입학·농어촌·특성화고교 동점자는 ① 필기고사 정답 문항수가 많은 자, ② 필기고사 중 높은 배점의 정답 문항수가 많은 자, ③ 맞은 문항의 정답률 합이 낮은 자, ④ 제출한 성적증명서상 최종 백분위 성적이 높은 자 순으로 선발한다. 의료인력 및 유치원교사 전형은 ① 필기고사 성적, ② 면접 성적, ③ 필기 정답 문항수, ④ 높은 배점의 정답 문항수가 많은 자 순이다. 우선선발은 ① 자격실적심사 성적, ② 면접 성적, ③ 최종 백분위 성적이 높은 자 순이다. 재외국민 및 외국인과 군위탁은 ① 면접 성적, ② 최종 백분위 성적이 높은 자, ③ 취득 학점이 많은 자 순이다."
+    },
+    {
+      "key": "refund-fee",
+      "heading": "등록포기·환불 및 전형료",
+      "pageStart": 29,
+      "pageEnd": 30,
+      "content": "등록 후 포기하려면 2027년 2월 18일(목) 18:00까지 입학처 홈페이지에서 등록포기 및 환불을 신청해야 하며 신청한 뒤에는 취소할 수 없다. 반환기한이 지나면 「대학등록금에 관한 규칙」 제6조에 따라 반환한다. 전형료는 일반편입, 학사편입, 우선선발, 농어촌, 특성화고교, 군위탁, 재외국민 및 외국인 전형이 65,000원이고 의료인력 및 유치원교사 전형이 100,000원이며 인터넷 접수 수수료 5,000원은 대학이 낸다. 원서접수를 마친 뒤에는 취소·변경과 전형료 환불이 불가능하다. 천재지변, 질병, 전형일자 사후 변경, 명백한 지원 자격 미충족 등 불가항력 사유는 2027년 1월 31일까지 증빙서류를 내면 심의 후 반환할 수 있으며 개인사정은 반환하지 않는다. 입학전형 수입·지출 잔액이 생기면 2027년 4월 30일까지 응시자에게 낸 전형료에 비례해 반환한다."
+    },
+    {
+      "key": "academic",
+      "heading": "학사안내",
+      "pageStart": 31,
+      "pageEnd": 31,
+      "content": "전적대학에서 이수한 교과목과 학점은 편입학 학과의 학점인정에 활용한다. 졸업하려면 인정받은 학점을 포함해 최소 전공학점과 필수(지정) 교과목을 이수하고 외국어능력졸업인증을 통과해야 하며 졸업논문 학과는 논문도 합격해야 한다. 학사편입생, 군위탁생, 재외국민 및 외국인 전형 편입생은 외국어능력졸업인증이 면제된다. 3학년 편입학은 수업연한 2년(4학기), 재학연한 3년(6학기)이고 4학년 편입학은 수업연한 1년(2학기), 재학연한 1.5년(3학기)이다. 간호학과는 교육과정 특성상 2학년 교육과정부터 이수할 수도 있다. 편입생은 교직과정 이수와 전과를 할 수 없다. 수업연한 안에 졸업요건을 채우지 못하면 장학금 지급과 학자금 대출이 제한될 수 있다. 성남 글로벌캠퍼스 장학복지팀(국가장학·학자금대출 031-750-5059, 교내장학 031-750-5058), 학사지원팀(수강신청 031-750-5049, 학적 031-750-5581), 인천 메디컬캠퍼스 학생복지팀(032-820-4062)에 문의할 수 있다."
+    }
+  ],
+  "selectionRules": [
+    {
+      "key": "priority-general",
+      "scopeType": "major",
+      "scopeValue": "경영학과, 회계세무학과",
+      "transferTypes": [
+        "우선선발(일반편입)"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자격실적심사 50%와 면접고사 50%를 합산한 총점순 선발",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": 50,
+      "finalInterviewWeight": 50,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        15
+      ],
+      "notes": "자격실적심사 50% + 면접고사 50%(기본계획의 55%·45%에서 변경). 모집인원 중 최대 30%(소수점 이하 버림)까지 선발하고 미충원분은 일반선발로 이월. 2026년 공인회계사 1차 이상 합격자 또는 2025·2024년 공인회계사 1차 이상 합격 경험자, 2026년 세무사 1차 이상 합격자만 지원. 자격시험 1차 점수를 100점 만점으로 환산하며 2차 점수는 반영하지 않음. 면접 2027. 1. 20.(수). 최종 단계의 서류 50%는 자격실적심사(자격시험 1차 점수)다.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "priority-bachelor",
+      "scopeType": "major",
+      "scopeValue": "경영학과",
+      "transferTypes": [
+        "우선선발(학사편입)"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "자격실적심사 50%와 면접고사 50%를 합산한 총점순 선발",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": null,
+      "finalDocumentWeight": 50,
+      "finalInterviewWeight": 50,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        15
+      ],
+      "notes": "학사편입학 우선선발은 경영학과만 해당. 자격실적심사 50% + 면접고사 50%, 모집인원 중 최대 30%(소수점 이하 버림)까지 선발하고 미충원분은 일반선발로 이월. 자격 요건은 일반편입 우선선발과 같음. 최종 단계의 서류 50%는 자격실적심사(자격시험 1차 점수)다.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "general-english",
+      "scopeType": "major",
+      "scopeValue": "경영학과, 회계세무학과, 관광경영학과, 의료산업경영학과, 미디어커뮤니케이션학과, 경제학과, 응용통계학과, 사회복지학과, 심리학과, 패션산업학과, 한국어문학과, 영미어문학과, 법학과, 경찰행정학과, 행정학과, 도시계획학전공, 조경학전공, 식품생명공학과, 식품영양학과, 간호학과, 치위생학과, 물리치료학과, 방사선학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        12
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 영어고사 객관식 40문항 60분, 2026. 12. 28.(월) 실시. 식품생명공학과는 기본계획의 수학고사에서 영어고사로 변경. 간호학과는 전적대학 전공이 간호학과인 경우만 지원 가능.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "general-math",
+      "scopeType": "major",
+      "scopeValue": "금융수학전공, 빅데이터경영전공, 건축공학전공, 화공생명공학전공, 배터리공학전공, 기계공학전공, 설비·소방공학전공, 스마트팩토리전공, 토목환경공학과, 신소재공학과, 바이오나노학과, 생명과학과, 반도체물리학과, 화학과, 전자공학과, 반도체공학과, 시스템반도체학과, 인공지능학과, 컴퓨터공학과, 스마트보안학과, 전기공학과, 스마트시티학과, 의공학과, 바이오로직스학과",
+      "transferTypes": [
+        "일반편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 25,
+      "examFormat": "객관식 25문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        12
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 수학고사 객관식 25문항 60분, 2026. 12. 28.(월) 실시.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "자연"
+        ]
+      }
+    },
+    {
+      "key": "bachelor-english",
+      "scopeType": "major",
+      "scopeValue": "경영학과, 회계세무학과, 관광경영학과, 의료산업경영학과, 미디어커뮤니케이션학과, 경제학과, 응용통계학과, 사회복지학과, 심리학과, 패션산업학과, 한국어문학과, 영미어문학과, 법학과, 경찰행정학과, 행정학과, 도시계획학전공, 식품생명공학과, 식품영양학과, 치위생학과, 물리치료학과, 방사선학과",
+      "transferTypes": [
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        14
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 영어고사 객관식 40문항 60분, 2026. 12. 28.(월) 실시. 식품생명공학과는 기본계획의 수학고사에서 영어고사로 변경.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "bachelor-math",
+      "scopeType": "major",
+      "scopeValue": "금융수학전공, 빅데이터경영전공, 화공생명공학전공, 배터리공학전공, 기계공학전공, 설비·소방공학전공, 스마트팩토리전공, 토목환경공학과, 신소재공학과, 바이오나노학과, 생명과학과, 반도체물리학과, 화학과, 전자공학과, 반도체공학과, 시스템반도체학과, 인공지능학과, 컴퓨터공학과, 스마트보안학과, 전기공학과, 스마트시티학과",
+      "transferTypes": [
+        "학사편입"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 25,
+      "examFormat": "객관식 25문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        14
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 수학고사 객관식 25문항 60분, 2026. 12. 28.(월) 실시.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "자연"
+        ]
+      }
+    },
+    {
+      "key": "rural-english",
+      "scopeType": "major",
+      "scopeValue": "경제학과, 응용통계학과, 사회복지학과, 법학과, 식품생명공학과, 간호학과, 치위생학과",
+      "transferTypes": [
+        "농어촌 특별전형"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        18
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 영어고사 객관식 40문항 60분, 2026. 12. 28.(월) 실시. 식품생명공학과는 기본계획의 수학고사에서 영어고사로 변경. 간호학과는 전적대학 전공이 간호학과인 경우만 지원 가능.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "rural-math",
+      "scopeType": "major",
+      "scopeValue": "생명과학과, 화학과, 반도체공학과",
+      "transferTypes": [
+        "농어촌 특별전형"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 25,
+      "examFormat": "객관식 25문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        18
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 수학고사 객관식 25문항 60분, 2026. 12. 28.(월) 실시.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "자연"
+        ]
+      }
+    },
+    {
+      "key": "specialized-english",
+      "scopeType": "major",
+      "scopeValue": "경영학과, 행정학과",
+      "transferTypes": [
+        "특성화고교 특별전형"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        19
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 영어고사 객관식 40문항 60분, 2026. 12. 28.(월) 실시.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "인문"
+        ]
+      }
+    },
+    {
+      "key": "specialized-math",
+      "scopeType": "major",
+      "scopeValue": "화공생명공학전공",
+      "transferTypes": [
+        "특성화고교 특별전형"
+      ],
+      "writtenSubjects": [
+        "수학"
+      ],
+      "examMinutes": 60,
+      "questionCount": 25,
+      "examFormat": "객관식 25문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 100,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 0,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        19
+      ],
+      "notes": "필기고사 100%로 성적순 선발. 수학고사 객관식 25문항 60분, 2026. 12. 28.(월) 실시.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "tracks": [
+          "자연"
+        ]
+      }
+    },
+    {
+      "key": "medical-teacher",
+      "scopeType": "major",
+      "scopeValue": "유아교육학과, 간호학과, 치위생학과, 방사선학과, 물리치료학과",
+      "transferTypes": [
+        "의료인력 및 유치원교사 양성 관련학과 전문학사학위 소지자"
+      ],
+      "writtenSubjects": [
+        "영어"
+      ],
+      "examMinutes": 60,
+      "questionCount": 40,
+      "examFormat": "객관식 40문항",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 40,
+      "finalDocumentWeight": null,
+      "finalInterviewWeight": 30,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        22,
+        23
+      ],
+      "notes": "영어고사 40% + 면접고사 30% + 전적대학 성적 30% 총점순 선발, 4학년 편입. 영어 2026. 12. 28.(월), 면접 2027. 1. 20.(수). 해당학과 전문학사학위와 관련 면허·자격증(유치원정교사 2급, 간호사, 치과위생사, 방사선사, 물리치료사) 취득(예정)자만 지원.",
+      "metadata": {
+        "factStatus": "confirmed",
+        "finalPriorUniversityWeight": 30
+      }
+    },
+    {
+      "key": "overseas-foreign",
+      "scopeType": "major",
+      "scopeValue": "건축공학전공, 전자공학과, 반도체공학과, 인공지능학과, 컴퓨터공학과, 시각디자인전공, 운동재활학과, 바이오로직스학과, 간호학과, 치위생학과, 물리치료학과",
+      "transferTypes": [
+        "재외국민 및 외국인"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "면접고사 100%(일반면접)",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 100,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        21
+      ],
+      "notes": "면접고사 100% 성적순 선발. 면접 2027. 1. 20.(수), 학업의지·성장가능성 평가. 국내대학 신입학 당시 재외국민 및 외국인 특별전형 입학자만 지원. 북한이탈주민은 인공지능학과·바이오로직스학과·간호학과 지원 불가. 시각디자인전공은 포트폴리오 제출.",
+      "metadata": {
+        "factStatus": "confirmed"
+      }
+    },
+    {
+      "key": "military",
+      "scopeType": "major",
+      "scopeValue": "교육부 추천인원",
+      "transferTypes": [
+        "군위탁"
+      ],
+      "writtenSubjects": [],
+      "examMinutes": null,
+      "questionCount": null,
+      "examFormat": "면접고사 100%",
+      "stage1WrittenWeight": null,
+      "finalWrittenWeight": 0,
+      "finalDocumentWeight": 0,
+      "finalInterviewWeight": 100,
+      "finalPracticalWeight": null,
+      "stage1SelectionMinMultiple": null,
+      "stage1SelectionMaxMultiple": null,
+      "sourcePages": [
+        3,
+        28
+      ],
+      "notes": "교육부 추천인원에 한하여 모집. 면접고사 100%.",
+      "metadata": {
+        "factStatus": "confirmed"
+      }
+    }
+  ],
+  "scheduleEvents": [
+    {
+      "key": "application",
+      "audience": "전체 지원자",
+      "label": "원서접수",
+      "startsAt": "2026-12-02T09:00:00+09:00",
+      "endsAt": "2026-12-04T18:00:00+09:00",
+      "startsOn": "2026-12-02",
+      "endsOn": "2026-12-04",
+      "displayText": "2026. 12. 2.(수) 09:00 ~ 12. 4.(금) 18:00",
+      "details": "본 대학 입학처 홈페이지에서 인터넷 접수. 전형료 결제 후 취소·수정 불가.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "documents-deadline",
+      "audience": "전체 지원자",
+      "label": "서류제출 마감",
+      "startsAt": null,
+      "endsAt": "2027-01-22T13:00:00+09:00",
+      "startsOn": "2027-01-22",
+      "endsOn": null,
+      "displayText": "2026. 12. 2.(수) ~ 2027. 1. 22.(금) 13:00",
+      "details": "원서접수 사이트에서 저용량 PDF 한 개로 합본해 온라인 제출. 방문·우편 불가.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "venue-check",
+      "audience": "필기·면접 응시자",
+      "label": "필기·면접 고사장 확인",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2026-12-18",
+      "endsOn": null,
+      "displayText": "2026. 12. 18.(금)",
+      "details": "고사시간·장소를 입학처 홈페이지에 게시하며 개별 통지하지 않음.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "written-exam",
+      "audience": "필기고사 응시자",
+      "label": "필기고사",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2026-12-28",
+      "endsOn": null,
+      "displayText": "2026. 12. 28.(월)",
+      "details": "영어 객관식 40문항·수학 객관식 25문항, 각 60분. 신분증·수험표 지참.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "interview",
+      "audience": "면접고사 응시자",
+      "label": "면접고사",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-01-20",
+      "endsOn": null,
+      "displayText": "2027. 1. 20.(수)",
+      "details": "우선선발, 재외국민 및 외국인, 의료인력 및 유치원교사, 군위탁 대상. 학업의지·성장가능성 평가.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "result",
+      "audience": "전체 지원자",
+      "label": "합격자 발표",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-02-06",
+      "endsOn": null,
+      "displayText": "2027. 2. 6.(토)",
+      "details": "본 대학 입학처 홈페이지.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "registration",
+      "audience": "합격자",
+      "label": "등록금 납부",
+      "startsAt": null,
+      "endsAt": "2027-02-11T16:00:00+09:00",
+      "startsOn": "2027-02-09",
+      "endsOn": "2027-02-11",
+      "displayText": "2027. 2. 9.(화) ~ 2. 11.(목) 16:00",
+      "details": "가상계좌 납부. 기간 내 미납 시 합격 취소.",
+      "sourcePage": 5,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional-1-result",
+      "audience": "충원 대상자",
+      "label": "1차 충원합격자 발표",
+      "startsAt": "2027-02-11T22:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-11",
+      "endsOn": null,
+      "displayText": "2027. 2. 11.(목) 22:00",
+      "details": "본 대학 입학처 홈페이지.",
+      "sourcePage": 8,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional-1-registration",
+      "audience": "1차 충원합격자",
+      "label": "1차 충원합격자 등록",
+      "startsAt": null,
+      "endsAt": "2027-02-14T14:00:00+09:00",
+      "startsOn": "2027-02-12",
+      "endsOn": "2027-02-14",
+      "displayText": "2027. 2. 12.(금) ~ 2. 14.(일) 14:00",
+      "details": "등록기간 3일.",
+      "sourcePage": 8,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional-2-result",
+      "audience": "충원 대상자",
+      "label": "2차 충원합격자 발표",
+      "startsAt": "2027-02-14T19:00:00+09:00",
+      "endsAt": null,
+      "startsOn": "2027-02-14",
+      "endsOn": null,
+      "displayText": "2027. 2. 14.(일) 19:00",
+      "details": "본 대학 입학처 홈페이지. 3차부터는 원서 연락처로 개별 통지.",
+      "sourcePage": 8,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional-2-registration",
+      "audience": "2차 충원합격자",
+      "label": "2차 충원합격자 등록",
+      "startsAt": null,
+      "endsAt": "2027-02-15T14:00:00+09:00",
+      "startsOn": "2027-02-15",
+      "endsOn": null,
+      "displayText": "2027. 2. 15.(월) 14:00까지",
+      "details": "등록기간 1일.",
+      "sourcePage": 8,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "additional-deadline",
+      "audience": "충원 대상자",
+      "label": "충원합격 통보 마감",
+      "startsAt": null,
+      "endsAt": "2027-02-18T18:00:00+09:00",
+      "startsOn": "2027-02-18",
+      "endsOn": null,
+      "displayText": "2027. 2. 18.(목) 18:00",
+      "details": "통보기간 중 연락두절이면 충원 대상에서 제외.",
+      "sourcePage": 8,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "withdrawal-deadline",
+      "audience": "등록자",
+      "label": "등록포기·환불 신청 마감",
+      "startsAt": null,
+      "endsAt": "2027-02-18T18:00:00+09:00",
+      "startsOn": "2027-02-18",
+      "endsOn": null,
+      "displayText": "2027. 2. 18.(목) 18:00까지",
+      "details": "입학처 홈페이지에서 신청하며 신청 후 취소 불가.",
+      "sourcePage": 29,
+      "metadata": {
+        "precision": "minute",
+        "factStatus": "scheduled"
+      }
+    },
+    {
+      "key": "final-documents",
+      "audience": "최종등록자 중 예정증명서·합격확인서 제출자",
+      "label": "최종등록자 서류 제출 마감",
+      "startsAt": null,
+      "endsAt": null,
+      "startsOn": "2027-02-22",
+      "endsOn": null,
+      "displayText": "2027. 2. 22.(월)",
+      "details": "수료·졸업·학위증명서 또는 자격증·면허증 사본을 입학처(글로벌센터 409호)에 방문 또는 우편(기한 내 도착분) 제출.",
+      "sourcePage": 26,
+      "metadata": {
+        "precision": "day",
+        "factStatus": "scheduled"
+      }
+    }
+  ],
+  "programs": [
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "경영학과",
+      "general": 25,
+      "bachelor": 6,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "priorityIncluded": true,
+        "specialQuotas": {
+          "특성화고교": 1
+        }
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "회계세무학과",
+      "general": 5,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "priorityIncluded": true
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "관광경영학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "인문",
+      "major": "의료산업경영학과",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "자연",
+      "major": "금융수학전공",
+      "general": 10,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "경영대학",
+      "category": "자연",
+      "major": "빅데이터경영전공",
+      "general": 7,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "미디어커뮤니케이션학과",
+      "general": 8,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "경제학과",
+      "general": 10,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "응용통계학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "사회복지학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "유아교육학과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "specialQuotas": {
+          "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 5
+        }
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "심리학과",
+      "general": 9,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "사회과학대학",
+      "category": "인문",
+      "major": "패션산업학과",
+      "general": 8,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "AI인문대학",
+      "category": "인문",
+      "major": "한국어문학과",
+      "general": 14,
+      "bachelor": 4,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "AI인문대학",
+      "category": "인문",
+      "major": "영미어문학과",
+      "general": 14,
+      "bachelor": 4,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "법과대학",
+      "category": "인문",
+      "major": "법학과",
+      "general": 7,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "법과대학",
+      "category": "인문",
+      "major": "경찰행정학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "법과대학",
+      "category": "인문",
+      "major": "행정학과",
+      "general": 15,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "특성화고교": 1
+        }
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "인문",
+      "major": "도시계획학전공",
+      "general": 7,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "인문",
+      "major": "조경학전공",
+      "general": 2,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "건축공학전공",
+      "general": 11,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "재외국민 및 외국인": 2
+        }
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "화공생명공학전공",
+      "general": 27,
+      "bachelor": 3,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "특성화고교": 1
+        }
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "배터리공학전공",
+      "general": 14,
+      "bachelor": 3,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "기계공학전공",
+      "general": 20,
+      "bachelor": 3,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "설비·소방공학전공",
+      "general": 3,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "스마트팩토리전공",
+      "general": 12,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "토목환경공학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "공과대학",
+      "category": "자연",
+      "major": "신소재공학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "자연",
+      "major": "바이오나노학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "인문",
+      "major": "식품생명공학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "인문",
+      "major": "식품영양학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "영어"
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "자연",
+      "major": "생명과학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "자연",
+      "major": "반도체물리학과",
+      "general": 9,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "바이오나노대학",
+      "category": "자연",
+      "major": "화학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "농어촌": 1
+        }
+      }
+    },
+    {
+      "college": "반도체대학",
+      "category": "자연",
+      "major": "전자공학과",
+      "general": 25,
+      "bachelor": 4,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "반도체대학",
+      "category": "자연",
+      "major": "반도체공학과",
+      "general": 15,
+      "bachelor": 4,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "농어촌": 1,
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "반도체대학",
+      "category": "자연",
+      "major": "시스템반도체학과",
+      "general": 2,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "AI·컴퓨팅대학",
+      "category": "자연",
+      "major": "인공지능학과",
+      "general": 26,
+      "bachelor": 4,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "AI·컴퓨팅대학",
+      "category": "자연",
+      "major": "컴퓨터공학과",
+      "general": 15,
+      "bachelor": 3,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "IT융합대학",
+      "category": "자연",
+      "major": "스마트보안학과",
+      "general": 6,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "IT융합대학",
+      "category": "자연",
+      "major": "전기공학과",
+      "general": 8,
+      "bachelor": 2,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "IT융합대학",
+      "category": "자연",
+      "major": "스마트시티학과",
+      "general": 7,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "IT융합대학",
+      "category": "자연",
+      "major": "의공학과",
+      "general": 10,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "writtenSubject": "수학"
+      }
+    },
+    {
+      "college": "예술·체육대학",
+      "category": "예체능",
+      "major": "운동재활학과",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "예술·체육대학",
+      "category": "예체능",
+      "major": "시각디자인전공",
+      "general": 0,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "약학대학",
+      "category": "자연",
+      "major": "바이오로직스학과",
+      "general": 22,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "메디컬",
+        "writtenSubject": "수학",
+        "specialQuotas": {
+          "재외국민 및 외국인": 1
+        }
+      }
+    },
+    {
+      "college": "간호대학",
+      "category": "인문",
+      "major": "간호학과",
+      "general": 5,
+      "bachelor": 0,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "메디컬",
+        "writtenSubject": "영어",
+        "nursingMajorOnly": true,
+        "specialQuotas": {
+          "농어촌": 1,
+          "재외국민 및 외국인": 1,
+          "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 25
+        }
+      }
+    },
+    {
+      "college": "의과학대학",
+      "category": "인문",
+      "major": "치위생학과",
+      "general": 5,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "메디컬",
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "농어촌": 2,
+          "재외국민 및 외국인": 1,
+          "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 4
+        }
+      }
+    },
+    {
+      "college": "의과학대학",
+      "category": "인문",
+      "major": "물리치료학과",
+      "general": 3,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "메디컬",
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "재외국민 및 외국인": 1,
+          "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 4
+        }
+      }
+    },
+    {
+      "college": "의과학대학",
+      "category": "인문",
+      "major": "방사선학과",
+      "general": 2,
+      "bachelor": 1,
+      "nursingNight": null,
+      "sourcePage": 4,
+      "metadata": {
+        "campus": "메디컬",
+        "writtenSubject": "영어",
+        "specialQuotas": {
+          "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 4
+        }
+      }
+    }
+  ],
+  "validation": {
+    "expectedProgramRows": 50,
+    "expectedGeneralTotal": 442,
+    "expectedBachelorTotal": 81,
+    "expectedNursingNightTotal": 0,
+    "expectedSelectionRuleRows": 13,
+    "expectedScheduleRows": 14,
+    "tablesChecked": [
+      "PDF 3페이지 전형요약 표(필기과목별 모집단위 목록)",
+      "PDF 4페이지 모집인원 통합 표(렌더링 육안 대조, 열별 계 442·81·11·3·12·42)",
+      "PDF 10·13·17·19·21·22페이지 전형별 모집인원 표(계 행과 합계 일치, 4쪽과 행 단위 일치)",
+      "PDF 5·8페이지 전형일정·충원 일정 표(요일 검산)",
+      "PDF 12·14·18·19·23페이지 필기고사 개요 표(60분은 영어·수학 병합 셀)",
+      "PDF 28페이지 동점자 처리기준, 30페이지 전형료"
+    ],
+    "notes": [
+      "PDF 텍스트 레이어 36/36페이지, 페이지 번호는 PDF 물리 페이지 기준(인쇄 쪽번호와 같음)",
+      "특별전형 인원은 programs[].metadata.specialQuotas에 두고 일반·학사 합계에는 넣지 않았다.",
+      "category는 일반편입 필기과목 기준(영어=인문, 수학=자연)이며 유아교육학과는 인문, 운동재활학과·시각디자인전공은 예체능이다."
+    ]
+  }
+}

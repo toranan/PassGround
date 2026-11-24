@@ -74,4 +74,27 @@ test("최종 요강: 정원 합계·캠퍼스 표기·필기 없는 전형 문�
   const unist = await load("2027-unist-general-transfer-final.verified.json");
   assert.equal(unist.actual.generalTotal, 73);
   assert.match(buildTransferKnowledgeUnits(unist).find((row) => row.unitType === "program").content, /^.*\n울산과학기술원 울산캠퍼스 /);
+
+  // 가천대: 일반·학사 외 특별전형 인원도 학과 문장에 들어가야 간호학과를 5명으로만 답하지 않는다.
+  const gachon = await load("2027-gachon-transfer-final.verified.json");
+  assert.deepEqual([gachon.actual.generalTotal, gachon.actual.bachelorTotal], [442, 81]);
+  const gachonUnits = buildTransferKnowledgeUnits(gachon);
+  const nursing = gachonUnits.find((row) => row.unitKey === "program:간호대학:간호학과").content;
+  assert.match(nursing, /가천대학교 메디컬캠퍼스 간호대학 간호학과/);
+  assert.match(nursing, /일반편입 5명, 학사편입 0명/);
+  assert.match(nursing, /특별전형 모집인원은 농어촌 1명, 재외국민 및 외국인 1명, 의료인력 및 유치원교사\(전문학사학위 소지자, 4학년\) 25명이다\.$/);
+  assert.doesNotMatch(gachonUnits.find((row) => row.unitKey === "program:경영대학:관광경영학과").content, /특별전형|캠퍼스/);
+  const special = (major) => gachon.programs.find((row) => row.major === major).metadata.specialQuotas ?? {};
+  const totalOf = (label) => gachon.programs.reduce((sum, row) => sum + (row.metadata.specialQuotas?.[label] ?? 0), 0);
+  assert.deepEqual(
+    ["농어촌", "특성화고교", "재외국민 및 외국인", "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)"].map(totalOf),
+    [11, 3, 12, 42]
+  );
+  assert.deepEqual(special("유아교육학과"), { "의료인력 및 유치원교사(전문학사학위 소지자, 4학년)": 5 });
+  // 기본계획 대비 변경: 식품생명공학과는 영어, 우선선발은 50:50
+  const ruleScope = (key) => gachon.selectionRules.find((row) => row.key === key).scopeValue.split(", ");
+  assert.ok(ruleScope("general-english").includes("식품생명공학과"));
+  assert.ok(!ruleScope("general-math").includes("식품생명공학과"));
+  assert.match(gachonUnits.find((row) => row.unitKey === "rule:priority-general").content, /서류 50%, 면접 50%/);
+  assert.match(gachonUnits.find((row) => row.unitKey === "rule:general-math").content, /필기시험 시간은 60분이고 객관식 25문항이다/);
 });

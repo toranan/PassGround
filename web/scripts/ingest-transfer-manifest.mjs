@@ -422,6 +422,11 @@ export function buildTransferKnowledgeUnits(manifest) {
     // 캠퍼스가 여럿인 대학(전남대 광주·여수)은 문서 캠퍼스가 '전체'라 모집단위 행의 캠퍼스를 쓴다.
     const campus = program.metadata.campus ?? document.campus;
     const campusLabel = campus && campus !== "전체" ? `${campus}캠퍼스 ` : "";
+    // 농어촌·의료인력 같은 특별전형 인원(가천대 간호학과 25명 등)이 일반·학사만 보고 빠지지 않게 같은 문장에 붙인다.
+    const specialQuotas = Object.entries(program.metadata.specialQuotas ?? {}).filter(([, count]) => Number(count) > 0);
+    const specialText = specialQuotas.length
+      ? ` 특별전형 모집인원은 ${specialQuotas.map(([label, count]) => `${label} ${count}명`).join(", ")}이다.`
+      : "";
     units.push({
       ...base,
       unitKey: `program:${program.college}:${program.major}`,
@@ -433,7 +438,7 @@ export function buildTransferKnowledgeUnits(manifest) {
       generalCount: program.general,
       bachelorCount: program.bachelor,
       nursingNightCount: program.nursingNight,
-      content: `${prefix}\n${document.university} ${campusLabel}${program.college} ${program.major}(${program.category})의 모집인원은 일반편입 ${program.general}명, 학사편입 ${program.bachelor}명, ${nursing}이다.`,
+      content: `${prefix}\n${document.university} ${campusLabel}${program.college} ${program.major}(${program.category})의 모집인원은 일반편입 ${program.general}명, 학사편입 ${program.bachelor}명, ${nursing}이다.${specialText}`,
       sourcePages: [program.sourcePage],
       metadata: { ...program.metadata },
     });
