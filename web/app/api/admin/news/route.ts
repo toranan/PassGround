@@ -230,9 +230,11 @@ export async function POST(request: Request) {
   }
 
   // 응답을 보낸 뒤 앱 사용자들에게 최신뉴스 알림을 보낸다.
+  // 여러 글을 한꺼번에 올릴 때는 sendPush:false로 알림을 끄고, 한 글에만 묶음 문구(pushMessage)로 보낸다.
   if (exam === "transfer" && newPostId && body.sendPush !== false) {
     const postId = newPostId;
-    after(() => sendNewsPush({ title, postId }));
+    const pushText = normalizeText(body.pushMessage, 120) || title;
+    after(() => sendNewsPush({ title: pushText, postId }));
   }
 
   const result = await loadNews(board.boardId);

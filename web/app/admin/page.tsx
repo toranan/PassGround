@@ -390,6 +390,9 @@ export default function AdminPage() {
     linkUrl: "",
   });
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
+  // 새 글은 기본으로 앱 알림을 보낸다. 여러 글을 연달아 올릴 때 끄거나 묶음 문구로 바꾼다.
+  const [newsSendPush, setNewsSendPush] = useState(true);
+  const [newsPushMessage, setNewsPushMessage] = useState("");
   const [newsAttachment, setNewsAttachment] = useState<UploadedAsset | null>(null);
   const [uploadingNewsAttachment, setUploadingNewsAttachment] = useState(false);
   const [knowledgeInputMode, setKnowledgeInputMode] = useState<"single" | "info" | "pdf">("info");
@@ -965,6 +968,8 @@ export default function AdminPage() {
           attachments: newsAttachment
             ? [{ url: newsAttachment.url, filename: newsAttachment.filename }]
             : [],
+          sendPush: newsSendPush,
+          pushMessage: newsPushMessage.trim(),
         }),
       });
       if (res.status === 401) {
@@ -986,6 +991,8 @@ export default function AdminPage() {
               attachments: newsAttachment
                 ? [{ url: newsAttachment.url, filename: newsAttachment.filename }]
                 : [],
+              sendPush: newsSendPush,
+              pushMessage: newsPushMessage.trim(),
             }),
           });
         }
@@ -1002,6 +1009,7 @@ export default function AdminPage() {
       setNewsForm({ title: "", content: "", linkUrl: "" });
       setNewsAttachment(null);
       setEditingNewsId(null);
+      setNewsPushMessage("");
       setMessage(editingNewsId ? "최신뉴스가 수정되었습니다." : "최신뉴스가 저장되었습니다.");
     } catch {
       setMessage(editingNewsId ? "최신뉴스 수정 중 오류가 발생했습니다." : "최신뉴스 저장 중 오류가 발생했습니다.");
@@ -1947,6 +1955,29 @@ export default function AdminPage() {
                           </div>
                         ) : null}
                       </div>
+                      {editingNewsId ? null : (
+                        <div className="space-y-2 rounded-md border border-border px-3 py-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={newsSendPush}
+                              onChange={(e) => setNewsSendPush(e.target.checked)}
+                              disabled={submitting}
+                            />
+                            앱 알림 보내기
+                          </label>
+                          {newsSendPush ? (
+                            <Input
+                              placeholder="알림 문구 (비우면 뉴스 제목)"
+                              value={newsPushMessage}
+                              onChange={(e) => setNewsPushMessage(e.target.value)}
+                              disabled={submitting}
+                            />
+                          ) : (
+                            <p className="text-xs text-muted-foreground">이 글은 알림 없이 올라갑니다.</p>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <div className="flex flex-wrap gap-2">
                           <Button onClick={handleSaveNews} disabled={submitting}>
